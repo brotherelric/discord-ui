@@ -27,7 +27,7 @@ This is a preview version and can have some issues
 This is a [discord.py](https://github.com/Rapptz/discord.py) ui extension made by [404kuso](https://github.com/404kuso) and [RedstoneZockt](https://github.com/RedstoneZockt)
 for using discord's newest ui features like buttons, slash commands and context commands (we got dpy2 supported if you want to keep using our libary)
 
-[Documentation](https://discord-ui.readthedocs.io/en/latest/)
+[Documentation](https://discord-ui.readthedocs.io/en/preview/)
 
 ## Installation
 
