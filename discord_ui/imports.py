@@ -1,5 +1,7 @@
-"""
-File for managing different discord package imports
+"""This module is for managing different discord packages.
+
+It will autoimport nextcord if installed, otherwise it will import `discord`.
+If you want to manually set a version, uncomment the `__import_version__ = ImportVersion.` line.
 """
 __discord_import__ = "d"
 
@@ -11,7 +13,6 @@ try:
 except ImportError:
     # otherwise set it to discord.py
     __discord_import__ = "d"
-
 from enum import Enum
 
 class ImportVersion(Enum):
@@ -19,6 +20,9 @@ class ImportVersion(Enum):
     nextcord = "n"
 
 __import_version__ = ImportVersion(__discord_import__)
+# uncomment line to manually set import
+# __import_version__ = ImportVersion.
+
 
 if __import_version__ is ImportVersion.discordpy:
     import discord
