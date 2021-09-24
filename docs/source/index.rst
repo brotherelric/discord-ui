@@ -11,6 +11,9 @@ receive data like who pressed the button and who selected which value in a menu,
 application-commands like slash-commands, message-commands and user-commands, receive their interaction and 
 the used options.
 
+.. warning::
+
+   This is a preview version and can contain some issues
 
 Installation
 ---------------------
@@ -21,13 +24,13 @@ Windows
 
 .. code-block::
 
-   > py -m pip install discord-ui
+   > py -m pip install git+https://github.com/discord-py-ui/discord-ui.git@preview
 
 Linux
 
 .. code-block::
 
-   $ python3 -m pip install discord-ui
+   $ python3 -m pip install git+https://github.com/discord-py-ui/discord-ui.git@preview
 
 
 Examples
@@ -39,7 +42,7 @@ We got some examples `here <https://github.com/discord-py-ui/discord-ui/tree/mai
 Links
 ---------------------
 
-*  `Github <https://github.com/discord-py-ui/discord-ui/>`__
+*  `Github <https://github.com/discord-py-ui/discord-ui/preview>`__
 *  `Pypi <https://pypi.org/project/discord-ui/>`__
 *  `404kuso <https://github.com/404kuso>`__
 *  `RedstoneZockt <https://github.com/RedstoneZockt>`__

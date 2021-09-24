@@ -6,7 +6,7 @@
         <br />
         <a href="https://pypi.org/project/discord-ui/"><b>pip package</b></a>
         ▪ 
-        <a href="https://discord-ui.readthedocs.io/en/latest/"><b>read the docs</b></a> 
+        <a href="https://discord-ui.readthedocs.io/en/preview/"><b>read the docs</b></a> 
         ▪ 
         <a href="https://github.com/discord-py-ui/discord-ui/tree/main/examples"><b>examples</b></a>
     </p>
@@ -16,6 +16,10 @@
 ![PyPI](https://img.shields.io/pypi/v/discord-ui)
 ![PyPI - Python Version](https://img.shields.io/pypi/pyversions/discord-ui)
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/550953d11c8242b9b7944642a2e292c7)](https://app.codacy.com/gh/discord-py-ui/discord-ui?utm_source=github.com&utm_medium=referral&utm_content=discord-py-ui/discord-ui&utm_campaign=Badge_Grade_Settings)
+
+```
+This is a preview version and can have some issues
+```
 
 ## Introduction
 
@@ -30,12 +34,12 @@ for using discord's newest ui features like buttons, slash commands and context 
 
 ### Windows
 ```cmd
-py -m pip install discord-ui
+py -m pip install git+https://github.com/discord-py-ui/discord-ui.git@preview
 ```
 
 ### Linux
 ```bash
-python3 -m pip install discord-ui
+python3 -m pip install git+https://github.com/discord-py-ui/discord-ui.git@preview
 ```
 
 ## License
