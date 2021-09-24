@@ -108,7 +108,7 @@ async def json_or_text(response: aiohttp.ClientResponse) -> Union[Dict[str, Any]
 
 
 class Route:
-    BASE: ClassVar[str] = 'https://discord.com/api/v8'
+    BASE: ClassVar[str] = 'https://discord.com/api/v9'
 
     def __init__(self, method: str, path: str, **parameters: Any) -> None:
         self.path: str = path
@@ -517,6 +517,34 @@ class HTTPClient:
                 )
 
         return self.request(route, form=form, files=files)
+
+    
+    async def _send_file_request(self, route, files, payload):
+        form = [{
+            'name': 'payload_json', 
+            'value': json.dumps(payload, separators=(',', ':'), ensure_ascii=True)
+        }]
+
+        if len(files) == 1:
+            file = files[0]
+            form.append({
+                'name': 'file',
+                'value': file.fp,
+                'filename': file.filename,
+                'content_type': 'application/octet-stream'
+            })
+        else:
+            for index, file in enumerate(files):
+                form.append({
+                    'name': 'file%s' % index,
+                    'value': file.fp,
+                    'filename': file.filename,
+                    'content_type': 'application/octet-stream'
+                })
+        return await self.request(route, form=form, files=files)
+
+    async def send_file_payload(self, channel_id, files, payload):
+        return await self._send_file_request(Route("POST", "/channels/{channel_id}/messages", channel_id=channel_id), files, payload)
 
     def send_files(
         self,

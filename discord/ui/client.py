@@ -1316,7 +1316,6 @@ class Components():
         self.listening_components: Dict[str, List[ListeningComponent]] = {}
         """A list of components that are listening for interaction"""
         self._discord: commands.Bot = client
-        self._discord._connection._component_listeners = {}
         if discord.__version__.startswith("2"):
             self._discord.add_listener(self._on_component_response, "on_socket_raw_receive")
         elif discord.__version__.startswith("1"):
@@ -1521,7 +1520,7 @@ class Components():
             The listener that will be attached
         
         """
-        listener._start(target_message, target_message)
+        listener._start(target_message)
     def clear_listeners(self):
         """Removes all component listeners"""
         self._connection._component_listeners = {}

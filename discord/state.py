@@ -177,6 +177,7 @@ class ConnectionState:
 
         self.allowed_mentions: Optional[AllowedMentions] = allowed_mentions
         self._chunk_requests: Dict[Union[int, str], ChunkRequest] = {}
+        self._component_listeners: Dict[str, str] = {}
 
         activity = options.get('activity', None)
         if activity:

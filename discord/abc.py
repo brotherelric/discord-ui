@@ -81,7 +81,6 @@ if TYPE_CHECKING:
     from .channel import TextChannel, DMChannel, GroupChannel, PartialMessageable
     from .threads import Thread
     from .enums import InviteTarget
-    from .ui.view import View
     from .types.channel import (
         PermissionOverwrite as PermissionOverwritePayload,
         Channel as ChannelPayload,
@@ -1236,7 +1235,8 @@ class Messageable:
         allowed_mentions=None,
         reference=None,
         mention_author=None,
-        view=None,
+        components=None,
+        listener=None,
     ):
         """|coro|
 
@@ -1363,13 +1363,8 @@ class Messageable:
             except AttributeError:
                 raise InvalidArgument('reference parameter must be Message, MessageReference, or PartialMessage') from None
 
-        if view:
-            if not hasattr(view, '__discord_ui_view__'):
-                raise InvalidArgument(f'view parameter must be View not {view.__class__!r}')
-
-            components = view.to_components()
-        else:
-            components = None
+        if listener is not None:
+            components = listener.to_components()
 
         if file is not None and files is not None:
             raise InvalidArgument('cannot pass both file and files parameter to send()')
@@ -1433,8 +1428,8 @@ class Messageable:
             )
 
         ret = state.create_message(channel=channel, data=data)
-        if view:
-            state.store_view(view, ret.id)
+        if listener:
+            listener._start(ret)
 
         if delete_after is not None:
             await ret.delete(delay=delete_after)
