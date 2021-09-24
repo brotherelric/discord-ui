@@ -2,8 +2,7 @@ from .types import AdditionalType, OptionType
 from ..tools import get, setup_logger
 from ..errors import CouldNotParse
 
-import discord
-from discord.enums import ChannelType
+from ..imports import discord
 
 import typing
 
@@ -60,21 +59,21 @@ def resolve(data, _state):
 
                 guild = _state._get_guild(data["guild_id"])
                 channel = None
-                if ChannelType(channel_data["type"]) is ChannelType.text:
+                if discord.enums.ChannelType(channel_data["type"]) is discord.enums.ChannelType.text:
                     channel = discord.TextChannel(data=channel_data, guild=guild, state=_state)
-                elif ChannelType(channel_data["type"]) is ChannelType.voice:
+                elif discord.enums.ChannelType(channel_data["type"]) is discord.enums.ChannelType.voice:
                     channel = discord.VoiceChannel(data=channel_data, guild=guild, state=_state)
-                elif ChannelType(channel_data["type"]) is ChannelType.category:
+                elif discord.enums.ChannelType(channel_data["type"]) is discord.enums.ChannelType.category:
                     channel = discord.CategoryChannel(data=channel_data, guild=guild, state=_state)
-                elif ChannelType(channel_data["type"]) is ChannelType.group:
+                elif discord.enums.ChannelType(channel_data["type"]) is discord.enums.ChannelType.group:
                     channel = discord.GroupChannel(data=channel_data, guild=guild, state=_state)
-                elif ChannelType(channel_data["type"]) is ChannelType.news:
+                elif discord.enums.ChannelType(channel_data["type"]) is discord.enums.ChannelType.news:
                     channel = discord.NewsChannel(data=channel_data, guild=guild, state=_state)
-                elif ChannelType(channel_data["type"]) is ChannelType.private:
+                elif discord.enums.ChannelType(channel_data["type"]) is discord.enums.ChannelType.private:
                     channel = discord.DMChannel(data=channel_data, guild=guild, state=_state)
-                elif ChannelType(channel_data["type"]) is ChannelType.store:
+                elif discord.enums.ChannelType(channel_data["type"]) is discord.enums.ChannelType.store:
                     channel = discord.StoreChannel(data=channel_data, guild=guild, state=_state)
-                elif ChannelType(channel_data["type"]) is ChannelType.stage_voice:
+                elif discord.enums.ChannelType(channel_data["type"]) is discord.enums.ChannelType.stage_voice:
                     channel = discord.StageChannel(data=channel_data, guild=guild, state=_state)
                 resolved["channels"][channel_id] = channel
         elif x == "roles":

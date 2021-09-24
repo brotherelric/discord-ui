@@ -1,13 +1,18 @@
 from ..tools import _or, _default, _none
 from ..errors import InvalidLength, WrongType
-from .errors import CallbackMissingContextCommandParameters, MissingOptionParameter, NoAsyncCallback, OptionalOptionParameter
+from ..enums import CommandType, OptionType
+from .errors import (
+    CallbackMissingContextCommandParameters, 
+    MissingOptionParameter, 
+    NoAsyncCallback, 
+    OptionalOptionParameter
+)
 
 import discord
 from discord.errors import InvalidArgument
 
 import typing
 import inspect
-from enum import IntEnum
 
 def format_name(value):
     return str(value).lower().replace(" ", "-")
@@ -107,10 +112,10 @@ class SlashOption():
         
         :type: :class:`int`
         """
-        return self._json["type"]
+        return OptionType(self._json["type"])
     @argument_type.setter
     def argument_type(self, value):
-        self._json["type"] = OptionType.any_to_type(value)
+        self._json["type"] = getattr(value, "value", OptionType.any_to_type(value))
 
     @property
     def name(self) -> str:
@@ -215,81 +220,9 @@ class SlashOption():
     def to_dict(self):
         return self._json
 
-class OptionType:
-    """The list of possible slash command option types"""
-
-    SUB_COMMAND             =          Subcommand           =           1
-    SUB_COMMAND_GROUP       =          Subcommand_group     =           2
-    STRING                  =          String               =           3
-    INTEGER                 =          Integer              =           4
-    BOOLEAN                 =          Boolean              =           5
-    MEMBER     =   USER     =          Member               =  User =   6
-    CHANNEL                 =          Channel              =           7
-    ROLE                    =          Role                 =           8
-    MENTIONABLE             =          Mentionable          =           9
-    FLOAT                   =          Float                =          10
-
-    @classmethod
-    def any_to_type(cls, whatever):
-        """Converts something to a option type if possible"""
-        if isinstance(whatever, int) and whatever in range(1, 11):
-            return whatever
-        if inspect.isclass(whatever):
-            if whatever is str:
-                return cls.STRING
-            if whatever is int:
-                return cls.INTEGER
-            if whatever is bool:
-                return cls.BOOLEAN
-            if whatever in [discord.User, discord.Member]:
-                return cls.MEMBER
-            if whatever is discord.TextChannel:
-                return cls.CHANNEL
-            if whatever is discord.Role:
-                return cls.ROLE
-            if whatever is float:
-                return cls.FLOAT
-        if isinstance(whatever, str):
-            whatever = whatever.lower()
-            if whatever in ["str", "string"]:
-                return cls.STRING
-            if whatever in ["int", "integer"]:
-                return cls.INTEGER
-            if whatever in ["bool", "boolean"]:
-                return cls.BOOLEAN
-            if whatever in ["user", "discord.user", "member", "discord.member", "usr", "mbr"]:
-                return cls.MEMBER
-            if whatever in ["channel", "textchannel", "discord.textchannel", "txtchannel"]:
-                return cls.CHANNEL
-            if whatever in ["role", "discord.role"]:
-                return cls.ROLE
-            if whatever in ["mentionable", "mention"]:
-                return cls.MENTIONABLE
-            if whatever in ["float", "floating", "floating number", "f"]:
-                return cls.FLOAT
 class AdditionalType:
     MESSAGE     =       44
     GUILD       =       45
-class CommandType(IntEnum):
-    Slash       =              1
-    User        =              2
-    Message     =              3
-
-    @staticmethod
-    def from_string(typ):
-        if isinstance(typ, str):
-            if typ.lower() == "slash":
-                return CommandType.Slash
-            elif typ.lower() == "user":
-                return CommandType.User
-            elif typ.lower() == "message":
-                return CommandType.Message
-        elif isinstance(typ, CommandType):
-            return typ
-        else:
-            return CommandType(typ)
-    def __str__(self):
-        return self.name
 
 class SlashPermission():
     """Permissions for a slash commannd

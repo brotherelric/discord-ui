@@ -1,5 +1,4 @@
 from .cogs import BaseCallable, CogCommand, CogMessageCommand, CogSubCommandGroup, ListeningComponent
-from .components import ComponentType
 from .slash.errors import NoAsyncCallback
 from .errors import MissingListenedComponentParameters, WrongType
 from .slash.tools import ParseMethod, cache_data, format_name, handle_options, handle_thing
@@ -10,13 +9,10 @@ from .http import jsonifyMessage, BetterRoute, send_files
 from .receive import ChoiceGeneratorContext, ComponentContext, Interaction, InteractionType, Message, PressedButton, SelectedMenu, SlashedContext, WebhookMessage, SlashedCommand, SlashedSubCommand, getMessage
 from .override import override_dpy as override_it
 from .listener import Listener
+from .enums import InteractionResponseType, ComponentType
 
-import discord
-from discord.ext import commands as com
-from discord.ext.commands.errors import CommandNotFound
-from discord.errors import Forbidden, InvalidArgument, NotFound
+from .imports import discord, commands
 
-import zlib
 import json
 import inspect
 import asyncio
@@ -103,7 +99,7 @@ class Slash():
         self.auto_defer: Tuple[bool, bool] = (auto_defer, False) if isinstance(auto_defer, bool) else auto_defer
         self.auto_sync = auto_sync
 
-        self._discord: com.Bot = client
+        self._discord: commands.Bot = client
         self.http: SlashHTTP = None # set it when bot is connected
         self._discord._connection.slash_http = None # set when bot is connected
         self.commands: Dict[(str, SlashCommand)] = {}
@@ -210,7 +206,7 @@ class Slash():
                 return
             parsed_options = {x["name"]: {"name": x["name"], "value": await handle_thing(x["value"], x["type"], data, self.parse_method, self._discord)} | ({"focused": True} if x.get("focused") else {}) for x in raw_options}
             choice_ctx = ChoiceGeneratorContext(command, self._discord._connection, data, parsed_options, user) 
-            return await self.http.respond_to(choice_ctx.id, choice_ctx.token, 8, {
+            return await self.http.respond_to(choice_ctx.id, choice_ctx.token, InteractionResponseType.Autocomplete_result, {
                 "choices": [(
                         {"name": x[0], "value": x[1]} if isinstance(x, tuple) else x
                     ) for x in (await get(command.options, choice_ctx.focused_option["name"], lambda x: getattr(x, "name", None)).choice_generator(choice_ctx))
@@ -360,7 +356,7 @@ class Slash():
         }
         own_guild_ids = [x.id for x in self._discord.guilds]
         
-        commands = self.gather_commands()
+        all_commands = self.gather_commands()
         async def guild_stuff(command, guild_ids, is_change=False):
             """Adds the command to the guilds"""
             for x in guild_ids:
@@ -369,9 +365,9 @@ class Slash():
                 if command.guild_permissions is not None:
                     for x in list(command.guild_permissions.keys()):
                         if int(x) not in own_guild_ids:
-                            raise InvalidArgument("guild_permissions invalid! Client is not in a guild with the id " + str(x))
+                            raise commands.errors.InvalidArgument("guild_permissions invalid! Client is not in a guild with the id " + str(x))
                 if int(x) not in own_guild_ids:
-                    raise InvalidArgument("guild_ids invalid! Client is not in a server with the id '" + str(x) + "'")
+                    raise commands.errors.InvalidArgument("guild_ids invalid! Client is not in a server with the id '" + str(x) + "'")
             
                 if added_commands["guilds"].get(x) is None:
                     added_commands["guilds"][x] = {}
@@ -416,8 +412,8 @@ class Slash():
                 logging.debug("adding '" + str(command.name) + "' as global command")
                 await global_stuff(command)
 
-        for x in commands:
-            await add_command(commands[x])
+        for x in all_commands:
+            await add_command(all_commands[x])
 
         for x in self.context_commands:
             for com in self.context_commands[x]:
@@ -467,7 +463,7 @@ class Slash():
         async for x in self._discord.fetch_guilds():
             try:
                 commands += await self.http.get_guild_commands(x.id)
-            except Forbidden:
+            except commands.errors.Forbidden:
                 logging.warn("Got forbidden in " + str(x.name) + " (" + str(x.id) + ")")
                 continue
         return commands
@@ -540,9 +536,9 @@ class Slash():
                 if command.guild_permissions is not None:
                     for x in list(command.guild_permissions.keys()):
                         if int(x) not in own_guild_ids:
-                            raise InvalidArgument("guild_permissions invalid! Client is not in a guild with the id " + str(x))
+                            raise commands.errors.InvalidArgument("guild_permissions invalid! Client is not in a guild with the id " + str(x))
                 if int(x) not in own_guild_ids:
-                    raise InvalidArgument("guild_ids invalid! Client is not in a server with the id '" + str(x) + "'")
+                    raise commands.errors.InvalidArgument("guild_ids invalid! Client is not in a server with the id '" + str(x) + "'")
 
                 if command.guild_permissions is not None:
                     command.permissions = command.guild_permissions.get(x)
@@ -626,7 +622,7 @@ class Slash():
         else:
             api_command = await self._get_guild_api_command(name, typ, guild_id)
         if api_command is None:
-            raise CommandNotFound("Slash command with name " + str(name) + " and type " + str(typ) + " not found in the api!")
+            raise commands.errors.CommandNotFound("Slash command with name " + str(name) + " and type " + str(typ) + " not found in the api!")
         if permissions is not None:
             await self.http.update_command_permissions(guild_id, api_command["id"], permissions.to_dict())
         if default_permission is not None:
@@ -674,14 +670,14 @@ class Slash():
 
         old_command = self._get_command(old_name, typ)
         if old_command is None:
-            raise NotFound("Could not find a command in the internal cache with the name " + str(old_name) + " and the type " + str(typ))
+            raise commands.errors.NotFound("Could not find a command in the internal cache with the name " + str(old_name) + " and the type " + str(typ))
         command = old_command
         if guild_id is not None:
             api_command = await self._get_guild_api_command(old_name, typ, guild_id)
         else:
             api_command = await self._get_global_api_command(old_name, typ)
         if old_command is None:
-            raise NotFound("Could not find a command in the api with the name " + str(old_name) + " and the type " + str(typ))
+            raise commands.errors.NotFound("Could not find a command in the api with the name " + str(old_name) + " and the type " + str(typ))
 
         if name is not None:
             command.name = name
@@ -1304,7 +1300,7 @@ class Components():
             ...
 
     """
-    def __init__(self, client: com.Bot, override_dpy=True, auto_defer=False):
+    def __init__(self, client: commands.Bot, override_dpy=True, auto_defer=False):
         """
         Creates a new compnent listener
         
@@ -1319,7 +1315,7 @@ class Components():
         self.auto_defer: Tuple[bool, bool] = (auto_defer, False) if isinstance(auto_defer, bool) else auto_defer
         self.listening_components: Dict[str, List[ListeningComponent]] = {}
         """A list of components that are listening for interaction"""
-        self._discord: com.Bot = client
+        self._discord: commands.Bot = client
         self._discord._connection._component_listeners = {}
         if discord.__version__.startswith("2"):
             self._discord.add_listener(self._on_component_response, "on_socket_raw_receive")

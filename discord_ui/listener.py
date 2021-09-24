@@ -180,9 +180,7 @@ from .tools import setup_logger
 from .components import Button, ComponentType, LinkButton, SelectMenu
 from .receive import ComponentContext, Message
 
-import discord
-from discord.ext import commands
-from discord.state import ConnectionState
+from .imports import discord, commands
 
 import asyncio
 from inspect import getmembers
@@ -365,7 +363,7 @@ class Listener():
         logging.debug("deleted listener")
     def _start(self, message):
         self.message = message
-        self._state: ConnectionState = message._state
+        self._state: discord.state.ConnectionState = message._state
         self._target_message_id = str(self.message.id)
         self._state._component_listeners[self._target_message_id] = self
         

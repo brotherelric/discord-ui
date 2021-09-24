@@ -1,8 +1,7 @@
 from .tools import MISSING
 from .errors import InvalidLength, OutOfValidRange, WrongType
 
-from discord import Emoji
-from discord.errors import InvalidArgument
+from .imports import discord, commands
 
 import inspect
 from enum import IntEnum
@@ -127,7 +126,7 @@ class SelectOption():
             return self._emoji["name"]
         return f'<{"a" if "animated" in self._emoji else ""}:{self._emoji["name"]}:{self._emoji["id"]}>'
     @emoji.setter
-    def emoji(self, val: Union[Emoji, str, dict]):
+    def emoji(self, val: Union[discord.Emoji, str, dict]):
         """The emoji appearing before the label"""
         if val is None:
             self._emoji = None
@@ -136,7 +135,7 @@ class SelectOption():
                 "id": None,
                 "name": val
             }
-        elif isinstance(val, Emoji):
+        elif isinstance(val, discord.Emoji):
             self._emoji = {
                 "id": val.id,
                 "name": val.name,
@@ -369,7 +368,7 @@ class BaseButton(Component):
     def __init__(self, label, color, emoji, new_line, disabled) -> None:
         Component.__init__(self, ComponentType.Button)
         if label is None and emoji is None:
-            raise InvalidArgument("You need to pass a label or an emoji")
+            raise commands.errors.InvalidArgument("You need to pass a label or an emoji")
         self._label = None
         self._style = None
         self._emoji = None
@@ -436,7 +435,7 @@ class BaseButton(Component):
     @color.setter
     def color(self, val):
         if ButtonStyles.getColor(val) is None:
-            raise InvalidArgument(str(val) + " is not a valid color")
+            raise commands.errors.InvalidArgument(str(val) + " is not a valid color")
         self._style = ButtonStyles.getColor(val).value
     
     @property
@@ -455,14 +454,14 @@ class BaseButton(Component):
             return self._emoji["name"]
         return f'<{"a" if "animated" in self._emoji else ""}:{self._emoji["name"]}:{self._emoji["id"]}>'
     @emoji.setter
-    def emoji(self, val: Union[Emoji, str, dict]):
+    def emoji(self, val: Union[discord.Emoji, str, dict]):
         if val is None:
             self._emoji = None
         elif isinstance(val, str):
             self._emoji = {
                 "name": val
             }
-        elif isinstance(val, Emoji):
+        elif isinstance(val, discord.Emoji):
             self._emoji = {
                 "id": val.id,
                 "name": val.name,

@@ -47,6 +47,7 @@ override_dpy2_client()
 
 __title__ = "discord-ui"
 __version__ = "5.0.1"
+from .imports import __import_version__
 
 if __version__.endswith("a"):
     print("Warning: This version is a preview version and can contain some issues!")

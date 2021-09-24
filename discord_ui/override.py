@@ -12,15 +12,15 @@ from .tools import MISSING
 from .receive import Message, WebhookMessage
 from .http import jsonifyMessage, BetterRoute, send_files
 
-import discord
-from discord.ext import commands
+
+from .imports import discord, commands
 
 import sys
 
 def override_dpy2_client():
-    module = sys.modules["discord"]
+    module = sys.modules[discord.__name__]
 
-    class OverridenV2Bot(commands.bot.Bot):
+    class OverridenV2Bot(commands.Bot):
         """A overriden client that enables `enable_debug_events` for receiving the events"""
         def __init__(self, command_prefix, help_command = None, description = None, **options):
             commands.bot.Bot.__init__(self, command_prefix, help_command=help_command, description=description, enable_debug_events=True, **options)
@@ -32,11 +32,11 @@ def override_dpy2_client():
             return object.__new__(cls)
 
     if discord.__version__.startswith("2"):
-        module.ext.commands.bot.Bot.__new__ = client_override
-    sys.modules["discord"] = module
+        module.ext.commands.Bot.__new__ = client_override
+    sys.modules[discord.__name__] = module
 def override_dpy():
     """This method overrides dpy methods. You shouldn't need to use this method by your own, the lib overrides everything by default"""
-    module = sys.modules["discord"]
+    module = sys.modules[discord.__name__]
 
     #region message override
     async def send(self: discord.TextChannel, content=None, **kwargs) -> Message:
@@ -101,4 +101,4 @@ def override_dpy():
     #endregion
 
 
-    sys.modules["discord"] = module
+    sys.modules[discord.__name__] = module

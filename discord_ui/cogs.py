@@ -1,10 +1,7 @@
-from .components import ComponentType
 from .slash.types import BaseCommand, MessageCommand, SlashCommand, SlashSubcommand, UserCommand
+from .enums import ComponentType
 
-import discord
-from discord.errors import InvalidArgument
-from discord.ext.commands import errors
-from discord.ext.commands.cooldowns import BucketType, CooldownMapping
+from .imports import discord, commands
 
 import asyncio
 import datetime
@@ -14,7 +11,7 @@ try:
 except ImportError:
     from typing_extensions import Literal
 
-class WrongListener(errors.CheckFailure):
+class WrongListener(commands.errors.CheckFailure):
     """
     Exception raised when a listening component received a component event that doesn't meet the check conditions
 
@@ -44,9 +41,9 @@ class BaseCallable():
         if hasattr(self.callback, "__commands_cooldown__"):
             cooldown = self.callback.__commands_cooldown__
         try:
-            self._buckets = CooldownMapping(cooldown)
+            self._buckets = commands.cooldowns.CooldownMapping(cooldown)
         except TypeError:
-            self._buckets = CooldownMapping(cooldown, BucketType.default)
+            self._buckets = commands.cooldowns.CooldownMapping(cooldown, commands.cooldowns.BucketType.default)
 
         self._max_concurrency = None
         if hasattr(self.callback, "__commands_max_concurrency__"):
@@ -74,7 +71,7 @@ class BaseCallable():
         return self.callback(*args, **kwds)
     async def invoke(self, ctx, *args, **kwargs):
         if not await self.can_run(ctx):
-            raise errors.CheckFailure()
+            raise commands.errors.CheckFailure()
         if self._before_invoke is not None:
             await self._before_invoke(ctx)
 
@@ -530,7 +527,7 @@ def context_cog(type: Literal["user", 2, "message", 3], name=None, guild_ids=Non
         elif type in ["message", 3]:
             return CogMessageCommand(callback, name, guild_ids=guild_ids, default_permission=default_permission, guild_permissions=guild_permissions)
         else:
-            raise InvalidArgument("Invalid context type! type has to be one of 'user', 1, 'message', 2!")
+            raise discord.errors.InvalidArgument("Invalid context type! type has to be one of 'user', 1, 'message', 2!")
     return wraper
 def listening_component_cog(custom_id, messages=None, users=None, component_type: Literal['button', 'select']=None, check=lambda _ctx: True):
     """

@@ -5,11 +5,11 @@ from .tools import MISSING, setup_logger, _none, get, _default
 from .slash.types import ContextCommand, SlashCommand, SlashOption, SlashPermission, SlashSubcommand
 from .http import BetterRoute, jsonifyMessage, send_files
 from .components import ActionRow, Button, LinkButton, SelectMenu, SelectOption, UseableComponent, make_component
+from .enums import InteractionResponseType
 
-import discord
-from discord.ext.commands import Bot
-from discord.errors import HTTPException
-from discord.state import ConnectionState
+
+from .imports import discord
+from .imports import commands
 
 from typing import Any, List, Union, Dict
 try:
@@ -95,7 +95,7 @@ class Interaction():
             payload = {"flags": 64}
             self._deferred_hidden = True
         
-        await self._state.slash_http.respond_to(self.id, self.token, 5, payload)
+        await self._state.slash_http.respond_to(self.id, self.token, InteractionResponseType.Deferred_channel_message, payload)
         self.deferred = True
 
     async def respond(self, content=MISSING, *, tts=False, embed=MISSING, embeds=MISSING, file=MISSING, files=MISSING, nonce=MISSING,
@@ -142,9 +142,9 @@ class Interaction():
         """
         if ninja_mode is True or all(y in [MISSING, False] for x, y in locals().items() if x not in ["self"]):
             try:
-                await self._state.slash_http.respond_to(self.id, self.token, 6)
+                await self._state.slash_http.respond_to(self.id, self.token, InteractionResponseType.Deferred_message_update)
                 return
-            except HTTPException as x:
+            except discord.errors.HTTPException as x:
                 if "value must be one of (4, 5)" in str(x).lower():
                     logging.warning(str(x) + "\n" + "The 'ninja_mode' parameter is not supported for slash commands!")
                     ninja_mode = False
@@ -180,7 +180,7 @@ class Interaction():
             else:
                 await self._state.http.request(route, json=payload)    
         else:
-            await self._state.slash_http.respond_to(self.id, self.token, 4, payload, files=[file] if file is not MISSING else _default(None, files))
+            await self._state.slash_http.respond_to(self.id, self.token, InteractionResponseType.Channel_message, payload, files=[file] if file is not MISSING else _default(None, files))
         self.responded = True
         
         r = await self._state.http.request(BetterRoute("GET", f"/webhooks/{self.application_id}/{self.token}/messages/@original"))
@@ -300,7 +300,7 @@ class SelectedMenu(Interaction, SelectMenu):
         default = [i for i, o in enumerate(s.options) if o.default is True]
         SelectMenu.__init__(self, s.custom_id, s.options, s.min_values, s.max_values, s.placeholder, default[0] if len(default) == 1 else None, s.disabled)
         
-        self.bot: Bot = client
+        self.bot: commands.Bot = client
         self.selected_options: List[SelectOption] = []
         """The list of the selected options"""
         self.selected_values: List[str] = []
@@ -320,7 +320,7 @@ class PressedButton(Interaction, Button):
         Button.__init__(self, b.custom_id, b.label, b.color, b.emoji, b.new_line, b.disabled)
 
         self._json = b.to_dict()
-        self.bot: Bot = client
+        self.bot: commands.Bot = client
         self.author: discord.Member = user
         """The user who pressed the button"""
 
@@ -332,7 +332,7 @@ class SlashedCommand(Interaction, SlashCommand):
         for x in self.__slots__:
             setattr(self, x, getattr(command, x))
 
-        self.bot: Bot = client
+        self.bot: commands.Bot = client
         self._json = command.to_dict()
         self.author: discord.Member = user
         """The user who used the command"""
@@ -355,7 +355,7 @@ class SlashedContext(Interaction, ContextCommand):
             setattr(self, x, getattr(command, x))
         
         self._json = command.to_dict()
-        self.bot: Bot = client
+        self.bot: commands.Bot = client
         self.param: Union[Message, discord.Member, discord.User] = param
         """The parameter that was received"""
         self.permissions: SlashPermission = command.guild_permissions.get(self.guild_id) if command.guild_permissions is not None else None 
@@ -363,7 +363,7 @@ class SlashedContext(Interaction, ContextCommand):
         
 
 
-async def getMessage(state: ConnectionState, data, response=True):
+async def getMessage(state: discord.state.ConnectionState, data, response=True):
     """
     Async function to get the response message
 
@@ -404,7 +404,7 @@ class Message(discord.Message):
         self.__slots__ = discord.Message.__slots__ + ("components", "supressed")
         self._payload = data
 
-        self._state: ConnectionState = None
+        self._state: discord.state.ConnectionState = None
         discord.Message.__init__(self, state=state, channel=channel, data=data)
         self.components: List[Union[Button, LinkButton, SelectMenu]] = []
         """The components in the message
@@ -630,7 +630,7 @@ class Message(discord.Message):
                     statements.append(check(com))
                 return all(statements)
             return False
-        if not isinstance(client, Bot):
+        if not isinstance(client, commands.Bot):
             raise WrongType("client", client, "discord.ext.commands.Bot")
         
         if event_name.lower() == "button":

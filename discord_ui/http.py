@@ -2,7 +2,7 @@ import asyncio
 from .errors import WrongType
 from .tools import MISSING, _or, components_to_dict, setup_logger
 
-import discord
+from .imports import discord
 from discord.http import Route
 
 import json

@@ -22,7 +22,7 @@ doesn't work
 import functools
 import inspect
 
-from discord.ext.commands import errors
+from ..imports import commands
 
 
 def check_failure_response(content=None, hidden=False, **fields):
@@ -83,7 +83,7 @@ def check_failure_response(content=None, hidden=False, **fields):
                 if not check(ctx):
                     await ctx.send(content, **fields, hidden=hidden)
                     return
-            except errors.CheckFailure:
+            except commands.errors.CheckFailure:
                 await ctx.send(content, **fields, hidden=hidden)
                 raise
             await _invoke(ctx, *args, **kwargs)
@@ -134,7 +134,7 @@ def any_failure_response(content, hidden=False, **fields):
                 if not await cog.can_run(ctx):
                     await ctx.send(content, hidden=hidden, **fields)
                     return
-            except errors.CheckFailure:
+            except commands.errors.CheckFailure:
                 await ctx.send(content, hidden=hidden, **fields)
                 raise
             await _invoke(ctx, *args, **kwargs)

@@ -1,7 +1,6 @@
 from ..tools import get, setup_logger
 from ..http import BetterRoute, handle_rate_limit, send_files
 
-from discord.ext import commands as com
 from discord.state import ConnectionState
 from discord.errors import Forbidden, HTTPException, NotFound
 
@@ -17,7 +16,7 @@ class SlashHTTP():
     async def respond_to(self, interaction_id, interaction_token, response_type, data=None, files=None):
         route = BetterRoute("POST", f'/interactions/{interaction_id}/{interaction_token}/callback')
         payload = {
-            "type": response_type
+            "type": getattr(response_type, "value", response_type)
         }
         if data:
             payload["data"] = data
