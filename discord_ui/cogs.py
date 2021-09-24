@@ -10,8 +10,8 @@ try:
     from typing import Literal
 except ImportError:
     from typing_extensions import Literal
-
-class WrongListener(commands.errors.CheckFailure):
+    
+class WrongListener(commands.CheckFailure):
     """
     Exception raised when a listening component received a component event that doesn't meet the check conditions
 

@@ -23,10 +23,10 @@ def override_dpy2_client():
     class OverridenV2Bot(commands.Bot):
         """A overriden client that enables `enable_debug_events` for receiving the events"""
         def __init__(self, command_prefix, help_command = None, description = None, **options):
-            commands.bot.Bot.__init__(self, command_prefix, help_command=help_command, description=description, enable_debug_events=True, **options)
+            commands.Bot.__init__(self, command_prefix, help_command=help_command, description=description, enable_debug_events=True, **options)
 
     def client_override(cls, *args, **kwargs):
-        if cls is commands.bot.Bot:
+        if cls is commands.Bot:
             return object.__new__(OverridenV2Bot)
         else:
             return object.__new__(cls)
