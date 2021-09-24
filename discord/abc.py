@@ -54,6 +54,7 @@ from .file import File
 from .voice_client import VoiceClient, VoiceProtocol
 from .sticker import GuildSticker, StickerItem
 from . import utils
+from .components import components_to_dict
 
 __all__ = (
     'Snowflake',
@@ -1162,7 +1163,6 @@ class Messageable:
         allowed_mentions: AllowedMentions = ...,
         reference: Union[Message, MessageReference, PartialMessage] = ...,
         mention_author: bool = ...,
-        view: View = ...,
     ) -> Message:
         ...
 
@@ -1180,7 +1180,6 @@ class Messageable:
         allowed_mentions: AllowedMentions = ...,
         reference: Union[Message, MessageReference, PartialMessage] = ...,
         mention_author: bool = ...,
-        view: View = ...,
     ) -> Message:
         ...
 
@@ -1198,7 +1197,6 @@ class Messageable:
         allowed_mentions: AllowedMentions = ...,
         reference: Union[Message, MessageReference, PartialMessage] = ...,
         mention_author: bool = ...,
-        view: View = ...,
     ) -> Message:
         ...
 
@@ -1216,7 +1214,6 @@ class Messageable:
         allowed_mentions: AllowedMentions = ...,
         reference: Union[Message, MessageReference, PartialMessage] = ...,
         mention_author: bool = ...,
-        view: View = ...,
     ) -> Message:
         ...
 
@@ -1365,6 +1362,8 @@ class Messageable:
 
         if listener is not None:
             components = listener.to_components()
+        if components is not None:
+            components = components_to_dict(components)
 
         if file is not None and files is not None:
             raise InvalidArgument('cannot pass both file and files parameter to send()')

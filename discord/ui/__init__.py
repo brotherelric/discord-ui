@@ -41,8 +41,8 @@ from .receive import Interaction, InteractionType, Message, WebhookMessage, Pres
 from .slash import ext
 from .listener import Listener
 
-from .override import override_dpy, override_dpy2_client
-override_dpy2_client()
+# from .override import override_dpy, override_dpy2_client
+# override_dpy2_client()
 
 
 __title__ = "discord-ui"

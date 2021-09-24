@@ -36,6 +36,7 @@ def override_dpy2_client():
     sys.modules[discord.__name__] = module
 def override_dpy():
     """This method overrides dpy methods. You shouldn't need to use this method by your own, the lib overrides everything by default"""
+    return
     module = sys.modules[discord.__name__]
 
     #region message override

@@ -30,14 +30,17 @@ import re
 import io
 from os import PathLike
 from typing import Dict, TYPE_CHECKING, Union, List, Optional, Any, Callable, Tuple, ClassVar, Optional, overload, TypeVar, Type
+try:
+    from typing import Literal
+except:
+    from typing_extensions import Literal
 
 from . import utils
 from .reaction import Reaction
 from .emoji import Emoji
 from .partial_emoji import PartialEmoji
 from .enums import MessageType, ChannelType, try_enum
-from .errors import InvalidArgument, HTTPException
-from .components import _component_factory
+from .errors import InvalidArgument, HTTPException, OutOfValidRange, InvalidEvent
 from .embeds import Embed
 from .member import Member
 from .flags import MessageFlags
@@ -47,6 +50,7 @@ from .guild import Guild
 from .mixins import Hashable
 from .sticker import StickerItem
 from .threads import Thread
+from .components import ActionRow, Button, LinkButton, SelectMenu, get_components
 
 if TYPE_CHECKING:
     from .types.message import (
@@ -74,7 +78,6 @@ if TYPE_CHECKING:
     from .mentions import AllowedMentions
     from .user import User
     from .role import Role
-    from .ui.view import View
 
     MR = TypeVar('MR', bound='MessageReference')
     EmojiInputType = Union[Emoji, PartialEmoji, str]
@@ -669,7 +672,7 @@ class Message(Hashable):
         self.content: str = data['content']
         self.nonce: Optional[Union[int, str]] = data.get('nonce')
         self.stickers: List[StickerItem] = [StickerItem(data=d, state=state) for d in data.get('sticker_items', [])]
-        self.components: List[Component] = [_component_factory(d) for d in data.get('components', [])]
+        self.components: List[Union[Button, LinkButton, SelectMenu]] = get_components(data)
 
         try:
             # if the channel doesn't have a guild attribute, we handle that
@@ -711,6 +714,28 @@ class Message(Hashable):
         return (
             f'<{name} id={self.id} channel={self.channel!r} type={self.type!r} author={self.author!r} flags={self.flags!r}>'
         )
+
+    @property
+    def buttons(self) -> List[Union[Button, LinkButton]]:
+        """The button components in the message
+        
+        :type: List[:class:`~Button` | :class:`~LinkButton`]
+        """
+        if hasattr(self, "components") and self.components is not None:
+            return [x for x in self.components if isinstance(x, (Button, LinkButton))]
+        return []
+    @property
+    def select_menus(self) -> List[SelectMenu]:
+        """The select menus components in the message
+
+        :type: List[:class:`~SelectMenu`]
+        """
+        if hasattr(self, "components") and self.components is not None:
+            return [x for x in self.components if isinstance(x, SelectMenu)]
+        return []
+    @property
+    def action_row(self) -> ActionRow:
+        return ActionRow(self.components)
 
     def _try_patch(self, data, key, transform=None) -> None:
         try:
@@ -768,6 +793,7 @@ class Message(Hashable):
         del self.reactions[index]
         return reaction
 
+    
     def _update(self, data):
         # In an update scheme, 'author' key has to be handled before 'member'
         # otherwise they overwrite each other which is undesirable.
@@ -787,6 +813,9 @@ class Message(Hashable):
                 delattr(self, attr)
             except AttributeError:
                 pass
+
+    def _handle_components(self, value: List[ComponentPayload]):
+        print(value)    
 
     def _handle_edited_timestamp(self, value: str) -> None:
         self._edited_timestamp = utils.parse_time(value)
@@ -870,9 +899,6 @@ class Message(Hashable):
                 role = self.guild.get_role(role_id)
                 if role is not None:
                     self.role_mentions.append(role)
-
-    def _handle_components(self, components: List[ComponentPayload]):
-        self.components = [_component_factory(d) for d in components]
 
     def _rebind_cached_references(self, new_guild: Guild, new_channel: Union[TextChannel, Thread]) -> None:
         self.guild = new_guild
@@ -1156,7 +1182,6 @@ class Message(Hashable):
         suppress: bool = ...,
         delete_after: Optional[float] = ...,
         allowed_mentions: Optional[AllowedMentions] = ...,
-        view: Optional[View] = ...,
     ) -> Message:
         ...
 
@@ -1170,7 +1195,6 @@ class Message(Hashable):
         suppress: bool = ...,
         delete_after: Optional[float] = ...,
         allowed_mentions: Optional[AllowedMentions] = ...,
-        view: Optional[View] = ...,
     ) -> Message:
         ...
 
@@ -1183,7 +1207,6 @@ class Message(Hashable):
         suppress: bool = MISSING,
         delete_after: Optional[float] = None,
         allowed_mentions: Optional[AllowedMentions] = MISSING,
-        view: Optional[View] = MISSING,
     ) -> Message:
         """|coro|
 
@@ -1279,18 +1302,9 @@ class Message(Hashable):
         if attachments is not MISSING:
             payload['attachments'] = [a.to_dict() for a in attachments]
 
-        if view is not MISSING:
-            self._state.prevent_view_updates_for(self.id)
-            if view:
-                payload['components'] = view.to_components()
-            else:
-                payload['components'] = []
 
         data = await self._state.http.edit_message(self.channel.id, self.id, **payload)
         message = Message(state=self._state, channel=self.channel, data=data)
-
-        if view and not view.is_finished():
-            self._state.store_view(view, self.id)
 
         if delete_after is not None:
             await self.delete(delay=delete_after)
@@ -1595,6 +1609,176 @@ class Message(Hashable):
 
         return data
 
+    async def disable_action_row(self, row, disable = True):
+        """Disables an action row of components in the message
+        
+        Parameters
+        ----------
+            row: :class:`int` |  :class:`range`
+                Which rows to disable, first row is ``0``; If row parameter is of type :class:`int`, the nth row will be disabled, if type is :class:`range`, the range is going to be iterated and all rows in the range will be disabled
+
+            disable: :class:`bool`, optional
+                Whether to disable (``True``) or enable (``False``) the components; default True
+
+        Raises
+        ------
+            :raises: :class:`discord_ui.errors.OutOfValidRange` : The specified range was out of the possible range of the component rows 
+            :raises: :class:`discord_ui.errors.OutOfValidRange` : The specified row was out of the possible range of the component rows
+        
+        """
+        comps = []
+        if isinstance(row, range):
+            for i, _ in enumerate(self.action_rows):
+                if i >= len(self.action_rows) - 1 or i < 0:
+                    raise OutOfValidRange("row[" + str(i) + "]", 0, len(self.action_rows) - 1)
+                for comp in self.action_rows[i]:
+                    if i in row:
+                        comp.disabled = disable
+                    comps.append(comp)
+        else:
+            for i, _ in enumerate(self.action_rows):
+                if i >= len(self.action_rows) - 1 or i < 0:
+                    raise OutOfValidRange("row", 0, len(self.action_rows) - 1)
+                for comp in self.action_rows[i]:
+                    if i == row:
+                        comp.disabled = disable
+                    comps.append(comp)
+        await self.edit(components=comps)
+
+    async def disable_components(self, disable = True):
+        """Disables all component in the message
+        
+        Parameters
+        ----------
+            disable: :class:`bool`, optional
+                Whether to disable (``True``) or enable (``False``) als components; default True
+        
+        """
+        fixed = []
+        for x in self.components:
+            x.disabled = disable
+            fixed.append(x)
+        await self.edit(components=fixed)
+
+    @property
+    def action_rows(self):
+        """The action rows in the message
+
+        :type: List[:class:`~Button` | :class:`LinkButton` | :class:`SelectMenu`]
+        """
+        rows: List[List[Union[Button, LinkButton, SelectMenu]]] = []
+
+        c_row = []
+        i = 0
+        for x in self.components:
+            if getattr(x, 'new_line', True) == True and i > 0:
+                rows.append(ActionRow(c_row))
+                c_row = []
+            c_row.append(x)
+            i += 1
+        if len(c_row) > 0:
+            rows.append(c_row) 
+        return rows
+
+    async def wait_for(self, event_name: Literal["select", "button", "component"], client, custom_id=None, by=None, check=lambda component: True, timeout=None) -> Union[PressedButton, SelectedMenu, ComponentContext]:
+        """Waits for a message component to be invoked in this message
+
+        Parameters
+        -----------
+            event_name: :class:`str`
+                The name of the event which will be awaited [``"select"`` | ``"button"`` | ``"component"``]
+                
+                .. note::
+
+                    ``event_name`` must be ``select`` for a select menu selection, ``button`` for a button press and ``component`` for any component
+
+            client: :class:`discord.ext.commands.Bot`
+                The discord client
+            custom_id: :class:`str`, Optional
+                Filters the waiting for a custom_id
+            by: :class:`discord.User` | :class:`discord.Member` | :class:`int` | :class:`str`, Optional
+                The user or the user id by that has to create the component interaction
+            check: :class:`function`, Optional
+                A check that has to return True in order to break from the event and return the received component
+                    The function takes the received component as the parameter
+            timeout: :class:`float`, Optional
+                After how many seconds the waiting should be canceled. 
+                Throws an :class:`asyncio.TimeoutError` Exception
+
+        Raises
+        ------
+            :raises: :class:`discord_ui.errors.InvalidEvent` : The event name passed was invalid 
+
+        Returns
+        ----------
+            :returns: The component that was waited for
+            :type: :class:`~PressedButton` | :class:`~SelectedMenu`
+
+        Example
+        ---------
+
+        .. code-block::
+
+            # send a message with comoponents
+            msg = await ctx.send("okayy", components=[Button("a_custom_id", ...)])
+            try:
+                # wait for the button
+                btn = await msg.wait_for("button", client, "a_custom_id", by=ctx.author, timeout=20)
+                # send response
+                btn.respond()
+            except asyncio.TimeoutError:
+                # no button press was received in 20 seconds timespan
+        """
+        def _check(com):
+            if com.message.id == self.id:
+                statements = []
+                if custom_id is not None:
+                    statements.append(com.custom_id == custom_id)
+                if by is not None:
+                    statements.append(com.author.id == (by.id if hasattr(by, "id") else int(by)))
+                if check is not None:
+                    statements.append(check(com))
+                return all(statements)
+            return False
+        
+        if event_name.lower() == "button":
+            return await client.wait_for('button_press', check=_check, timeout=timeout)
+        if event_name.lower() == "select":
+            return await client.wait_for("menu_select", check=_check, timeout=timeout)
+        if event_name.lower() == "component":
+            return await client.wait_for("component", check=_check, timeout=timeout)
+        
+        raise InvalidEvent(event_name, ["button", "select", "component"])
+
+    async def put_listener(self, listener):
+        """Adds a listener to this message and edits it if the components are missing
+        
+        Parameters
+        ----------
+        listener: :class:`Listener`
+            The listener which should be put to the message
+        
+        """
+        if len(self.components) == 0:
+            await self.edit(components=listener.to_components())
+        self.attach_listener(listener)
+        
+    def attach_listener(self, listener):
+        """Attaches a listener to this message after it was sent
+        
+        Parameters
+        ----------
+        listener: :class:`Listener`
+            The listener that should be attached
+        
+        """
+        listener._start(self)
+    def remove_listener(self):
+        """Removes the listener from this message"""
+        try:
+            del self._state._component_listeners[str(self.id)]
+        except KeyError:
+            pass
 
 class PartialMessage(Hashable):
     """Represents a partial message to aid with working messages when only

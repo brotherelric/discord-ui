@@ -21,363 +21,746 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
 FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 DEALINGS IN THE SOFTWARE.
 """
+from .errors import InvalidLength, OutOfValidRange, WrongType, InvalidArgument
+from .partial_emoji import PartialEmoji
 
-from __future__ import annotations
-
-from typing import Any, ClassVar, Dict, List, Optional, TYPE_CHECKING, Tuple, Type, TypeVar, Union
-from .enums import try_enum, ComponentType, ButtonStyle
-from .utils import get_slots, MISSING
-from .partial_emoji import PartialEmoji, _EmojiTag
-
-if TYPE_CHECKING:
-    from .types.components import (
-        Component as ComponentPayload,
-        ButtonComponent as ButtonComponentPayload,
-        SelectMenu as SelectMenuPayload,
-        SelectOption as SelectOptionPayload,
-        ActionRow as ActionRowPayload,
-    )
-    from .emoji import Emoji
+import inspect
+from enum import IntEnum
+from typing import Any, List, Union
 
 
-__all__ = (
-    'Component',
-    'ActionRow',
-    'Button',
-    'SelectMenu',
-    'SelectOption',
-)
-
-C = TypeVar('C', bound='Component')
-
-
-class Component:
-    """Represents a Discord Bot UI Kit Component.
-
-    Currently, the only components supported by Discord are:
-
-    - :class:`ActionRow`
-    - :class:`Button`
-    - :class:`SelectMenu`
-
-    This class is abstract and cannot be instantiated.
-
-    .. versionadded:: 2.0
-
-    Attributes
-    ------------
-    type: :class:`ComponentType`
-        The type of component.
+class SelectOption():
     """
+    An option for a select menu
+    
+    Parameters
+    ----------
+    value: :class:`str`
+        The dev-define value of the option, max 100 characters
+    label: :class:`str`
+        The user-facing name of the option, max 25 characters; default \u200b ("empty" char)
+    description: :class:`str`, optional
+        An additional description of the option, max 50 characters
+    emoji : :class:`discord.Emoji` | :class:`str`, optional
+        Emoji appearing before the label; default MISSING
+    """
+    def __init__(self, value, label="\u200b", description=None, emoji=None) -> None:
+        """
+        Creates a new SelectOption
 
-    __slots__: Tuple[str, ...] = ('type',)
+        Example:
+        ```py
+        SelectOption(label="This is a option", value="my_value", description="This is the description of the option")
+        ```
+        """
+        self._label = None
+        self._value = None
+        self._description = None
+        self._emoji = None
+        self.default: bool = False
+        """
+        Whether this option is selected by default in the menu or not
 
-    __repr_info__: ClassVar[Tuple[str, ...]]
-    type: ComponentType
+        :type: :class:`bool`
+        """
 
+        self.label = label
+        self.value = value
+        self.description = description
+        self.emoji = emoji
     def __repr__(self) -> str:
-        attrs = ' '.join(f'{key}={getattr(self, key)!r}' for key in self.__repr_info__)
-        return f'<{self.__class__.__name__} {attrs}>'
+        return f"<discord_ui.SelectOption(label={self.label}, value={self.value})>"
 
-    @classmethod
-    def _raw_construct(cls: Type[C], **kwargs) -> C:
-        self: C = cls.__new__(cls)
-        for slot in get_slots(cls):
-            try:
-                value = kwargs[slot]
-            except KeyError:
-                pass
-            else:
-                setattr(self, slot, value)
-        return self
+    @property
+    def content(self) -> str:
+        """
+        The complete option content, consisting of the emoji and label
 
-    def to_dict(self) -> Dict[str, Any]:
-        raise NotImplementedError
+        :type: :class:`str`
+        """
+        return (self.emoji + " ") if self.emoji is not None else "" + (self.label or '')
+    
+    @property
+    def label(self) -> str:
+        """
+        The main text appearing on the option 
+
+        :type: :class:`str`
+        """
+        return self._label
+    @label.setter
+    def label(self, value: str):
+        if value is None:
+            value = ""
+        elif value is not None and not isinstance(value, str):
+            raise WrongType("label", value, "str")
+        elif value is not None and len(value) > 100 and value > 0:
+            raise InvalidLength("label", value, 100, 0)
+        self._label = value
+
+    @property
+    def value(self) -> Any:
+        """
+        A unique value for the option, which will be usedd to identify the selected value
+
+        :type: :class:`str`
+        """
+        return self._value
+    @value.setter
+    def value(self, value):
+        if inspect.isclass(value):
+            raise WrongType("value", value, ["int", "str", "bool", "float"])
+        if isinstance(value, str):
+            if len(value) > 100 or len(value) < 1:
+                raise InvalidLength("value", _min=1, _max=100)
+        self._value = value
+
+    @property
+    def description(self) -> str:
+        """
+        A description appearing on the option
+
+        :type: :class:`str`
+        """
+        return self._description
+    @description.setter
+    def description(self, value):
+        if value is not None and not isinstance(value, str):
+            raise WrongType("description", "str")
+        if value is not None and len(value) > 100:
+            raise InvalidLength("description", 100, 0)
+        self._description = value
+    
+    @property
+    def emoji(self) -> str:
+        """
+        The mention of the emoji before the text
+
+            .. note::
+                For setting the emoji, you can use a str or discord.Emoji
+        
+        :type: :class:`str`
+        """
+        if self._emoji is None:
+            return None
+        if "id" not in self._emoji:
+            return self._emoji["name"]
+        return f'<{"a" if "animated" in self._emoji else ""}:{self._emoji["name"]}:{self._emoji["id"]}>'
+    @emoji.setter
+    def emoji(self, val: Union[PartialEmoji, str, dict]):
+        """The emoji appearing before the label"""
+        if val is None:
+            self._emoji = None
+        elif isinstance(val, str):
+            self._emoji = {
+                "id": None,
+                "name": val
+            }
+        elif isinstance(val, PartialEmoji):
+            self._emoji = {
+                "id": val.id,
+                "name": val.name,
+                "animated": val.animated
+            }
+        elif isinstance(val, dict):
+            self._emoji = val
+        elif val is None:
+            self._emoji = None
+        else:
+            raise WrongType("emoji", val, ["str", "discord.Emoji", "dict"])
 
 
-class ActionRow(Component):
-    """Represents a Discord Bot UI Kit Action Row.
-
-    This is a component that holds up to 5 children components in a row.
-
-    This inherits from :class:`Component`.
-
-    .. versionadded:: 2.0
-
-    Attributes
-    ------------
-    type: :class:`ComponentType`
-        The type of component.
-    children: List[:class:`Component`]
-        The children components that this holds, if any.
-    """
-
-    __slots__: Tuple[str, ...] = ('children',)
-
-    __repr_info__: ClassVar[Tuple[str, ...]] = __slots__
-
-    def __init__(self, data: ComponentPayload):
-        self.type: ComponentType = try_enum(ComponentType, data['type'])
-        self.children: List[Component] = [_component_factory(d) for d in data.get('components', [])]
-
-    def to_dict(self) -> ActionRowPayload:
-        return {
-            'type': int(self.type),
-            'components': [child.to_dict() for child in self.children],
-        }  # type: ignore
-
-
-class Button(Component):
-    """Represents a button from the Discord Bot UI Kit.
-
-    This inherits from :class:`Component`.
-
-    .. note::
-
-        The user constructible and usable type to create a button is :class:`discord.ui.Button`
-        not this one.
-
-    .. versionadded:: 2.0
-
-    Attributes
-    -----------
-    style: :class:`.ButtonStyle`
-        The style of the button.
-    custom_id: Optional[:class:`str`]
-        The ID of the button that gets received during an interaction.
-        If this button is for a URL, it does not have a custom ID.
-    url: Optional[:class:`str`]
-        The URL this button sends you to.
-    disabled: :class:`bool`
-        Whether the button is disabled or not.
-    label: Optional[:class:`str`]
-        The label of the button, if any.
-    emoji: Optional[:class:`PartialEmoji`]
-        The emoji of the button, if available.
-    """
-
-    __slots__: Tuple[str, ...] = (
-        'style',
-        'custom_id',
-        'url',
-        'disabled',
-        'label',
-        'emoji',
-    )
-
-    __repr_info__: ClassVar[Tuple[str, ...]] = __slots__
-
-    def __init__(self, data: ButtonComponentPayload):
-        self.type: ComponentType = try_enum(ComponentType, data['type'])
-        self.style: ButtonStyle = try_enum(ButtonStyle, data['style'])
-        self.custom_id: Optional[str] = data.get('custom_id')
-        self.url: Optional[str] = data.get('url')
-        self.disabled: bool = data.get('disabled', False)
-        self.label: Optional[str] = data.get('label')
-        self.emoji: Optional[PartialEmoji]
-        try:
-            self.emoji = PartialEmoji.from_dict(data['emoji'])
-        except KeyError:
-            self.emoji = None
-
-    def to_dict(self) -> ButtonComponentPayload:
+    def to_dict(self) -> dict:
         payload = {
-            'type': 2,
-            'style': int(self.style),
-            'label': self.label,
-            'disabled': self.disabled,
+            "label": self._label,
+            "value": self._value,
+            "default": self.default
         }
-        if self.custom_id:
-            payload['custom_id'] = self.custom_id
-
-        if self.url:
-            payload['url'] = self.url
-
-        if self.emoji:
-            payload['emoji'] = self.emoji.to_dict()
-
-        return payload  # type: ignore
-
-
-class SelectMenu(Component):
-    """Represents a select menu from the Discord Bot UI Kit.
-
-    A select menu is functionally the same as a dropdown, however
-    on mobile it renders a bit differently.
-
-    .. note::
-
-        The user constructible and usable type to create a select menu is
-        :class:`discord.ui.Select` not this one.
-
-    .. versionadded:: 2.0
-
-    Attributes
-    ------------
-    custom_id: Optional[:class:`str`]
-        The ID of the select menu that gets received during an interaction.
-    placeholder: Optional[:class:`str`]
-        The placeholder text that is shown if nothing is selected, if any.
-    min_values: :class:`int`
-        The minimum number of items that must be chosen for this select menu.
-        Defaults to 1 and must be between 1 and 25.
-    max_values: :class:`int`
-        The maximum number of items that must be chosen for this select menu.
-        Defaults to 1 and must be between 1 and 25.
-    options: List[:class:`SelectOption`]
-        A list of options that can be selected in this menu.
-    disabled: :class:`bool`
-        Whether the select is disabled or not.
-    """
-
-    __slots__: Tuple[str, ...] = (
-        'custom_id',
-        'placeholder',
-        'min_values',
-        'max_values',
-        'options',
-        'disabled',
-    )
-
-    __repr_info__: ClassVar[Tuple[str, ...]] = __slots__
-
-    def __init__(self, data: SelectMenuPayload):
-        self.type = ComponentType.select
-        self.custom_id: str = data['custom_id']
-        self.placeholder: Optional[str] = data.get('placeholder')
-        self.min_values: int = data.get('min_values', 1)
-        self.max_values: int = data.get('max_values', 1)
-        self.options: List[SelectOption] = [SelectOption.from_dict(option) for option in data.get('options', [])]
-        self.disabled: bool = data.get('disabled', False)
-
-    def to_dict(self) -> SelectMenuPayload:
-        payload: SelectMenuPayload = {
-            'type': self.type.value,
-            'custom_id': self.custom_id,
-            'min_values': self.min_values,
-            'max_values': self.max_values,
-            'options': [op.to_dict() for op in self.options],
-            'disabled': self.disabled,
-        }
-
-        if self.placeholder:
-            payload['placeholder'] = self.placeholder
-
+        if self._description is not None:
+            payload["description"] = self._description
+        if self._emoji is not None:
+            payload["emoji"] = self._emoji
         return payload
 
+    @classmethod
+    def _fromData(cls, data) -> "SelectOption":
+        """
+        Initializes a new SelectOption from a dict
+        
+        Parameters
+        ----------
+            data: :class:`dict`
+                The data to initialize from
+        Returns
+        -------
+            :class:`~SelectOption`
+                The new Option generated from the dict
+        
+        """
+        x = SelectOption(data["value"], data.get("label"), data.get("description"), data.get("emoji"))
+        x.default = data.get("default", False)
+        return x
 
-class SelectOption:
-    """Represents a select menu's option.
+class Component():
+    def __init__(self, component_type) -> None:
+        self._component_type = getattr(component_type, "value", component_type)
+    @property
+    def component_type(self) -> int:
+        """
+        The message component type
 
-    These can be created by users.
+        :type: :class:`int`
+        """
+        return ComponentType(self._component_type)
 
-    .. versionadded:: 2.0
+class UseableComponent(Component):
+    def __init__(self, component_type) -> None:
+        Component.__init__(self, component_type)
+        self._custom_id = None
+    @property
+    def custom_id(self) -> str:
+        """
+        The custom_id of the menu to identify it
 
-    Attributes
-    -----------
-    label: :class:`str`
-        The label of the option. This is displayed to users.
-        Can only be up to 100 characters.
-    value: :class:`str`
-        The value of the option. This is not displayed to users.
-        If not provided when constructed then it defaults to the
-        label. Can only be up to 100 characters.
-    description: Optional[:class:`str`]
-        An additional description of the option, if any.
-        Can only be up to 100 characters.
-    emoji: Optional[Union[:class:`str`, :class:`Emoji`, :class:`PartialEmoji`]]
-        The emoji of the option, if available.
-    default: :class:`bool`
-        Whether this option is selected by default.
+        :type: :class:`str`
+        """
+        return self._custom_id
+    @custom_id.setter
+    def custom_id(self, value: str):
+        if len(value) > 100 or len(value) < 1:
+            raise InvalidLength("custom_id", 0, 100)
+        if not isinstance(value, str):
+            raise WrongType("custom_id", value, "str")
+        self._custom_id = value
+
+class SelectMenu(UseableComponent):
     """
+    Represents a ui-dropdown selectmenu
 
-    __slots__: Tuple[str, ...] = (
-        'label',
-        'value',
-        'description',
-        'emoji',
-        'default',
-    )
+    Parameters
+    ----------
+    custom_id: :class:`str`
+        The custom_id for identifying the menu, max 100 characters
+    options: List[:class:`~SelectOption`]
+        A list of options to select from
+    min_values: :class:`int`, optional
+        The minimum number of items that must be chosen; default ``1``, min 0, max 25
+    max_values: :class:`int`, optional
+        The maximum number of items that can be chosen; default ``1``, max 25
+    placeholder: :class:`str`, optional
+        A custom placeholder text if nothing is selected, max 100 characters; default MISSING
+    default: :class:`int`, optional
+        The position of the option that should be selected by default; default MISSING
+    disabled: :class:`bool`, optional
+        Whether the select menu should be disabled or not; default ``False``
+    """
+    def __init__(self, custom_id, options, min_values=1, max_values=1, placeholder=None, default=None, disabled=False) -> None:
+        """
+        Creates a new ui select menu
 
-    def __init__(
-        self,
-        *,
-        label: str,
-        value: str = MISSING,
-        description: Optional[str] = None,
-        emoji: Optional[Union[str, Emoji, PartialEmoji]] = None,
-        default: bool = False,
-    ) -> None:
-        self.label = label
-        self.value = label if value is MISSING else value
-        self.description = description
+        Example:
+        ```py
+        SelectMenu(custom_id="my_id", options=[SelectOption(...)], min_values=2, placeholder="select something", default=0)
+        ```
+        """
+        UseableComponent.__init__(self, ComponentType.Select)
+        self._options = None
 
-        if emoji is not None:
-            if isinstance(emoji, str):
-                emoji = PartialEmoji.from_str(emoji)
-            elif isinstance(emoji, _EmojiTag):
-                emoji = emoji._to_partial()
-            else:
-                raise TypeError(f'expected emoji to be str, Emoji, or PartialEmoji not {emoji.__class__}')
+        self.max_values: int = 0
+        """
+        The maximum number of items that can be chosen; default 1, max 25
 
-        self.emoji = emoji
-        self.default = default
+        :type: :class:`int`
+        """
+        self.min_values: int = 0
+        """
+        The minimum number of items that must be chosen; default 1, min 0, max 25
 
+        :type: :class:`int`
+        """
+        self.disabled = disabled
+        """
+        Whether the selectmenu is disabled or not
+
+        :type: :class:`bool`
+        """
+        self.placeholder: str = placeholder
+        """
+        Custom placeholder text if nothing is selected
+
+        :type: :class:`str` | :class:`None`
+        """
+        self.custom_id = custom_id
+        self.disabled = disabled
+        self.options = options
+
+        if min_values is not None and max_values is None:
+            if min_values < 0 or min_values > 25:
+                raise OutOfValidRange("min_values", 0, 25)
+            self.min_values = min_values
+            self.max_values = min_values
+        elif min_values is None and max_values is not None:
+            if max_values < 0 or min_values > 25:
+                raise OutOfValidRange("min_values", 0, 25)
+            self.min_values = 1
+            self.max_values = max_values
+        elif min_values is not None and max_values is not None:
+            if max_values < 0 or min_values > 25:
+                raise OutOfValidRange("min_values", 0, 25)
+            if min_values < 0 or min_values > 25:
+                raise OutOfValidRange("min_values", 0, 25)
+            self.min_values = min_values
+            self.max_values = max_values
+        
+        if default is not None:
+            self.set_default_option(default)
+    def __str__(self) -> str:
+        return self.custom_id
     def __repr__(self) -> str:
-        return (
-            f'<SelectOption label={self.label!r} value={self.value!r} description={self.description!r} '
-            f'emoji={self.emoji!r} default={self.default!r}>'
-        )
+        return f"<discord_ui.SelectMenu(custom_id={self.custom_id}, options={self.options})>"
+    
+    @staticmethod
+    def _fromData(data) -> 'SelectMenu':
+        return SelectMenu(data["custom_id"], data["options"], data.get("min_values"), data.get("max_values"), data.get("placeholder"), disabled=data.get("disabled", False))
+    # region props
+    @property
+    def options(self) -> List[SelectOption]:
+        """
+        The options in the select menu to select from
+
+        :type: List[:class:`~SelectOption`]
+        """
+        return [SelectOption._fromData(x) for x in self._options]
+    @options.setter
+    def options(self, value: List[SelectOption]):
+        if isinstance(value, list):
+            if len(value) > 25 or len(value) == 0:
+                raise OutOfValidRange("length of options", 1, 25)
+            if all(isinstance(x, SelectOption) for x in value):
+                self._options = [x.to_dict() for x in value]
+            elif all(isinstance(x, dict) for x in value):
+                self._options = value
+            else:
+                raise WrongType("options", value, ["List[SelectOption]", "List[dict]"])
+        else:
+            raise WrongType("options", value, "list")
+
+    @property
+    def default_option(self) -> Union[SelectOption, None]:
+        """
+        The option selected by default
+
+        :type: :class:`~SelectOption` | :class:`None`
+        """
+        x = [x for x in self.options if x.default]
+        if len(x) == 1:
+            return x[0]
+    def set_default_option(self, position: int) -> 'SelectMenu':
+        """
+        Selects the default selected option
+
+        Parameters
+        ----------
+        position: :class:`int`
+            The position of the option that should be default
+        """
+        if not isinstance(position, int):
+            raise WrongType("position", position, "int")
+        if position < 0 or position >= len(self.options):
+            raise OutOfValidRange("default option position", 0, str(len(self.options) - 1))
+        self._options[position]["default"] = True
+        return self
+    # endregion
+
+    def to_dict(self) -> dict:
+        payload = {
+            "type": self._component_type,
+            "custom_id": self._custom_id,
+            "options": self._options,
+            "disabled": self.disabled,
+            "min_values": self.min_values,
+            "max_values": self.max_values
+        }
+        if self.placeholder is not None:
+            payload["placeholder"] = self.placeholder
+        return payload
+
+class BaseButton(Component):
+    def __init__(self, label, color, emoji, new_line, disabled) -> None:
+        Component.__init__(self, ComponentType.Button)
+        if label is None and emoji is None:
+            raise InvalidArgument("You need to pass a label or an emoji")
+        self._label = None
+        self._style = None
+        self._emoji = None
+        self._url = None
+
+        self.new_line = new_line
+        self.label = label
+        self.color = color
+        self.disabled = disabled
+        self.emoji = emoji
 
     def __str__(self) -> str:
-        if self.emoji:
-            base = f'{self.emoji} {self.label}'
+        return self.content
+    def to_dict(self):
+        payload = {"type": self._component_type, "style": self._style, "disabled": self.disabled, "emoji": self._emoji}
+        if self._style == ButtonStyles.url:
+            payload["url"] = self._url
         else:
-            base = self.label
-
-        if self.description:
-            return f'{base}\n{self.description}'
-        return base
-
-    @classmethod
-    def from_dict(cls, data: SelectOptionPayload) -> SelectOption:
-        try:
-            emoji = PartialEmoji.from_dict(data['emoji'])
-        except KeyError:
-            emoji = None
-
-        return cls(
-            label=data['label'],
-            value=data['value'],
-            description=data.get('description'),
-            emoji=emoji,
-            default=data.get('default', False),
-        )
-
-    def to_dict(self) -> SelectOptionPayload:
-        payload: SelectOptionPayload = {
-            'label': self.label,
-            'value': self.value,
-            'default': self.default,
-        }
-
-        if self.emoji:
-            payload['emoji'] = self.emoji.to_dict()  # type: ignore
-
-        if self.description:
-            payload['description'] = self.description
-
+            payload["custom_id"] = self._custom_id
+        if self._emoji is not None:
+            payload["emoji"] = self._emoji
+        if self._label is not None:
+            payload["label"] = self._label
         return payload
 
+    @property
+    def content(self) -> str:
+        """
+        The complete content in the button ("{emoji} {label}")
 
-def _component_factory(data: ComponentPayload) -> Component:
-    component_type = data['type']
-    if component_type == 1:
-        return ActionRow(data)
-    elif component_type == 2:
-        return Button(data)  # type: ignore
-    elif component_type == 3:
-        return SelectMenu(data)  # type: ignore
+        :type: :class:`str`
+        """
+        return (self.emoji + " " if self.emoji is not None else "") + (self.label or '')
+        
+    @property
+    def label(self) -> str:
+        """
+        The label displayed on the button
+
+        :type: :class:`str`
+        """
+        return self._label
+    @label.setter
+    def label(self, val: str):
+        if val is None:
+            val = ""
+        elif val is not None and not isinstance(val, str):
+            raise WrongType("label", val, "str")
+        elif val is not None and len(val) > 100:
+            raise InvalidLength("label", _max=100)
+        elif val is not None and len(val) < 1:
+            raise InvalidLength("label", _min=0)
+
+        self._label = str(val)
+
+    @property
+    def color(self) -> int:
+        """
+        The color for the button
+
+        :type: :class:`int`, one of :class:`~ButtonStyles`
+        """
+        return self._style
+    @color.setter
+    def color(self, val):
+        if ButtonStyles.getColor(val) is None:
+            raise InvalidArgument(str(val) + " is not a valid color")
+        self._style = ButtonStyles.getColor(val).value
+    
+    @property
+    def emoji(self) -> str:
+        """
+        The mention of the emoji before the text
+        
+            .. note::
+                For setting the emoji, you can use a str or discord.Emoji          
+        
+        :type: :class:`str`
+        """
+        if self._emoji is None:
+            return None
+        if "id" not in self._emoji:
+            return self._emoji["name"]
+        return f'<{"a" if "animated" in self._emoji else ""}:{self._emoji["name"]}:{self._emoji["id"]}>'
+    @emoji.setter
+    def emoji(self, val: Union[PartialEmoji, str, dict]):
+        if val is None:
+            self._emoji = None
+        elif isinstance(val, str):
+            self._emoji = {
+                "name": val
+            }
+        elif isinstance(val, PartialEmoji):
+            self._emoji = {
+                "id": val.id,
+                "name": val.name,
+                "animated": val.animated
+            }
+        elif isinstance(val, dict):
+            self._emoji = val
+        else:
+            raise WrongType("emoji", val, ["str", "discord.Emoji", "dict"])
+
+class Button(BaseButton, UseableComponent):
+    """
+    A ui-button
+
+    Parameters
+    ----------
+    custom_id: :class:`str`
+        A identifier for the button, max 100 characters
+    label: :class:`str`, optional
+        Text that appears on the button, max 80 characters; default \u200b ("empty" char)
+    color: :class:`str` | :class:`int`, optional
+        The color of the button; default "blurple"
+
+        .. tip:
+
+            You can either use a string for a color or an int. Color strings are: 
+            (`primary`, `blurple`), (`secondary`, `grey`), (`succes`, `green`) and (`danger`, `Red`)
+            
+            If you want to use integers, take a lot at the :class:`~ButtonStyles` class
+
+    emoji: :class:`discord.Emoji` | :class:`str`, optional
+        The emoji displayed before the text; default MISSING
+    new_line: :class:`bool`, optional
+        Whether a new line should be added before the button; default False
+    disabled: :class:`bool`, optional
+        Whether the button is disabled; default False
+    """
+    def __init__(self, custom_id, label="\u200b", color = "blurple", emoji=None, new_line=False, disabled=False) -> None:
+        """
+        Creates a new ui-button
+
+        Example:
+        ```py
+        Button("my_custom_id", "This is a cool button", "green", new_line=True)
+        ```
+        """
+        BaseButton.__init__(self, label, color, emoji, new_line, disabled)
+        UseableComponent.__init__(self, self.component_type)
+        self.custom_id = custom_id
+    def __repr__(self) -> str:
+        return f"<discord_ui.Button({self.custom_id}:{self.content})>"
+    def copy(self) -> 'Button':
+        return Button(self.custom_id, self.label, self.color, self.emoji, self.new_line, self.disabled)
+
+    @classmethod
+    def _fromData(cls, data, new_line=False) -> 'Button':
+        """
+        Returns a new button initialized from api response data
+
+        Returns
+        -------
+        Button
+            The initialized button
+        """
+        return Button(data["custom_id"], data.get("label"), data["style"], data.get("emoji"), new_line, data.get("disabled", False))
+
+class LinkButton(BaseButton):
+    """
+    A discord-ui linkbutton
+
+    Parameters
+    ----------
+    url: :class:`str`
+        A url which will be opened when pressing the button
+    label: :class:`str`, optional
+        Text that appears on the button, max 80 characters; default \u200b ("empty" char)
+    emoji: :class:`discord.Emoji` | :class:`str`, optional
+        Emoji that appears before the label; default MISSING
+    new_line: :class:`bool`, optional
+        Whether a new line should be added before the button; default False
+    disabled: :class:`bool`, optional
+        Whether the button is disabled; default False
+    """
+    def __init__(self, url, label="\u200b", emoji=None, new_line=False, disabled=False) -> None:
+        """
+        Creates a new LinkButton object
+        
+        Example:
+        ```py
+        LinkButton("https://discord.com/", "press me (if you can)!", emoji="😀", disabled=True)
+        ```
+        """
+        BaseButton.__init__(self, label, ButtonStyles.url, emoji, new_line, disabled)
+        self._url = None
+        self.url = url
+
+    def __repr__(self) -> str:
+        return f"<discord_ui.LinkButton({self.custom_id}:{self.content})>"
+    def copy(self) -> 'LinkButton':
+        return LinkButton(self.url, self.label, self.emoji, self.new_line, self.disabled)
+
+    @property
+    def url(self) -> str:
+        """
+        The link which will be opened upon pressing the button
+
+        :type: :class:`str`
+        """
+        return self._url
+    @url.setter
+    def url(self, val: str):
+        if not isinstance(val, str):
+            raise WrongType("url", val, "str")
+        self._url = str(val)
+
+    @classmethod
+    def _fromData(cls, data, new_line=False) -> 'LinkButton':
+        return LinkButton(data["url"], data.get("label"), data.get("emoji"), new_line, data.get("disabled", False))
+
+
+class ButtonStyles(IntEnum):
+    """
+    A list of button styles (colors) in message components
+    """
+    Primary     =     	 blurple        = 1
+    Secondary   =         grey          = 2
+    Succes      =        green          = 3
+    Danger      =         red           = 4
+    url                                 = 5
+
+    def __str__(self) -> str:
+        return self.name
+
+    @classmethod
+    def getColor(cls, s):
+        if isinstance(s, int):
+            return cls(s)
+        if isinstance(s, cls):
+            return s
+        s = s.lower()
+        if s in ("blurple", "primary"):
+            return cls.blurple
+        if s in ("grey", "gray", "secondary"):
+            return cls.grey
+        if s in ("green", "succes"):
+            return cls.green
+        if s in ("red", "danger"):
+            return cls.red
+# endregion
+
+
+class ActionRow():
+    """
+    Alternative to setting ``new_line`` in a full component list or putting the components in a list
+        
+    Only works for :class:`~Button` and :class:`~LinkButton`, because :class:`~SelectMenu` is always in a new line
+    
+    Parameters
+    ----------
+        disbaled: :class:`bool`, optional
+            Whether all components should be disabled; default False   
+    """
+    def __init__(self, *items, disabled = False):
+        """
+        Creates a new component list
+
+        Examples
+        ```py
+        ActionRow(Button(...), Button(...))
+        
+        ActionRow([Button(...), Button(...)])
+        ```
+        """
+        self.items = items[0] if all(isinstance(i, list) for i in items) else items
+        """The componetns in the action row"""
+        self.component_type = 1
+        self.disable(disabled)
+        
+    def disable(self, disable=True) -> 'ActionRow':
+        for i, _ in enumerate(self.items):
+            self.items[i].disabled = disable
+        return self
+    def filter(self, check = lambda x: ...):
+        """
+        Filters all components
+        
+        Parameters
+        ----------
+            check: :class:`lambda`
+                What condition has to be True that the component will pass the filter
+        
+        Returns
+        -------
+            :returns: The filtered components
+            :type: List[:class:`~Button` | :class:`~LinkButton`]
+        
+        """
+        return [x for x in self.items if check(x)]
+
+
+class ComponentType(IntEnum):
+    """
+    A list of component types
+    """
+    Action_row      =           1
+    Button          =           2
+    Select          =           3
+
+    def __str__(self) -> str:
+        return self.name
+
+def make_component(data, new_line = False):
+    if ComponentType(data["type"]) == ComponentType.Button:
+        if data["style"] == ButtonStyles.url:
+            return LinkButton._fromData(data, new_line)
+        return Button._fromData(data, new_line)
+    if ComponentType(data["type"]) is ComponentType.Select:
+        return SelectMenu._fromData(data)
+    # if data["type"] == ComponentType.ACTION_ROW:
+        # return ActionRow._fromData(data)
+
+def components_to_dict(components) -> List[dict]:
+    wrappers: List[List[Any]] = []
+    component_list = []
+
+    if len(components) > 1:
+        curWrapper = []
+        i = 0
+        for component in components:
+            if hasattr(component, "items") or isinstance(component, list):
+                if i > 0 and len(curWrapper) > 0:
+                    wrappers.append(curWrapper)
+                curWrapper = []
+                wrappers.append(component.items if hasattr(component, "items") else component)
+                continue
+                
+            # i > 0 => Preventing empty component field when first button wants to newLine 
+            if component.component_type == 3:
+                if i > 0:
+                    wrappers.append(curWrapper)
+                curWrapper = []
+                wrappers.append(component)
+            elif component.component_type == 2:
+                if component.new_line and i > 0:
+                    wrappers.append(curWrapper)
+                    curWrapper = [component]
+                else: 
+                    curWrapper.append(component)
+                    i += 1
+        if len(curWrapper) > 0:
+            wrappers.append(curWrapper)
     else:
-        as_enum = try_enum(ComponentType, component_type)
-        return Component._raw_construct(type=as_enum)
+        wrappers = [components]
+
+    for wrap in wrappers:
+        if isinstance(wrap, list) and not all(hasattr(x, "to_dict") for x in wrap):
+            raise Exception("Components with types [" + ', '.join([str(type(x)) for x in wrap]) + "] are missing to_dict() method")
+        component_list.append({"type": 1, "components": [x.to_dict() for x in wrap] if type(wrap) is list else [wrap.to_dict()]})
+    return component_list
+
+def get_components(data):
+    if data.get("components") is None:
+        return []
+    components = []
+    if len(data["components"]) == 0:
+        pass
+    elif len(data["components"]) > 1:
+        # multiple lines
+        for componentWrapper in data["components"]:
+            # newline
+            for index, com in enumerate(componentWrapper["components"]):
+                components.append(make_component(com, index==0))
+    elif len(data["components"][0]["components"]) > 1:
+        # All inline
+        for index, com in enumerate(data["components"][0]["components"]):
+            components.append(make_component(com, index==0))
+    else:
+        # One button
+        component = data["components"][0]["components"][0]
+        components.append(make_component(component))
+    return components
