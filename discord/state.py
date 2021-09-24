@@ -53,8 +53,6 @@ from .flags import ApplicationFlags, Intents, MemberCacheFlags
 from .object import Object
 from .invite import Invite
 from .integrations import _integration_factory
-from .interactions import Interaction
-from .ui.view import ViewStore, View
 from .stage_instance import StageInstance
 from .threads import Thread, ThreadMember
 from .sticker import GuildSticker
@@ -253,8 +251,6 @@ class ConnectionState:
         self._emojis: Dict[int, Emoji] = {}
         self._stickers: Dict[int, GuildSticker] = {}
         self._guilds: Dict[int, Guild] = {}
-        if views:
-            self._view_store: ViewStore = ViewStore(self)
 
         self._voice_clients: Dict[int, VoiceProtocol] = {}
 
@@ -358,16 +354,6 @@ class ConnectionState:
         sticker_id = int(data['id'])
         self._stickers[sticker_id] = sticker = GuildSticker(state=self, data=data)
         return sticker
-
-    def store_view(self, view: View, message_id: Optional[int] = None) -> None:
-        self._view_store.add_view(view, message_id)
-
-    def prevent_view_updates_for(self, message_id: int) -> Optional[View]:
-        return self._view_store.remove_message_tracking(message_id)
-
-    @property
-    def persistent_views(self) -> Sequence[View]:
-        return self._view_store.persistent_views
 
     @property
     def guilds(self) -> List[Guild]:
@@ -697,15 +683,6 @@ class ConnectionState:
             else:
                 if reaction:
                     self.dispatch('reaction_clear_emoji', reaction)
-
-    def parse_interaction_create(self, data) -> None:
-        interaction = Interaction(data=data, state=self)
-        if data['type'] == 3:  # interaction component
-            custom_id = interaction.data['custom_id']  # type: ignore
-            component_type = interaction.data['component_type']  # type: ignore
-            self._view_store.dispatch(component_type, custom_id, interaction)
-
-        self.dispatch('interaction', interaction)
 
     def parse_presence_update(self, data) -> None:
         guild_id = utils._get_as_snowflake(data, 'guild_id')

@@ -33,7 +33,7 @@ import importlib.util
 import sys
 import traceback
 import types
-from typing import Any, Callable, Mapping, List, Dict, TYPE_CHECKING, Optional, TypeVar, Type, Union
+from typing import Any, Callable, Mapping, List, Dict, TYPE_CHECKING, NewType, Optional, TypeVar, Type, Union
 
 import discord
 
@@ -43,6 +43,7 @@ from .context import Context
 from . import errors
 from .help import HelpCommand, DefaultHelpCommand
 from .cog import Cog
+from ... import ui
 
 if TYPE_CHECKING:
     import importlib.machinery
@@ -135,6 +136,8 @@ class BotBase(GroupMixin):
         self.owner_id = options.get('owner_id')
         self.owner_ids = options.get('owner_ids', set())
         self.strip_after_prefix = options.get('strip_after_prefix', False)
+        self.slash = ui.Slash(self, self)
+        self.components = ui.Components(self, self)
 
         if self.owner_id and self.owner_ids:
             raise TypeError('Both owner_id and owner_ids are set.')

@@ -324,9 +324,8 @@ class DiscordWebSocket:
         ws.sequence = sequence
         ws._max_heartbeat_timeout = client._connection.heartbeat_timeout
 
-        if client._enable_debug_events:
-            ws.send = ws.debug_send
-            ws.log_receive = ws.debug_log_receive
+        ws.send = ws.debug_send
+        ws.log_receive = ws.debug_log_receive
 
         client._connection._update_references(ws)
 

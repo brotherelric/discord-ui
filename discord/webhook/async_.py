@@ -69,7 +69,6 @@ if TYPE_CHECKING:
     from ..guild import Guild
     from ..channel import TextChannel
     from ..abc import Snowflake
-    from ..ui.view import View
     import datetime
 
 MISSING = utils.MISSING
@@ -432,7 +431,6 @@ def handle_message_parameters(
     files: List[File] = MISSING,
     embed: Optional[Embed] = MISSING,
     embeds: List[Embed] = MISSING,
-    view: Optional[View] = MISSING,
     allowed_mentions: Optional[AllowedMentions] = MISSING,
     previous_allowed_mentions: Optional[AllowedMentions] = None,
 ) -> ExecuteWebhookParameters:
@@ -458,12 +456,6 @@ def handle_message_parameters(
             payload['content'] = str(content)
         else:
             payload['content'] = None
-
-    if view is not MISSING:
-        if view is not None:
-            payload['components'] = view.to_components()
-        else:
-            payload['components'] = []
 
     payload['tts'] = tts
     if avatar_url:
@@ -645,7 +637,6 @@ class WebhookMessage(Message):
         embed: Optional[Embed] = MISSING,
         file: File = MISSING,
         files: List[File] = MISSING,
-        view: Optional[View] = MISSING,
         allowed_mentions: Optional[AllowedMentions] = None,
     ) -> WebhookMessage:
         """|coro|
@@ -709,7 +700,6 @@ class WebhookMessage(Message):
             embed=embed,
             file=file,
             files=files,
-            view=view,
             allowed_mentions=allowed_mentions,
         )
 
@@ -1214,7 +1204,6 @@ class Webhook(BaseWebhook):
         embed: Embed = MISSING,
         embeds: List[Embed] = MISSING,
         allowed_mentions: AllowedMentions = MISSING,
-        view: View = MISSING,
         thread: Snowflake = MISSING,
         wait: Literal[True],
     ) -> WebhookMessage:
@@ -1234,7 +1223,6 @@ class Webhook(BaseWebhook):
         embed: Embed = MISSING,
         embeds: List[Embed] = MISSING,
         allowed_mentions: AllowedMentions = MISSING,
-        view: View = MISSING,
         thread: Snowflake = MISSING,
         wait: Literal[False] = ...,
     ) -> None:
@@ -1253,7 +1241,6 @@ class Webhook(BaseWebhook):
         embed: Embed = MISSING,
         embeds: List[Embed] = MISSING,
         allowed_mentions: AllowedMentions = MISSING,
-        view: View = MISSING,
         thread: Snowflake = MISSING,
         wait: bool = False,
     ) -> Optional[WebhookMessage]:
@@ -1359,12 +1346,6 @@ class Webhook(BaseWebhook):
         if application_webhook:
             wait = True
 
-        if view is not MISSING:
-            if isinstance(self._state, _WebhookState):
-                raise InvalidArgument('Webhook views require an associated state with the webhook')
-            if ephemeral is True and view.timeout is None:
-                view.timeout = 15 * 60.0
-
         params = handle_message_parameters(
             content=content,
             username=username,
@@ -1375,7 +1356,6 @@ class Webhook(BaseWebhook):
             embed=embed,
             embeds=embeds,
             ephemeral=ephemeral,
-            view=view,
             allowed_mentions=allowed_mentions,
             previous_allowed_mentions=previous_mentions,
         )
@@ -1398,10 +1378,6 @@ class Webhook(BaseWebhook):
         msg = None
         if wait:
             msg = self._create_message(data)
-
-        if view is not MISSING and not view.is_finished():
-            message_id = None if msg is None else msg.id
-            self._state.store_view(view, message_id)
 
         return msg
 
@@ -1455,7 +1431,6 @@ class Webhook(BaseWebhook):
         embed: Optional[Embed] = MISSING,
         file: File = MISSING,
         files: List[File] = MISSING,
-        view: Optional[View] = MISSING,
         allowed_mentions: Optional[AllowedMentions] = None,
     ) -> WebhookMessage:
         """|coro|
@@ -1523,12 +1498,6 @@ class Webhook(BaseWebhook):
         if self.token is None:
             raise InvalidArgument('This webhook does not have a token associated with it')
 
-        if view is not MISSING:
-            if isinstance(self._state, _WebhookState):
-                raise InvalidArgument('This webhook does not have state associated with it')
-
-            self._state.prevent_view_updates_for(message_id)
-
         previous_mentions: Optional[AllowedMentions] = getattr(self._state, 'allowed_mentions', None)
         params = handle_message_parameters(
             content=content,
@@ -1536,7 +1505,6 @@ class Webhook(BaseWebhook):
             files=files,
             embed=embed,
             embeds=embeds,
-            view=view,
             allowed_mentions=allowed_mentions,
             previous_allowed_mentions=previous_mentions,
         )
@@ -1552,8 +1520,6 @@ class Webhook(BaseWebhook):
         )
 
         message = self._create_message(data)
-        if view and not view.is_finished():
-            self._state.store_view(view, message_id)
         return message
 
     async def delete_message(self, message_id: int, /) -> None:
