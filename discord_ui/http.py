@@ -3,14 +3,13 @@ from .errors import WrongType
 from .tools import MISSING, _or, components_to_dict, setup_logger
 
 from .imports import discord
-from discord.http import Route
 
 import json
 from typing import List
 
 logging = setup_logger(__name__)
 
-class BetterRoute(Route):
+class BetterRoute(discord.http.Route):
     BASE = "https://discord.com/api/v9"
 
 async def send_files(route, files, payload, http):

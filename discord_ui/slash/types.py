@@ -8,8 +8,8 @@ from .errors import (
     OptionalOptionParameter
 )
 
-import discord
-from discord.errors import InvalidArgument
+from ..imports import discord
+from ..imports import commands
 
 import typing
 import inspect

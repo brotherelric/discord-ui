@@ -1,8 +1,7 @@
 from ..tools import get, setup_logger
 from ..http import BetterRoute, handle_rate_limit, send_files
 
-from discord.state import ConnectionState
-from discord.errors import Forbidden, HTTPException, NotFound
+from ..imports import discord
 
 import aiohttp
 
@@ -47,13 +46,13 @@ class SlashHTTP():
             commands = await self._http.request(BetterRoute("GET", f"/applications/{self.application_id}/guilds/{guild_id}/commands"))
             for x in commands:
                 await self.delete_guild_command( x["id"], guild_id)
-        except Forbidden:
+        except discord.errors.Forbidden:
             logging.warn("got forbidden in " + str(guild_id))
 
     async def delete_global_command(self, command_id):
         try:
             return await self._http.request(BetterRoute("DELETE", f"/applications/{self.application_id}/commands/{command_id}"))
-        except HTTPException as ex:
+        except discord.errors.HTTPException as ex:
             if ex.status == 429:
                 await handle_rate_limit(await ex.response.json())
                 return await self.delete_global_command(command_id)
@@ -61,7 +60,7 @@ class SlashHTTP():
     async def delete_guild_command(self, command_id, guild_id):
         try:
             return await self._http.request(BetterRoute("DELETE", f"/applications/{self.application_id}/guilds/{guild_id}/commands/{command_id}"))
-        except HTTPException as ex:
+        except discord.errors.HTTPException as ex:
             if ex.status == 429:
                 await handle_rate_limit(await ex.response.json())
                 return await self.delete_guild_command(command_id, guild_id)
@@ -73,9 +72,9 @@ class SlashHTTP():
     async def get_command_permissions(self, command_id, guild_id):
         try:
             return await self._http.request(BetterRoute("GET", f"/applications/{self.application_id}/guilds/{guild_id}/commands/{command_id}/permissions"))
-        except NotFound:
+        except discord.errors.NotFound:
             return {"id": command_id, "application_id": self.application_id, "permissions": []}
-        except HTTPException as ex:
+        except discord.errors.HTTPException as ex:
             if ex.status == 429:
                 await handle_rate_limit(await ex.response.json())
                 return await self.get_command_permissions(command_id, guild_id)
@@ -91,12 +90,12 @@ class SlashHTTP():
                     data = await handle_rate_limit(await response.json())
                     await self.update_command_permissions(guild_id, command_id, permissions)
                     return data
-                raise HTTPException(response, response.content)
+                raise discord.errors.HTTPException(response, response.content)
 
     async def create_global_command(self, command: dict):
         try:
             return await self._http.request(BetterRoute("POST", f"/applications/{self.application_id}/commands"), json=command)
-        except HTTPException as ex:
+        except discord.errors.HTTPException as ex:
             if ex.status == 429:
                 await handle_rate_limit(await ex.response.json())
                 return await self.create_global_command(command)
@@ -106,7 +105,7 @@ class SlashHTTP():
             data = await self._http.request(BetterRoute("POST", f"/applications/{self.application_id}/guilds/{guild_id}/commands"), json=command)
             await self.update_command_permissions(guild_id, data["id"], permissions)
             return data
-        except HTTPException as ex:
+        except discord.errors.HTTPException as ex:
             if ex.status == 429:
                 await handle_rate_limit(await ex.response.json())
                 return await self.create_guild_command(command, guild_id, permissions)
@@ -116,7 +115,7 @@ class SlashHTTP():
     async def edit_global_command(self, command_id: str, new_command: dict):
         try:
             return await self._http.request(BetterRoute("PATCH", f"/applications/{self.application_id}/commands/{command_id}"), json=new_command)
-        except HTTPException as ex:
+        except discord.errors.HTTPException as ex:
             if ex.status == 429:
                 await handle_rate_limit(await ex.response.json())
                 return await self.edit_global_command(command_id, new_command)
@@ -126,7 +125,7 @@ class SlashHTTP():
             data = await self._http.request(BetterRoute("PATCH", f"/applications/{self.application_id}/guilds/{guild_id}/commands/{command_id}"), json=new_command)
             if permissions is not None:
                 return await self.update_command_permissions(guild_id, data["id"], permissions)
-        except HTTPException as ex:
+        except discord.errors.HTTPException as ex:
             if ex.status == 429:
                 await handle_rate_limit(await ex.response.json())
                 return await self.edit_guild_command(command_id, guild_id, new_command, permissions)
@@ -135,7 +134,7 @@ class SlashHTTP():
     async def get_global_commands(self):
         try:
             return await self._http.request(BetterRoute("GET", f"/applications/{self.application_id}/commands"))
-        except HTTPException as ex:
+        except discord.errors.HTTPException as ex:
             if ex.status == 429:
                 await handle_rate_limit(await ex.response.json())
                 return await self.get_global_commands()
@@ -143,7 +142,7 @@ class SlashHTTP():
     async def get_guild_commands(self, guild_id):
         try:
             return await self._http.request(BetterRoute("GET", f"/applications/{self.application_id}/guilds/{guild_id}/commands"))
-        except HTTPException as ex:
+        except discord.errors.HTTPException as ex:
             if ex.status == 429:
                 await handle_rate_limit(await ex.response.json())
                 return await self.get_guild_commands(guild_id)
@@ -153,5 +152,5 @@ class SlashHTTP():
             raise ex
 
 # just for typing
-class ModifiedSlashState(ConnectionState):
+class ModifiedSlashState(discord.state.ConnectionState):
     slash_http: SlashHTTP = None
