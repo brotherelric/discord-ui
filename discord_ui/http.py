@@ -1,10 +1,10 @@
-import asyncio
 from .errors import WrongType
 from .tools import MISSING, _or, components_to_dict, setup_logger
 
-from .imports import discord
+import discord
 
 import json
+import asyncio
 from typing import List
 
 logging = setup_logger(__name__)

@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from ..tools import _or, _default, _none
 from ..errors import InvalidLength, WrongType
 from ..enums import CommandType, OptionType
@@ -8,8 +10,8 @@ from .errors import (
     OptionalOptionParameter
 )
 
-from ..imports import discord
-from ..imports import commands
+import discord
+from discord.ext import commands
 
 import typing
 import inspect
@@ -299,7 +301,7 @@ class SlashPermission():
                 raise WrongType("forbidden", forbidden, ["Dict[int | str, int]", "List[discord.Member | discord.User | discord.Role]"])
 
     @classmethod
-    def Empty(cls) -> 'SlashPermission':
+    def Empty(cls) -> SlashPermission:
         """Returns an empty permission for the command"""
         return cls()
     def to_dict(self):
@@ -378,7 +380,7 @@ class BaseCommand():
                     else: 
                         op_type = _name
                     if OptionType.any_to_type(op_type) is None:
-                        raise InvalidArgument("Could not find a matching option type for parameter '" + str(op_type) + "'")
+                        raise discord.errors.InvalidArgument("Could not find a matching option type for parameter '" + str(op_type) + "'")
                     _ops.append(SlashOption(op_type, _name, required=_val.default == inspect._empty))
                 self.options = _ops
 
@@ -477,7 +479,7 @@ class BaseCommand():
     @name.setter
     def name(self, value):
         if _none(value):
-            raise InvalidArgument("You have to specify a name")
+            raise discord.errors.InvalidArgument("You have to specify a name")
         if not isinstance(value, str):
             raise WrongType("name", value, "str")
         if len(value) > 32 or len(value) < 1:
@@ -603,7 +605,7 @@ class SlashCommand(BaseCommand):
         ```
         """
         BaseCommand.__init__(self, CommandType.Slash, callback, name, description, options, guild_ids, default_permission, guild_permissions)
-    def copy(self) -> 'SlashCommand':
+    def copy(self) -> SlashCommand:
         c = SlashCommand(self.callback, self.name, self.description, self.options, self.guild_ids, self.default_permission, self.guild_permissions)
         for x in self.__slots__:
             setattr(c, x, getattr(self, x))
@@ -614,7 +616,7 @@ class SlashSubcommand(BaseCommand):
         if isinstance(base_names, str):
             base_names = [base_names]
         if len(base_names) > 2:
-            raise InvalidArgument("subcommand groups are currently limited to 2 bases")
+            raise discord.errors.InvalidArgument("subcommand groups are currently limited to 2 bases")
         if any([len(x) > 32 or len(x) < 1 for x in base_names]):
             raise InvalidLength("base_names", 1, 32)
         BaseCommand.__init__(self, CommandType.Slash, callback, name, description, options, guild_ids=guild_ids, default_permission=default_permission, guild_permissions=guild_permissions)
@@ -654,7 +656,7 @@ class ContextCommand(BaseCommand):
 class UserCommand(ContextCommand):
     def __init__(self, callback, name=None, guild_ids = None, default_permission = True, guild_permissions = None) -> None:
         ContextCommand.__init__(self, CommandType.User, callback, name, guild_ids, default_permission, guild_permissions)
-    def copy(self) -> 'UserCommand':
+    def copy(self) -> UserCommand:
         c = UserCommand(self.callback, self.name, self.guild_ids, self.default_permission, self.guild_permissions)
         for x in self.__slots__:
             setattr(c, x, getattr(self, x))
@@ -663,7 +665,7 @@ class UserCommand(ContextCommand):
 class MessageCommand(ContextCommand):
     def __init__(self, callback, name=None, guild_ids = None, default_permission = True, guild_permissions = None) -> None:
         ContextCommand.__init__(self, CommandType.Message, callback, name, guild_ids, default_permission, guild_permissions)
-    def copy(self) -> 'MessageCommand':
+    def copy(self) -> MessageCommand:
         c = MessageCommand(self.callback, self.name, self.guild_ids, self.default_permission, self.guild_permissions)
         for x in self.__slots__:
             setattr(c, x, getattr(self, x))

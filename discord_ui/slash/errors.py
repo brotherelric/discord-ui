@@ -1,14 +1,17 @@
-class AlreadyDeferred(Exception):
+from discord.ext.commands import errors
+
+
+class AlreadyDeferred(errors.ClientException):
     """Exception that is raised when you try to defer an interaction that was already deferred."""
     def __init__(self, *args: object) -> None:
         super().__init__("Interaction was already deferred")
-class EphemeralDeletion(Exception):
+class EphemeralDeletion(errors.ClientException):
     """Exception that is raised when you try to delete an ephemeral message.
     
     Ephemeral messages can not be deleted"""
     def __init__(self, *args: object) -> None:
         super().__init__("Cannot delete an ephemeral message")
-class MissingOptionParameter(Exception):
+class MissingOptionParameter(errors.ClientException):
     """Exception that is raised when a callback is missing a parameter which was 
     specified in the slash command.
     
@@ -25,7 +28,7 @@ class MissingOptionParameter(Exception):
     """
     def __init__(self, option_name, *args: object) -> None:
         super().__init__("Missing parameter '" + option_name + "' in callback function")
-class OptionalOptionParameter(Exception):
+class OptionalOptionParameter(errors.ClientException):
     """Exception that is rarised when a callback function has a required parameter which 
     is marked optional in the slash command.
     
@@ -34,14 +37,14 @@ class OptionalOptionParameter(Exception):
     """
     def __init__(self, param_name, *args: object) -> None:
         super().__init__("Parameter '" + param_name + "' in callback function needs to be optional (" + param_name + "=None)")
-class NoAsyncCallback(Exception):
+class NoAsyncCallback(errors.ClientException):
     """Exception that is raised when a sync callback was provided
     
     Callbacks have to be async
     """
     def __init__(self, *args: object) -> None:
         super().__init__("callback has to be async")
-class CallbackMissingContextCommandParameters(Exception):
+class CallbackMissingContextCommandParameters(errors.ClientException):
     """Exception that is raised when a callback for a context command is missing parmeters.
     
     A context-command callback has to accept two parameters, one for the interaction context

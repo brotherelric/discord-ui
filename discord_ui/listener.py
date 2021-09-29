@@ -180,7 +180,8 @@ from .tools import setup_logger
 from .components import Button, ComponentType, LinkButton, SelectMenu
 from .receive import ComponentContext, Message
 
-from .imports import discord, commands
+import discord
+from discord.ext import commands
 
 import asyncio
 from inspect import getmembers

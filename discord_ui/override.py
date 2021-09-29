@@ -9,15 +9,17 @@
 
 import asyncio
 from .tools import MISSING
-from .receive import Message, WebhookMessage
+from .receive import Message
 from .http import jsonifyMessage, BetterRoute, send_files
 
 
-from .imports import discord, commands
+import discord
+from discord.ext import commands
 
 import sys
 
 def override_dpy2_client():
+    # override for dpy forks
     module = sys.modules[discord.__name__]
 
     class OverridenV2Bot(commands.Bot):
@@ -33,9 +35,11 @@ def override_dpy2_client():
 
     if discord.__version__.startswith("2"):
         module.ext.commands.Bot.__new__ = client_override
+    # override for dpy forks
     sys.modules[discord.__name__] = module
 def override_dpy():
     """This method overrides dpy methods. You shouldn't need to use this method by your own, the lib overrides everything by default"""
+    # override for dpy forks
     module = sys.modules[discord.__name__]
 
     #region message override
@@ -81,11 +85,6 @@ def override_dpy():
     #endregion
 
     #region webhook override
-    def webhook_message_override(cls, *args, **kwargs):
-        if cls is discord.webhook.WebhookMessage:
-            return object.__new__(WebhookMessage)
-        else:
-            return object.__new__(cls)
     def send_webhook(self: discord.Webhook, content=MISSING, *, wait=False, username=MISSING, avatar_url=MISSING, tts=False, files=None, embed=MISSING, embeds=MISSING, allowed_mentions=MISSING, components=MISSING):
         payload = jsonifyMessage(content, tts=tts, embed=embed, embeds=embeds, allowed_mentions=allowed_mentions, components=components)
 
@@ -97,8 +96,8 @@ def override_dpy():
         return self._adapter.execute_webhook(payload=payload, wait=wait, files=files)
 
     module.webhook.Webhook.send = send_webhook
-    module.webhook.WebhookMessage.__new__ = webhook_message_override
     #endregion
 
 
+    # override for dpy forks
     sys.modules[discord.__name__] = module

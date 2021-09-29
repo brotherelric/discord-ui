@@ -7,9 +7,8 @@ from .http import BetterRoute, jsonifyMessage, send_files
 from .components import ActionRow, Button, LinkButton, SelectMenu, SelectOption, UseableComponent, make_component
 from .enums import InteractionResponseType
 
-
-from .imports import discord
-from .imports import commands
+import discord
+from discord.ext import commands
 
 from typing import Any, List, Union, Dict
 try:
@@ -258,7 +257,6 @@ class Interaction():
             await msg.delete(delete_after)
         if listener is not MISSING:
             listener._start(msg)
-        print(msg)
         return msg
     def _handle_auto_defer(self, auto_defer):
         self.deferred = auto_defer[0]
@@ -671,28 +669,6 @@ class Message(discord.Message):
             del self._state._component_listeners[str(self.id)]
         except KeyError:
             pass
-
-
-class WebhookMessage(Message, discord.WebhookMessage):
-    def __init__(self, *, state, channel, data):
-        Message.__init__(self, state=state, channel=channel, data=data)
-        discord.WebhookMessage.__init__(self, state=state, channel=channel, data=data)
-    async def edit(self, *args, **fields):
-        """Edits the message
-
-        content: :class:`str`, Optional
-            The content to edit the message with or None to clear it.
-        embed: :class:`discord.Embed`
-            Embed rich content
-        embeds: List[:class:`discord.Embed`], Optional
-            A list of embeds to edit the message with.
-        supress: :class:`bool`
-            Whether to supress all embeds in the message
-        allowed_mentions: :class`discord.AllowedMentions`
-            Controls the mentions being processed in this message. See `discord.abc.Messageable.send` for more information.
-        """
-        return await self._state._webhook._adapter.edit_webhook_message(message_id=self.id, payload=jsonifyMessage(*args, **fields))
-    
 
 class EphemeralMessage(Message):
     """Represents a hidden (ephemeral) message"""

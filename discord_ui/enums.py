@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from .imports import discord
+import discord
 
 import inspect
 from enum import IntEnum

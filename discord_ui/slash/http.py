@@ -1,7 +1,8 @@
 from ..tools import get, setup_logger
 from ..http import BetterRoute, handle_rate_limit, send_files
 
-from ..imports import discord
+import discord
+from discord.state import ConnectionState
 
 import aiohttp
 
@@ -152,5 +153,5 @@ class SlashHTTP():
             raise ex
 
 # just for typing
-class ModifiedSlashState(discord.state.ConnectionState):
+class ModifiedSlashState(ConnectionState):
     slash_http: SlashHTTP = None

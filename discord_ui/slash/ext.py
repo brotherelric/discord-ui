@@ -21,8 +21,8 @@ doesn't work
 
 import functools
 import inspect
+from discord.ext import commands
 
-from ..imports import commands
 
 
 def check_failure_response(content=None, hidden=False, **fields):

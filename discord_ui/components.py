@@ -1,7 +1,9 @@
-from .tools import MISSING
+from __future__ import annotations
+
 from .errors import InvalidLength, OutOfValidRange, WrongType
 
-from .imports import discord, commands
+import discord
+from discord.ext import commands
 
 import inspect
 from enum import IntEnum
@@ -299,7 +301,7 @@ class SelectMenu(UseableComponent):
         return f"<discord_ui.SelectMenu(custom_id={self.custom_id}, options={self.options})>"
     
     @staticmethod
-    def _fromData(data) -> 'SelectMenu':
+    def _fromData(data) -> SelectMenu:
         return SelectMenu(data["custom_id"], data["options"], data.get("min_values"), data.get("max_values"), data.get("placeholder"), disabled=data.get("disabled", False))
     # region props
     @property
@@ -334,7 +336,7 @@ class SelectMenu(UseableComponent):
         x = [x for x in self.options if x.default]
         if len(x) == 1:
             return x[0]
-    def set_default_option(self, position: int) -> 'SelectMenu':
+    def set_default_option(self, position: int) -> SelectMenu:
         """
         Selects the default selected option
 
@@ -513,11 +515,11 @@ class Button(BaseButton, UseableComponent):
         self.custom_id = custom_id
     def __repr__(self) -> str:
         return f"<discord_ui.Button({self.custom_id}:{self.content})>"
-    def copy(self) -> 'Button':
+    def copy(self) -> Button:
         return Button(self.custom_id, self.label, self.color, self.emoji, self.new_line, self.disabled)
 
     @classmethod
-    def _fromData(cls, data, new_line=False) -> 'Button':
+    def _fromData(cls, data, new_line=False) -> Button:
         """
         Returns a new button initialized from api response data
 
@@ -560,7 +562,7 @@ class LinkButton(BaseButton):
 
     def __repr__(self) -> str:
         return f"<discord_ui.LinkButton({self.custom_id}:{self.content})>"
-    def copy(self) -> 'LinkButton':
+    def copy(self) -> LinkButton:
         return LinkButton(self.url, self.label, self.emoji, self.new_line, self.disabled)
 
     @property
@@ -578,7 +580,7 @@ class LinkButton(BaseButton):
         self._url = str(val)
 
     @classmethod
-    def _fromData(cls, data, new_line=False) -> 'LinkButton':
+    def _fromData(cls, data, new_line=False) -> LinkButton:
         return LinkButton(data["url"], data.get("label"), data.get("emoji"), new_line, data.get("disabled", False))
 
 
@@ -640,7 +642,7 @@ class ActionRow():
         self.component_type = 1
         self.disable(disabled)
         
-    def disable(self, disable=True) -> 'ActionRow':
+    def disable(self, disable=True) -> ActionRow:
         for i, _ in enumerate(self.items):
             self.items[i].disabled = disable
         return self

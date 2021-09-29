@@ -1,7 +1,10 @@
+from __future__ import annotations
+
 from .slash.types import BaseCommand, MessageCommand, SlashCommand, SlashSubcommand, UserCommand
 from .enums import ComponentType
 
-from .imports import discord, commands
+import discord
+from discord.ext import commands
 
 import asyncio
 import datetime
@@ -271,7 +274,7 @@ class CogCommand(BaseSlash, SlashCommand):
     def __init__(self, *args, **kwargs) -> None:
         SlashCommand.__init__(self, *args, **kwargs)
         BaseSlash.__init__(self, args[0])
-    def copy(self) -> 'CogCommand':
+    def copy(self) -> CogCommand:
         c = CogCommand(self.callback, self.name, self.description, self.options, self.guild_ids, self.default_permission, self.guild_permissions)
         for x in self.__slots__:
             setattr(c, x, getattr(self, x, None))
@@ -280,7 +283,7 @@ class CogSubCommandGroup(BaseSlash, SlashSubcommand):
     def __init__(self, *args, **kwargs) -> None:
         SlashSubcommand.__init__(self, *args, **kwargs)
         BaseSlash.__init__(self, args[0])
-    def copy(self) -> 'CogSubCommandGroup':
+    def copy(self) -> CogSubCommandGroup:
         c = CogSubCommandGroup(self.callback, self.base_names, self.name, self.description, self.options, self.guild_ids, self.default_permission, self.guild_permissions)
         for x in self.__slots__:
             setattr(c, x, getattr(self, x, None))
@@ -289,7 +292,7 @@ class CogMessageCommand(BaseSlash, MessageCommand):
     def __init__(self, *args, **kwargs) -> None:
         MessageCommand.__init__(self, *args, **kwargs)
         BaseSlash.__init__(self, args[0])
-    def copy(self) -> 'CogMessageCommand':
+    def copy(self) -> CogMessageCommand:
         c = CogMessageCommand(self.callback, self.name, self.guild_ids, self.default_permission, self.guild_permissions)
         for x in self.__slots__:
             setattr(c, x, getattr(self, x, None))
@@ -298,7 +301,7 @@ class CogUserCommand(BaseSlash, UserCommand):
     def __init__(self, *args, **kwargs) -> None:
         UserCommand.__init__(self, *args, **kwargs)
         BaseSlash.__init__(self, args[0])
-    def copy(self) -> 'CogUserCommand':
+    def copy(self) -> CogUserCommand:
         c = CogUserCommand(self.callback, self.name, self.guild_ids, self.default_permission, self.guild_permissions)
         for x in self.__slots__:
             setattr(c, x, getattr(self, x, None))

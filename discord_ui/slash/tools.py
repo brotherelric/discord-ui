@@ -2,8 +2,7 @@ from .types import AdditionalType, OptionType
 from ..tools import get, setup_logger
 from ..errors import CouldNotParse
 
-from ..imports import discord
-
+import discord
 import typing
 
 logging = setup_logger(__name__)

@@ -3,15 +3,16 @@ from .slash.errors import NoAsyncCallback
 from .errors import MissingListenedComponentParameters, WrongType
 from .slash.tools import ParseMethod, cache_data, format_name, handle_options, handle_thing
 from .slash.http import SlashHTTP
-from .slash.types import AdditionalType, BaseCommand, CommandType, ContextCommand, MessageCommand, OptionType, SlashCommand, SlashOption, SlashSubcommand, UserCommand
+from .slash.types import CommandType, ContextCommand, MessageCommand, OptionType, SlashCommand, SlashOption, SlashSubcommand, UserCommand
 from .tools import MISSING, _none, _or, get_index, setup_logger, get
 from .http import jsonifyMessage, BetterRoute, send_files
-from .receive import ChoiceGeneratorContext, ComponentContext, Interaction, InteractionType, Message, PressedButton, SelectedMenu, SlashedContext, WebhookMessage, SlashedCommand, SlashedSubCommand, getMessage
+from .receive import ChoiceGeneratorContext, ComponentContext, Interaction, InteractionType, Message, PressedButton, SelectedMenu, SlashedContext, SlashedCommand, SlashedSubCommand, getMessage
 from .override import override_dpy as override_it
 from .listener import Listener
 from .enums import InteractionResponseType, ComponentType
 
-from .imports import discord, commands
+import discord
+from discord.ext import commands
 
 import json
 import inspect
@@ -1466,7 +1467,7 @@ class Components():
             await msg.delete(delay=delete_after)
         
         return msg
-    def send_webhook(self, webhook, content=MISSING, *, wait=False, username=MISSING, avatar_url=MISSING, tts=False, files=MISSING, embed=MISSING, embeds=MISSING, allowed_mentions=MISSING, components=MISSING) -> Union[WebhookMessage, None]:
+    def send_webhook(self, webhook, content=MISSING, *, wait=False, username=MISSING, avatar_url=MISSING, tts=False, files=MISSING, embed=MISSING, embeds=MISSING, allowed_mentions=MISSING, components=MISSING) -> Union[discord.WebhookMessage, None]:
         """
         Sends a webhook message
         
