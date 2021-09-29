@@ -514,7 +514,7 @@ class Button(BaseButton, UseableComponent):
         """
         BaseButton.__init__(self, label, color, emoji, new_line, disabled)
         UseableComponent.__init__(self, self.component_type)
-        self.custom_id = custom_id or [choice(string.ascii_letters) for _ in range(100)]
+        self.custom_id = custom_id or ''.join([choice(string.ascii_letters) for _ in range(100)])
     def __repr__(self) -> str:
         return f"<discord_ui.Button({self.custom_id}:{self.content})>"
     def copy(self) -> Button:
