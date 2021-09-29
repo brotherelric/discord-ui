@@ -13,6 +13,10 @@ from .enums import InteractionResponseType, ComponentType
 
 import discord
 from discord.ext import commands
+try:
+    from discord.ext.commands.errors import *
+except ImportError:
+    from discord.ext.commands import *
 
 import json
 import inspect
@@ -366,9 +370,9 @@ class Slash():
                 if command.guild_permissions is not None:
                     for x in list(command.guild_permissions.keys()):
                         if int(x) not in own_guild_ids:
-                            raise commands.errors.InvalidArgument("guild_permissions invalid! Client is not in a guild with the id " + str(x))
+                            raise InvalidArgument("guild_permissions invalid! Client is not in a guild with the id " + str(x))
                 if int(x) not in own_guild_ids:
-                    raise commands.errors.InvalidArgument("guild_ids invalid! Client is not in a server with the id '" + str(x) + "'")
+                    raise InvalidArgument("guild_ids invalid! Client is not in a server with the id '" + str(x) + "'")
             
                 if added_commands["guilds"].get(x) is None:
                     added_commands["guilds"][x] = {}
@@ -464,7 +468,7 @@ class Slash():
         async for x in self._discord.fetch_guilds():
             try:
                 commands += await self.http.get_guild_commands(x.id)
-            except commands.errors.Forbidden:
+            except Forbidden:
                 logging.warn("Got forbidden in " + str(x.name) + " (" + str(x.id) + ")")
                 continue
         return commands
@@ -537,9 +541,9 @@ class Slash():
                 if command.guild_permissions is not None:
                     for x in list(command.guild_permissions.keys()):
                         if int(x) not in own_guild_ids:
-                            raise commands.errors.InvalidArgument("guild_permissions invalid! Client is not in a guild with the id " + str(x))
+                            raise InvalidArgument("guild_permissions invalid! Client is not in a guild with the id " + str(x))
                 if int(x) not in own_guild_ids:
-                    raise commands.errors.InvalidArgument("guild_ids invalid! Client is not in a server with the id '" + str(x) + "'")
+                    raise InvalidArgument("guild_ids invalid! Client is not in a server with the id '" + str(x) + "'")
 
                 if command.guild_permissions is not None:
                     command.permissions = command.guild_permissions.get(x)
@@ -623,7 +627,7 @@ class Slash():
         else:
             api_command = await self._get_guild_api_command(name, typ, guild_id)
         if api_command is None:
-            raise commands.errors.CommandNotFound("Slash command with name " + str(name) + " and type " + str(typ) + " not found in the api!")
+            raise CommandNotFound("Slash command with name " + str(name) + " and type " + str(typ) + " not found in the api!")
         if permissions is not None:
             await self.http.update_command_permissions(guild_id, api_command["id"], permissions.to_dict())
         if default_permission is not None:
@@ -671,14 +675,14 @@ class Slash():
 
         old_command = self._get_command(old_name, typ)
         if old_command is None:
-            raise commands.errors.NotFound("Could not find a command in the internal cache with the name " + str(old_name) + " and the type " + str(typ))
+            raise NotFound("Could not find a command in the internal cache with the name " + str(old_name) + " and the type " + str(typ))
         command = old_command
         if guild_id is not None:
             api_command = await self._get_guild_api_command(old_name, typ, guild_id)
         else:
             api_command = await self._get_global_api_command(old_name, typ)
         if old_command is None:
-            raise commands.errors.NotFound("Could not find a command in the api with the name " + str(old_name) + " and the type " + str(typ))
+            raise NotFound("Could not find a command in the api with the name " + str(old_name) + " and the type " + str(typ))
 
         if name is not None:
             command.name = name

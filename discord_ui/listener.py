@@ -181,7 +181,10 @@ from .components import Button, ComponentType, LinkButton, SelectMenu
 from .receive import ComponentContext, Message
 
 import discord
-from discord.ext import commands
+try:
+    from discord.ext.commands.errors import *
+except:
+    from discord.ext.commands import *
 
 import asyncio
 from inspect import getmembers
@@ -219,7 +222,7 @@ class _Listener():
     
     async def invoke(self, ctx, listener):
         if not await self.can_run(ctx):
-            raise commands.errors.CheckFailure()
+            raise CheckFailure()
         await self.callback(listener, ctx)
 
 class NoListenerFound(Exception):

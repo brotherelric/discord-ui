@@ -3,7 +3,7 @@ from __future__ import annotations
 from .errors import InvalidLength, OutOfValidRange, WrongType
 
 import discord
-from discord.ext import commands
+from discord.errors import *
 
 import inspect
 from enum import IntEnum
@@ -370,7 +370,7 @@ class BaseButton(Component):
     def __init__(self, label, color, emoji, new_line, disabled) -> None:
         Component.__init__(self, ComponentType.Button)
         if label is None and emoji is None:
-            raise commands.errors.InvalidArgument("You need to pass a label or an emoji")
+            raise InvalidArgument("You need to pass a label or an emoji")
         self._label = None
         self._style = None
         self._emoji = None
@@ -437,7 +437,7 @@ class BaseButton(Component):
     @color.setter
     def color(self, val):
         if ButtonStyles.getColor(val) is None:
-            raise commands.errors.InvalidArgument(str(val) + " is not a valid color")
+            raise InvalidArgument(str(val) + " is not a valid color")
         self._style = ButtonStyles.getColor(val).value
     
     @property

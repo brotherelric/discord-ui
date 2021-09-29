@@ -4,7 +4,11 @@ from .slash.types import BaseCommand, MessageCommand, SlashCommand, SlashSubcomm
 from .enums import ComponentType
 
 import discord
-from discord.ext import commands
+from discord.ext.commands import BucketType, CooldownMapping
+try:
+    from discord.ext.commands.errors import * 
+except ImportError:
+    from discord.ext.commands import *
 
 import asyncio
 import datetime
@@ -14,7 +18,7 @@ try:
 except ImportError:
     from typing_extensions import Literal
     
-class WrongListener(commands.CheckFailure):
+class WrongListener(CheckFailure):
     """
     Exception raised when a listening component received a component event that doesn't meet the check conditions
 
@@ -44,9 +48,9 @@ class BaseCallable():
         if hasattr(self.callback, "__commands_cooldown__"):
             cooldown = self.callback.__commands_cooldown__
         try:
-            self._buckets = commands.cooldowns.CooldownMapping(cooldown)
+            self._buckets = CooldownMapping(cooldown)
         except TypeError:
-            self._buckets = commands.cooldowns.CooldownMapping(cooldown, commands.cooldowns.BucketType.default)
+            self._buckets = CooldownMapping(cooldown, BucketType.default)
 
         self._max_concurrency = None
         if hasattr(self.callback, "__commands_max_concurrency__"):
@@ -74,7 +78,7 @@ class BaseCallable():
         return self.callback(*args, **kwds)
     async def invoke(self, ctx, *args, **kwargs):
         if not await self.can_run(ctx):
-            raise commands.errors.CheckFailure()
+            raise CheckFailure()
         if self._before_invoke is not None:
             await self._before_invoke(ctx)
 
