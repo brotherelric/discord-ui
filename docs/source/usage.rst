@@ -81,11 +81,11 @@ And to send them, we use
     await ui.components.send(message.channel, "Hello World", components=[
         Button("my_custom_id", "press me", "green"),
         Button("my_other_custom_id", "or press me!", emoji="😁", new_line=True),
-        SelectMenu("another_custom_id", options=[
+        SelectMenu(options=[
                 SelectOption("choose me", 1),
                 SelectOption("or me", 2),
                 SelectOption("or me", 3)
-        ], placeholder="Select something")
+        ], "another_custom_id", placeholder="Select something")
     ])
 
 **Overriden**
@@ -96,11 +96,11 @@ And to send them, we use
     await message.channel.send(message.channel, "Hello World", components=[
         Button("my_custom_id", "press me", "green"),
         Button("my_other_custom_id", "or press me!", emoji="😁", new_line=True),
-        SelectMenu("another_custom_id", options=[
+        SelectMenu(options=[
                 SelectOption("choose me", 1),
                 SelectOption("or me", 2),
                 SelectOption("or me", 3)
-        ], placeholder="Select something")
+        ], "another_custom_id", placeholder="Select something")
     ])
 
 The message
@@ -235,7 +235,9 @@ Sending the components
         if message.content == "!test":
             await message.channel.send(message.channel, "listening", components=[
                     Button("listening", "hi there"),
-                    SelectMenu("listening", options=[SelectOption(label="This is a option", value="my_value", description="This is the description of the option")])
+                    SelectMenu(options=[
+                            SelectOption(label="This is a option", value="my_value", description="This is the description of the option")
+                        ], custom_id="listening")
                 ]
             )
 
@@ -248,7 +250,7 @@ Sending the components
         if message.content == "!test":
             await message.channel.send(message.channel, "listening", components=[
                     Button("listening", "hi there"),
-                    SelectMenu("listening", options=[SelectOption(label="This is a option", value="my_value", description="This is the description of the option")])
+                    SelectMenu(options=[SelectOption(label="This is a option", value="my_value", description="This is the description of the option")], "listening")
                 ]
             )
 

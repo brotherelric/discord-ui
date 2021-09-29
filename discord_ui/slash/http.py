@@ -3,6 +3,7 @@ from ..http import BetterRoute, handle_rate_limit, send_files
 
 import discord
 from discord.state import ConnectionState
+from discord.http import HTTPClient
 
 import aiohttp
 
@@ -155,3 +156,4 @@ class SlashHTTP():
 # just for typing
 class ModifiedSlashState(ConnectionState):
     slash_http: SlashHTTP = None
+    http: HTTPClient

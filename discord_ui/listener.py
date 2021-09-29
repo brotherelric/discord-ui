@@ -252,21 +252,30 @@ class Listener():
     timeout: :class:`float`, optional
         A timeout after how many seconds the listener shouold be deleted.
         If ``None``, the listener will never timeout
-    target_user: :class:`discord.Member` | :class:`discord.User`
-        The user from which the interactions should be received. 
+    target_users: List[:class:`discord.Member` | :class:`discord.User` | :class:`int` | :class:`str`]
+        A list of users or user ids from which the interactions has to be be received. 
         Every interaction by other users will be ignored
     """
-    def __init__(self, timeout=180.0, target_user=None) -> None:
+    def __init__(self, timeout=180.0, target_users=None) -> None:
+        self._target_users = []
         self.timeout: float = timeout
         """Timeout after how many seconds the listener should timeout and be deleted"""
-        self.target_user: Union[discord.Member, discord.User] = target_user
-        """The user from which the interaction has to come"""
+        self.target_users = target_users
         self.components: List[Union[List[Button, LinkButton, SelectMenu], Button, LinkButton, SelectMenu]] = []
         """The components that are going to be send together with the listener"""
         self.message: Message = None
         """The target message"""
     def __init_subclass__(cls) -> None:
         cls.__listeners__ = []
+
+    @property
+    def target_users(self) -> List[int]:
+        """A list of user ids from which the interaction has to come"""
+        return self._target_users
+    @target_users.setter
+    def target_users(self, value):
+        self._target_users = [int(getattr(x, 'id', x)) for x in value]
+
 
     @staticmethod
     def button(custom_id=None):
@@ -348,7 +357,7 @@ class Listener():
         listeners = self._get_listeners()
         listers = []
         for listener in listeners.get(interaction_component.custom_id, []):
-            if hasattr(self, 'target_user') and self.target_user.id != interaction_component.author.id:
+            if hasattr(self, 'target_users') and interaction_component.author.id in self.target_users:
                 continue
             if listener.type == interaction_component.component_type:
                 if listener.target_values is not None:

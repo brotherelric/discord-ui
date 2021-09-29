@@ -9,6 +9,7 @@ from .enums import InteractionResponseType
 
 import discord
 from discord.ext import commands
+from discord.state import ConnectionState
 
 from typing import Any, List, Union, Dict
 try:
@@ -400,14 +401,12 @@ class Message(discord.Message):
     """A fixed :class:`discord.Message` optimized for components"""
     def __init__(self, *, state, channel, data):
         self.__slots__ = discord.Message.__slots__ + ("components", "supressed")
-        self._payload = data
-
-        self._state: discord.state.ConnectionState = None
+        self._state: ConnectionState = None
         discord.Message.__init__(self, state=state, channel=channel, data=data)
         self.components: List[Union[Button, LinkButton, SelectMenu]] = []
         """The components in the message
         
-        :type: List[]:class:`~Button` | :class:`~LinkButton` | :class:`SelectMenu`]
+        :type: List[:class:`~Button` | :class:`~LinkButton` | :class:`~SelectMenu`]
         """
         self.suppressed = False
         self._update_components(data)
@@ -542,6 +541,8 @@ class Message(discord.Message):
                 Whether to disable (``True``) or enable (``False``) als components; default True
         
         """
+        if len(self.components) == 0:
+            return
         fixed = []
         for x in self.components:
             x.disabled = disable

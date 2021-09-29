@@ -6,6 +6,8 @@ import discord
 from discord.errors import *
 
 import inspect
+import string
+from random import choice
 from enum import IntEnum
 from typing import Any, List, Union
 
@@ -197,7 +199,6 @@ class Component():
 class UseableComponent(Component):
     def __init__(self, component_type) -> None:
         Component.__init__(self, component_type)
-        self._custom_id = None
     @property
     def custom_id(self) -> str:
         """
@@ -220,10 +221,10 @@ class SelectMenu(UseableComponent):
 
     Parameters
     ----------
-    custom_id: :class:`str`
-        The custom_id for identifying the menu, max 100 characters
     options: List[:class:`~SelectOption`]
         A list of options to select from
+    custom_id: :class:`str`, optional
+        The custom_id for identifying the menu, max 100 characters
     min_values: :class:`int`, optional
         The minimum number of items that must be chosen; default ``1``, min 0, max 25
     max_values: :class:`int`, optional
@@ -235,13 +236,13 @@ class SelectMenu(UseableComponent):
     disabled: :class:`bool`, optional
         Whether the select menu should be disabled or not; default ``False``
     """
-    def __init__(self, custom_id, options, min_values=1, max_values=1, placeholder=None, default=None, disabled=False) -> None:
+    def __init__(self, options, custom_id=None, min_values=1, max_values=1, placeholder=None, default=None, disabled=False) -> None:
         """
         Creates a new ui select menu
 
         Example:
         ```py
-        SelectMenu(custom_id="my_id", options=[SelectOption(...)], min_values=2, placeholder="select something", default=0)
+        SelectMenu(options=[SelectOption(...)], custom_id="my_id", min_values=2, placeholder="select something", default=0)
         ```
         """
         UseableComponent.__init__(self, ComponentType.Select)
@@ -271,7 +272,7 @@ class SelectMenu(UseableComponent):
 
         :type: :class:`str` | :class:`None`
         """
-        self.custom_id = custom_id
+        self.custom_id = custom_id or [choice(string.ascii_letters) for _ in range(100)]
         self.disabled = disabled
         self.options = options
 
@@ -480,8 +481,9 @@ class Button(BaseButton, UseableComponent):
 
     Parameters
     ----------
-    custom_id: :class:`str`
+    custom_id: :class:`str`, optional
         A identifier for the button, max 100 characters
+            If no custom_id was passed, a random 100 character string will be generated
     label: :class:`str`, optional
         Text that appears on the button, max 80 characters; default \u200b ("empty" char)
     color: :class:`str` | :class:`int`, optional
@@ -501,7 +503,7 @@ class Button(BaseButton, UseableComponent):
     disabled: :class:`bool`, optional
         Whether the button is disabled; default False
     """
-    def __init__(self, custom_id, label="\u200b", color = "blurple", emoji=None, new_line=False, disabled=False) -> None:
+    def __init__(self, custom_id=None, label="\u200b", color = "blurple", emoji=None, new_line=False, disabled=False) -> None:
         """
         Creates a new ui-button
 
@@ -512,7 +514,7 @@ class Button(BaseButton, UseableComponent):
         """
         BaseButton.__init__(self, label, color, emoji, new_line, disabled)
         UseableComponent.__init__(self, self.component_type)
-        self.custom_id = custom_id
+        self.custom_id = custom_id or [choice(string.ascii_letters) for _ in range(100)]
     def __repr__(self) -> str:
         return f"<discord_ui.Button({self.custom_id}:{self.content})>"
     def copy(self) -> Button:

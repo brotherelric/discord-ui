@@ -156,10 +156,10 @@ ui = UI(client)
 @client.listen("on_message")
 async def on_message(message: discord.Message):
     if message.content == "!sel":
-        msg = await message.channel.send("you", components=[SelectMenu("custom_id", options=[
+        msg = await message.channel.send("you", components=[SelectMenu(options=[
             SelectOption("my_value", label="test", description="this is a test"),
             SelectOption("my_other_value", emoji="🤗", description="this is a test too")
-        ], max_values=2)])
+        ], "custom_id", max_values=2)])
         try:
             sel = await msg.wait_for("select", client, by=message.author, timeout=20)
             await sel.respond("you selected `" + str([x.content for x in sel.selected_options]) + "`")
