@@ -6,6 +6,7 @@ from .enums import ComponentType
 
 import discord
 from discord.ext import commands
+from discord.errors import InvalidArgument
 try:
     from discord.ext.commands.errors import * 
 except ImportError:
@@ -534,7 +535,7 @@ def context_command(type: Literal["user", 2, "message", 3], name=None, guild_ids
         elif type in ["message", 3]:
             return CogMessageCommand(callback, name, guild_ids=guild_ids, default_permission=default_permission, guild_permissions=guild_permissions)
         else:
-            raise discord.errors.InvalidArgument("Invalid context type! type has to be one of 'user', 1, 'message', 2!")
+            raise InvalidArgument("Invalid context type! type has to be one of 'user', 1, 'message', 2!")
     return wraper
 def listening_component(custom_id, messages=None, users=None, component_type: Literal['button', 'select']=None, check=lambda _ctx: True):
     """

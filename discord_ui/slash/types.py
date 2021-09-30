@@ -358,8 +358,11 @@ class BaseCommand():
                 raise NoAsyncCallback()
 
             callback_params = inspect.signature(callback).parameters
+            has_kwargs = 4 in [x.kind for x in list(callback_params.values())]
             if self.options is not None:
                 for op in self.options:
+                    if callback_params.get(op.name) is None and has_kwargs:
+                        continue
                     if callback_params.get(op.name) is None:
                         raise MissingOptionParameter(op.name)
                     param = callback_params[op.name]
