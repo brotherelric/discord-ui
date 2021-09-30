@@ -25,13 +25,13 @@ class ButtonStyle(BaseIntEnum):
             return s
         s = s.lower()
         if s in ("blurple", "primary"):
-            return cls.blurple
+            return cls.Blurple
         if s in ("grey", "gray", "secondary"):
-            return cls.grey
+            return cls.Grey
         if s in ("green", "succes"):
-            return cls.green
+            return cls.Green
         if s in ("red", "danger"):
-            return cls.red
+            return cls.Red
 
 class CommandType(BaseIntEnum):
     Slash       =              1
