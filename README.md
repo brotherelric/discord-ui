@@ -200,6 +200,25 @@ You can find more (and better) examples [here](https://github.com/discord-py-ui/
 # Changelog
 
 -   <details>
+    <summary>5.1.0</summary>
+    
+    ## **Fixed**
+    - disable_action_row
+    - disabling action row
+    
+    ## **Changed**
+    - Component custom ids are now optional, if no custom id is passed, a 100 character long random string will be used
+    - The order of SelectMenus init params are changed, custom_id is now after options
+    ```py
+    SelectMenu("my_custom_id", [options...here])
+    # is now
+    SelectMenu([options...here], "my_custom_id")
+    ```
+    - `ButtonStyle` value names changed: color names are now capitalized and `Danger` is now `Destructive
+
+    </details>
+
+-   <details>
     <summary>5.0.1</summary>
 
     ## **Fixed**

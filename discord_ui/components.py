@@ -590,11 +590,11 @@ class ButtonStyles(IntEnum):
     """
     A list of button styles (colors) in message components
     """
-    Primary     =     	 blurple        = 1
-    Secondary   =         grey          = 2
-    Succes      =        green          = 3
-    Danger      =         red           = 4
-    url                                 = 5
+    Blurple     =     Primary           = 1
+    Grey        =     Secondary         = 2
+    Green       =     Succes            = 3
+    Red         =     Destructive       = 4
+    url         =     Link              = 5
 
     def __str__(self) -> str:
         return self.name
