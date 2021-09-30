@@ -1,7 +1,7 @@
 from .slash.http import ModifiedSlashState
 from .errors import InvalidEvent, OutOfValidRange, WrongType
 from .slash.errors import AlreadyDeferred, EphemeralDeletion
-from .tools import MISSING, setup_logger, _none, get, _default
+from .tools import MISSING, get_index, setup_logger, _none, get, _default
 from .slash.types import ContextCommand, SlashCommand, SlashOption, SlashPermission, SlashSubcommand
 from .http import BetterRoute, jsonifyMessage, send_files
 from .components import ActionRow, Button, LinkButton, SelectMenu, SelectOption, UseableComponent, make_component
@@ -297,7 +297,7 @@ class SelectedMenu(Interaction, SelectMenu):
     def __init__(self, data, user, s, msg, client) -> None:
         Interaction.__init__(self, client._connection, data, user, msg)
         default = [i for i, o in enumerate(s.options) if o.default is True]
-        SelectMenu.__init__(self, s.custom_id, s.options, s.min_values, s.max_values, s.placeholder, default[0] if len(default) == 1 else None, s.disabled)
+        SelectMenu.__init__(self, s.options, s.custom_id, s.min_values, s.max_values, s.placeholder, default[0] if len(default) == 1 else None, s.disabled)
         
         self.bot: commands.Bot = client
         self.selected_options: List[SelectOption] = []
@@ -496,9 +496,24 @@ class Message(discord.Message):
         if delete_after is not MISSING:
             await self.delete(delay=delete_after)
 
-    async def disable_component(self, component_index, disabled=True):
+    async def disable_component(self, component_index=None, custom_id=None, disabled=True):
+        """Disables a single component
+        
+        Parameters
+        ----------
+        component_index: :class:`int`, optional
+            The list index of the target component; default None
+        custom_id: :class:`str`, optional
+            The custom_id of the target component; default None
+        disabled: :class:`bool`, optional
+            Whether the component should be disabled (``True``) or enabled (``False``); default True
+        
+        """
         comps = self.components
-        comps[component_index].disabled = disabled
+        if component_index is not None:
+            comps[component_index].disabled = disabled
+        elif custom_id is not None:
+            comps[get_index(self.components, custom_id, lambda x: x.custom_id)].disabled = disabled
         await self.edit(components=comps)
     async def disable_action_row(self, row, disable = True):
         """Disables an action row of components in the message
@@ -506,7 +521,9 @@ class Message(discord.Message):
         Parameters
         ----------
             row: :class:`int` |  :class:`range`
-                Which rows to disable, first row is ``0``; If row parameter is of type :class:`int`, the nth row will be disabled, if type is :class:`range`, the range is going to be iterated and all rows in the range will be disabled
+                Which rows to disable, first row is ``0``; 
+                If row parameter is of type :class:`int`, the n-th row will be disabled.
+                If type is :class:`range`, the range all rows in the range will be disabled
 
             disable: :class:`bool`, optional
                 Whether to disable (``True``) or enable (``False``) the components; default True
@@ -519,21 +536,19 @@ class Message(discord.Message):
         """
         comps = []
         if isinstance(row, range):
-            for i, _ in enumerate(self.action_rows):
-                if i >= len(self.action_rows) - 1 or i < 0:
+            for i, r in enumerate(self.action_rows):
+                if i >= len(self.action_rows) or i < 0:
                     raise OutOfValidRange("row[" + str(i) + "]", 0, len(self.action_rows) - 1)
-                for comp in self.action_rows[i]:
-                    if i in row:
-                        comp.disabled = disable
-                    comps.append(comp)
+                if i in row:
+                    r.disable(disable)
+                comps.append(r)
         else:
-            for i, _ in enumerate(self.action_rows):
-                if i >= len(self.action_rows) - 1 or i < 0:
+            for i, r in enumerate(self.action_rows):
+                if i >= len(self.action_rows) or i < 0:
                     raise OutOfValidRange("row", 0, len(self.action_rows) - 1)
-                for comp in self.action_rows[i]:
-                    if i == row:
-                        comp.disabled = disable
-                    comps.append(comp)
+                if i == row:
+                    r.disable(disable)
+                comps.append(r)
         await self.edit(components=comps)
 
     async def disable_components(self, disable = True):
@@ -554,12 +569,12 @@ class Message(discord.Message):
         await self.edit(components=fixed)
 
     @property
-    def action_rows(self):
+    def action_rows(self) -> List[ActionRow]:
         """The action rows in the message
 
-        :type: List[:class:`~Button` | :class:`LinkButton` | :class:`SelectMenu`]
+        :type: List[:class:`~ActionRow`]
         """
-        rows: List[List[Union[Button, LinkButton, SelectMenu]]] = []
+        rows = []
 
         c_row = []
         i = 0
@@ -570,7 +585,7 @@ class Message(discord.Message):
             c_row.append(x)
             i += 1
         if len(c_row) > 0:
-            rows.append(c_row) 
+            rows.append(ActionRow(c_row))
         return rows
 
     async def wait_for(self, event_name: Literal["select", "button", "component"], client, custom_id=None, by=None, check=lambda component: True, timeout=None) -> Union[PressedButton, SelectedMenu, ComponentContext]:

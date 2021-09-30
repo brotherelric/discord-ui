@@ -357,7 +357,7 @@ class Listener():
         listeners = self._get_listeners()
         listers = []
         for listener in listeners.get(interaction_component.custom_id, []):
-            if hasattr(self, 'target_users') and interaction_component.author.id in self.target_users:
+            if not interaction_component.author.id in self._target_users:
                 continue
             if listener.type == interaction_component.component_type:
                 if listener.target_values is not None:

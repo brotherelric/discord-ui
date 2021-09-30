@@ -166,7 +166,7 @@ class SelectOption():
         return payload
 
     @classmethod
-    def _fromData(cls, data) -> "SelectOption":
+    def _fromData(cls, data) -> SelectOption:
         """
         Initializes a new SelectOption from a dict
         
@@ -303,7 +303,7 @@ class SelectMenu(UseableComponent):
     
     @staticmethod
     def _fromData(data) -> SelectMenu:
-        return SelectMenu(data["custom_id"], data["options"], data.get("min_values"), data.get("max_values"), data.get("placeholder"), disabled=data.get("disabled", False))
+        return SelectMenu(data["options"], data["custom_id"], data.get("min_values"), data.get("max_values"), data.get("placeholder"), disabled=data.get("disabled", False))
     # region props
     @property
     def options(self) -> List[SelectOption]:
@@ -622,13 +622,8 @@ class ActionRow():
     Alternative to setting ``new_line`` in a full component list or putting the components in a list
         
     Only works for :class:`~Button` and :class:`~LinkButton`, because :class:`~SelectMenu` is always in a new line
-    
-    Parameters
-    ----------
-        disbaled: :class:`bool`, optional
-            Whether all components should be disabled; default False   
     """
-    def __init__(self, *items, disabled = False):
+    def __init__(self, *items):
         """
         Creates a new component list
 
@@ -639,13 +634,16 @@ class ActionRow():
         ActionRow([Button(...), Button(...)])
         ```
         """
-        self.items = items[0] if all(isinstance(i, list) for i in items) else items
+        self.items: List[Union[Button, LinkButton, SelectMenu]] = items[0] if all(isinstance(i, list) for i in items) else items
         """The componetns in the action row"""
         self.component_type = 1
-        self.disable(disabled)
         
     def disable(self, disable=True) -> ActionRow:
         for i, _ in enumerate(self.items):
+            if isinstance(self.items[i], list):
+                for j, _ in enumerate(self.items[i]):
+                    self.items[i][j].disabled = disable
+                continue
             self.items[i].disabled = disable
         return self
     def filter(self, check = lambda x: ...):
