@@ -272,7 +272,7 @@ class SelectMenu(UseableComponent):
 
         :type: :class:`str` | :class:`None`
         """
-        self.custom_id = custom_id or [choice(string.ascii_letters) for _ in range(100)]
+        self.custom_id = custom_id or ''.join([choice(string.ascii_letters) for _ in range(100)])
         self.disabled = disabled
         self.options = options
 

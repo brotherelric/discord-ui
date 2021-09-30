@@ -496,6 +496,10 @@ class Message(discord.Message):
         if delete_after is not MISSING:
             await self.delete(delay=delete_after)
 
+    async def disable_component(self, component_index, disabled=True):
+        comps = self.components
+        comps[component_index].disabled = disabled
+        await self.edit(components=comps)
     async def disable_action_row(self, row, disable = True):
         """Disables an action row of components in the message
         
