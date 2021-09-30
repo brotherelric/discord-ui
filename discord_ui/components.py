@@ -173,18 +173,18 @@ class SelectOption():
         return payload
 
     @classmethod
-    def _fromData(cls, data) -> SelectOption:
+    def _from_data(cls, data) -> SelectOption:
         """
         Initializes a new SelectOption from a dict
         
         Parameters
         ----------
-            data: :class:`dict`
-                The data to initialize from
+        data: :class:`dict`
+            The data to initialize from
         Returns
         -------
-            :class:`~SelectOption`
-                The new Option generated from the dict
+        :class:`~SelectOption`
+            The new Option generated from the dict
         
         """
         x = SelectOption(data["value"], data.get("label"), data.get("description"), data.get("emoji"))
@@ -628,13 +628,13 @@ class ActionRow():
         
         Parameters
         ----------
-            check: :class:`lambda`
-                What condition has to be True that the component will pass the filter
+        check: :class:`lambda`
+            What condition has to be True that the component will pass the filter
         
         Returns
         -------
-            :returns: The filtered components
-            :type: List[:class:`~Button` | :class:`~LinkButton`]
+        :returns: The filtered components
+        :type: List[:class:`~Button` | :class:`~LinkButton`]
         
         """
         return [x for x in self.items if check(x)]

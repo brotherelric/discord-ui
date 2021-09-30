@@ -42,19 +42,19 @@ def get_index(l: list, elem: Any, mapping = lambda x: x, default: int = -1) -> i
     
     Parameters
     ----------
-        l: :class:`List`
-            The list to get from
-        elem: :class:`Any`
-            The element that has to be found
-        mapping: :class:`function`
-            A function that will be applied to the current element that is checked, before comparing it to the target
-        default: :class:`Any`
-            The element that will be returned if nothing is found; default -1
+    l: :class:`List`
+        The list to get from
+    elem: :class:`Any`
+        The element that has to be found
+    mapping: :class:`function`
+        A function that will be applied to the current element that is checked, before comparing it to the target
+    default: :class:`Any`
+        The element that will be returned if nothing is found; default -1
 
     Returns
     -------
-        :returns: The found element
-        :type: :class:`Any`
+    :returns: The found element
+    :type: :class:`Any`
     
 
     Example:
@@ -75,19 +75,19 @@ def get(l: list, elem: Any = True, mapping = lambda x: True, default: Any = None
     
     Parameters
     ----------
-        l: :class:`List`
-            The list to get from
-        elem: :class:`Any`
-            The element that has to be found
-        mapping: :class:`function`
-            A function that will be applied to the current element that is checked, before comparing it to the target
-        default: :class:`Any`
-            The element that will be returned if nothing is found; default None
+    l: :class:`List`
+        The list to get from
+    elem: :class:`Any`
+        The element that has to be found
+    mapping: :class:`function`
+        A function that will be applied to the current element that is checked, before comparing it to the target
+    default: :class:`Any`
+        The element that will be returned if nothing is found; default None
 
     Returns
     -------
-        :returns: The found element
-        :type: :class:`Any`
+    :returns: The found element
+    :type: :class:`Any`
 
 
     Example:
@@ -109,23 +109,23 @@ def components_to_dict(*components) -> List[dict]:
     components: :class:`*args` | :class:`list`
         A list of components that should be converted.
         
-        Example
-        
-        .. code-block::
+    Example
+    
+    .. code-block::
 
-            # List of components with component rows (everything in [] defines that it will be in it's own component row)
-            components_to_dict(Button(...), [Button(...), Button(...)], SelectMenu(...), LinkButton)
-            # or
-            components_to_dict([Button(...), [LinkButton(...), Button(...)]])
+        # List of components with component rows (everything in [] defines that it will be in it's own component row)
+        components_to_dict(Button(...), [Button(...), Button(...)], SelectMenu(...), LinkButton)
+        # or
+        components_to_dict([Button(...), [LinkButton(...), Button(...)]])
 
     Raises
     ------
-        :raises: :class:`Exception` : Invalid Data was passed
+    :raises: :class:`Exception` : Invalid Data was passed
     
     Returns
     -------
-        :returns: The converted data
-        :type: List[:class:`dict`]
+    :returns: The converted data
+    :type: List[:class:`dict`]
 
 
     """

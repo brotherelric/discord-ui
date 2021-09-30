@@ -43,27 +43,27 @@ class Slash():
     
     Parameters
     ----------
-        client: :class:`commands.Bot`
-            The bot client
+    client: :class:`commands.Bot`
+        The bot client
 
-        parse_method: :class:`bool`, optional
-            How received option data should be treated; Default ``ParseMethod.AUTO``
+    parse_method: :class:`bool`, optional
+        How received option data should be treated; Default ``ParseMethod.AUTO``
 
-        delete_unused: :class:`bool`, optional
-            Whether the commands that are not registered by this slash extension should be deleted in the api; Default ``False``
+    delete_unused: :class:`bool`, optional
+        Whether the commands that are not registered by this slash extension should be deleted in the api; Default ``False``
 
-        sync_on_cog: :class:`bool`, optional
-            Whether the slashcommands should be updated whenever a new cog is added or removed; Default ``False``
+    sync_on_cog: :class:`bool`, optional
+        Whether the slashcommands should be updated whenever a new cog is added or removed; Default ``False``
 
-        wait_sync: :class:`float`, optional
-            How many seconds will be waited until the commands are going to be synchronized; Default ``1``
+    wait_sync: :class:`float`, optional
+        How many seconds will be waited until the commands are going to be synchronized; Default ``1``
 
-        auto_defer: Tuple[:class:`bool`, :class:`bool`]
-            Settings for the auto-defer; Default ``(True, False)``
+    auto_defer: Tuple[:class:`bool`, :class:`bool`]
+        Settings for the auto-defer; Default ``(True, False)``
 
-            ``[0]``: Whether interactions should be deferred automatically
+        ``[0]``: Whether interactions should be deferred automatically
 
-            ``[1]``: Whether the deferration should be hidden (True) or public (False)
+        ``[1]``: Whether the deferration should be hidden (True) or public (False)
 
     Example
     ------------------
@@ -356,13 +356,13 @@ class Slash():
         
         Parameters
         ----------
-            delete_unused: :class:`bool`, optional
-                Whether the unused command should be deleted from the api; default ``None``
+        delete_unused: :class:`bool`, optional
+            Whether the unused command should be deleted from the api; default ``None``
         
         Raises
         ------
-            :raises: :class:`InvalidArgument` : A slash command has an invalid guild_id
-            :raises: :class:`InvalidArgument` : A slash command has an invalid id specified in the guild_permissions
+        :raises: :class:`InvalidArgument` : A slash command has an invalid guild_id
+        :raises: :class:`InvalidArgument` : A slash command has an invalid id specified in the guild_permissions
         
         """
         delete_unused = delete_unused or self.delete_unused
@@ -536,13 +536,13 @@ class Slash():
         
         Parameters
         ----------
-            command: :class:`SlashCommand` | :class:`ContextCommand`
-                The command that should be added
+        command: :class:`SlashCommand` | :class:`ContextCommand`
+            The command that should be added
         
         Raises
         ------
-            :raises: :class:`InvalidArgument` : When a guild-id in ``guild_ids`` is not a valid server where the bot client is in it
-            :raises: :class:`InvalidArgument` : When a guild-id in ``guild_permissions`` is not a valid server where the bot client is in it
+        :raises: :class:`InvalidArgument` : When a guild-id in ``guild_ids`` is not a valid server where the bot client is in it
+        :raises: :class:`InvalidArgument` : When a guild-id in ``guild_permissions`` is not a valid server where the bot client is in it
         
         """
         if command.guild_ids is not None:
@@ -569,8 +569,8 @@ class Slash():
         
         Parameters
         ----------
-            base: :class:`~SlashCommand`
-                The slash command to add
+        base: :class:`~SlashCommand`
+            The slash command to add
         
         """
         api_command = await self._get_global_api_command(base.name, base._json["type"])
@@ -585,10 +585,10 @@ class Slash():
         
         Parameters
         ----------
-            base: :class:`~SlashCommand`
-                The guild slash command which should be added
-            guild_id: :class:`str`
-                The ID of the guild where the command is going to be added
+        base: :class:`~SlashCommand`
+            The guild slash command which should be added
+        guild_id: :class:`str`
+            The ID of the guild where the command is going to be added
         
         """
         target_guild = guild_id
@@ -654,31 +654,31 @@ class Slash():
         
         Parameters
         ----------
-            old_name: :class:`str`
-                The original name of the command
-            typ: Literal[``'slash'``, ``1`` | ``'user'``, ``2`` | ``'message'``, ``3``], optional
-                The type of the command; default ``1`` (slashcommand)
-            guild_id: :class:`[type]`, optional
-                The guild id of the command; default ``MISSING``
-            name: :class:`str`, optional
-                The new name of the command
-            description: :class:`str`, optional
-                The new description of the command
-            options: List[:class:`~SlashOption`], optional
-                The new
-            guild_ids: List[:class:`int` | :class:`str`], optional
-                The list of new guild_ids where the command is available
-            default_permission: :class:`bool` | :class:`discord.Permissions`, optional
-                The new default permissions for the command
-            guild_permissions: :class:`dict`, optional
-                The new guild permissions for the command
-            callback: :class:`function`, optional, optional
-                The new command callback; default ``MISSING``
+        old_name: :class:`str`
+            The original name of the command
+        typ: Literal[``'slash'``, ``1`` | ``'user'``, ``2`` | ``'message'``, ``3``], optional
+            The type of the command; default ``1`` (slashcommand)
+        guild_id: :class:`[type]`, optional
+            The guild id of the command; default ``MISSING``
+        name: :class:`str`, optional
+            The new name of the command
+        description: :class:`str`, optional
+            The new description of the command
+        options: List[:class:`~SlashOption`], optional
+            The new
+        guild_ids: List[:class:`int` | :class:`str`], optional
+            The list of new guild_ids where the command is available
+        default_permission: :class:`bool` | :class:`discord.Permissions`, optional
+            The new default permissions for the command
+        guild_permissions: :class:`dict`, optional
+            The new guild permissions for the command
+        callback: :class:`function`, optional, optional
+            The new command callback; default ``MISSING``
         
         Raises
         ------
-            :raises: :class:`NotFound` : When a command in the internal cache doesn't exsist
-            :raises: :class:`NotFound` : When a command in the api doesn't exist
+        :raises: :class:`NotFound` : When a command in the internal cache doesn't exsist
+        :raises: :class:`NotFound` : When a command in the api doesn't exist
         
         """
         typ = CommandType.from_string(typ).value
@@ -734,31 +734,31 @@ class Slash():
         
         Parameters
         ----------
-            base_names: List[:class:`str`] | :class:`str`
-                The base_names of the command
-            old_name: :class:`str`
-                The original name of the command
-            guild_id: :class:`[type]`, optional
-                The guild id of the command where the changes should be applied; default ``MISSING``
-            name: :class:`str`, optional
-                The new name of the command
-            description: :class:`str`, optional
-                The new description of the command
-            options: List[:class:`~SlashOption`], optional
-                The new options for the command
-            guild_ids: List[:class:`int` | :class:`str`], optional
-                The list of new guild_ids where the command is available
-            default_permission: :class:`bool` | :class:`discord.Permissions`, optional
-                The new default permissions for the command
-            guild_permissions: :class:`dict`, optional
-                The new guild permissions for the command
-            callback: :class:`function`, optional, optional
-                The new command callback; default ``MISSING``
-        
+        base_names: List[:class:`str`] | :class:`str`
+            The base_names of the command
+        old_name: :class:`str`
+            The original name of the command
+        guild_id: :class:`[type]`, optional
+            The guild id of the command where the changes should be applied; default ``MISSING``
+        name: :class:`str`, optional
+            The new name of the command
+        description: :class:`str`, optional
+            The new description of the command
+        options: List[:class:`~SlashOption`], optional
+            The new options for the command
+        guild_ids: List[:class:`int` | :class:`str`], optional
+            The list of new guild_ids where the command is available
+        default_permission: :class:`bool` | :class:`discord.Permissions`, optional
+            The new default permissions for the command
+        guild_permissions: :class:`dict`, optional
+            The new guild permissions for the command
+        callback: :class:`function`, optional, optional
+            The new command callback; default ``MISSING``
+    
         Raises
         ------
-            :raises: :class:`NotFound` : When a command in the internal cache doesn't exsist
-            :raises: :class:`NotFound` : When a command in the api doesn't exist
+        :raises: :class:`NotFound` : When a command in the internal cache doesn't exsist
+        :raises: :class:`NotFound` : When a command in the api doesn't exist
         
         """
         if isinstance(base_names, str):
@@ -913,8 +913,8 @@ class Slash():
 
         Parameters
         ----------
-            guild_id: :class:`str`
-                The id of the guild where all commands are going to be deleted
+        guild_id: :class:`str`
+            The id of the guild where all commands are going to be deleted
         
         """
         await self.http.delete_guild_commands(guild_id)
@@ -977,39 +977,38 @@ class Slash():
 
         Parameters
         ----------
-            name: :class:`str`, optional
-                1-32 characters long name; default MISSING
-                
-                .. note::
-
-                    The name will be corrected automaticaly (spaces will be replaced with "-" and the name will be lowercased)
+        name: :class:`str`, optional
+            1-32 characters long name; default MISSING
             
-            description: :class:`str`, optional
-                1-100 character description of the command; default the command name
-            options: List[:class:`~SlashOptions`], optional
-                The parameters for the command; default MISSING
-            choices: List[:class:`tuple`] | List[:class:`dict`], optional
-                Choices for string and int types for the user to pick from; default MISSING
-            guild_ids: List[:class:`str` | :class:`int`], optional
-                A list of guild ids where the command is available; default MISSING
-            default_permission: :class:`bool` | :class:`discord.Permissions`, optional
-                Permissions that a user needs to have in order to execute the command, default ``True``.
-                    If a bool was passed, it will indicate whether all users can use the command (``True``) or not (``False``)
-            guild_permissions: Dict[``guild_id``: :class:`~SlashPermission`]
-                The permissions for the command in guilds
-                    Format: ``{"guild_id": SlashPermission}``
+            .. note::
+
+                The name will be corrected automaticaly (spaces will be replaced with "-" and the name will be lowercased)
+        
+        description: :class:`str`, optional
+            1-100 character description of the command; default the command name
+        options: List[:class:`~SlashOptions`], optional
+            The parameters for the command; default MISSING
+        choices: List[:class:`tuple`] | List[:class:`dict`], optional
+            Choices for string and int types for the user to pick from; default MISSING
+        guild_ids: List[:class:`str` | :class:`int`], optional
+            A list of guild ids where the command is available; default MISSING
+        default_permission: :class:`bool` | :class:`discord.Permissions`, optional
+            Permissions that a user needs to have in order to execute the command, default ``True``.
+                If a bool was passed, it will indicate whether all users can use the command (``True``) or not (``False``)
+        guild_permissions: Dict[``guild_id``: :class:`~SlashPermission`]
+            The permissions for the command in guilds
+                Format: ``{"guild_id": SlashPermission}``
 
         Decorator
         ---------
+        callback: :class:`method(ctx)`
+            The asynchron function that will be called if the command was used
+                ctx: :class:`~SlashedCommand`
+                    The used slash command
 
-            callback: :class:`method(ctx)`
-                The asynchron function that will be called if the command was used
-                    ctx: :class:`~SlashedCommand`
-                        The used slash command
+                .. note::
 
-                    .. note::
-
-                        ``ctx`` is just an example name, you can use whatever you want for that
+                    ``ctx`` is just an example name, you can use whatever you want for that
 
         Example
         -------
@@ -1061,45 +1060,44 @@ class Slash():
 
         Parameters
         ----------
-            base_names: List[:class:`str`] | :class:`str`
-                The names of the parent bases, currently limited to 2
-                    If you want to make a subcommand (``/base name``), you have to use a str instead of a list
-            name: :class:`str`, optional
-                1-32 characters long name; default MISSING
-                
-                .. note::
-
-                    The name will be corrected automaticaly (spaces will be replaced with "-" and the name will be lowercased)
-            description: :class:`str`, optional
-                1-100 character description of the command; default the command name
-            options: List[:class:`~SlashOptions`], optional
-                The parameters for the command; default MISSING
-            choices: List[:class:`tuple`] | List[:class:`dict`], optional
-                Choices for string and int types for the user to pick from; default MISSING
-            guild_ids: List[:class:`str` | :class:`int`], optional
-                A list of guild ids where the command is available; default MISSING
-            default_permission: :class:`bool` | :class:`discord.Permissions`, optional
-                Permissions that a user needs to have in order to execute the command, default ``True``. 
-                    If a bool was passed, it will indicate whether all users can use the command (``True``) or not (``False``)
-            guild_permissions: Dict[``guild_id``: :class:`~SlashPermission`]
-                The permissions for the command in guilds
-                    Format: ``{"guild_id": SlashPermission}``
-
+        base_names: List[:class:`str`] | :class:`str`
+            The names of the parent bases, currently limited to 2
+                If you want to make a subcommand (``/base name``), you have to use a str instead of a list
+        name: :class:`str`, optional
+            1-32 characters long name; default MISSING
+            
             .. note::
 
-                Permissions will be the same for every subcommand with the same base
+                The name will be corrected automaticaly (spaces will be replaced with "-" and the name will be lowercased)
+        description: :class:`str`, optional
+            1-100 character description of the command; default the command name
+        options: List[:class:`~SlashOptions`], optional
+            The parameters for the command; default MISSING
+        choices: List[:class:`tuple`] | List[:class:`dict`], optional
+            Choices for string and int types for the user to pick from; default MISSING
+        guild_ids: List[:class:`str` | :class:`int`], optional
+            A list of guild ids where the command is available; default MISSING
+        default_permission: :class:`bool` | :class:`discord.Permissions`, optional
+            Permissions that a user needs to have in order to execute the command, default ``True``. 
+                If a bool was passed, it will indicate whether all users can use the command (``True``) or not (``False``)
+        guild_permissions: Dict[``guild_id``: :class:`~SlashPermission`]
+            The permissions for the command in guilds
+                Format: ``{"guild_id": SlashPermission}``
+
+        .. note::
+
+            Permissions will be the same for every subcommand with the same base
 
         Decorator
         ---------
+        callback: :class:`method(ctx)`
+            The asynchron function that will be called if the command was used
+                ctx: :class:`~SlashedSubCommand`
+                    The used slash command
 
-            callback: :class:`method(ctx)`
-                The asynchron function that will be called if the command was used
-                    ctx: :class:`~SlashedSubCommand`
-                        The used slash command
+                .. note::
 
-                    .. note::
-
-                        ``ctx`` is just an example name, you can use whatever you want for that
+                    ``ctx`` is just an example name, you can use whatever you want for that
         
         Example
         -------
@@ -1214,30 +1212,29 @@ class Slash():
 
         Parameters
         ----------
-            name: :class:`str`, optional
-                The name of the command; default MISSING
-            guild_ids: List[:class:`str` | :class:`int`]
-                A list of guilds where the command can be used
-            default_permission: :class:`bool` | :class:`discord.Permissions`, optional
-                Permissions that a user needs to have in order to execute the command, default ``True``.
-                    If a bool was passed, it will indicate whether all users can use the command (``True``) or not (``False``)
-            guild_permissions: Dict[:class:`SlashPermission`], optional
-                Special permissions for guilds; default MISSING
+        name: :class:`str`, optional
+            The name of the command; default MISSING
+        guild_ids: List[:class:`str` | :class:`int`]
+            A list of guilds where the command can be used
+        default_permission: :class:`bool` | :class:`discord.Permissions`, optional
+            Permissions that a user needs to have in order to execute the command, default ``True``.
+                If a bool was passed, it will indicate whether all users can use the command (``True``) or not (``False``)
+        guild_permissions: Dict[:class:`SlashPermission`], optional
+            Special permissions for guilds; default MISSING
 
         Decorator
         ---------
+        callback: :class:`method(ctx, message)`
+            The asynchron function that will be called if the command was used
+                ctx: :class:`~SlashedSubCommand`
+                    The used slash command
+                message: :class:`~Message`
+                    The message on which the command was used
+            
+                .. note::
 
-            callback: :class:`method(ctx, message)`
-                The asynchron function that will be called if the command was used
-                    ctx: :class:`~SlashedSubCommand`
-                        The used slash command
-                    message: :class:`~Message`
-                        The message on which the command was used
-              
-                    .. note::
-
-                        ``ctx`` and ``message`` are just example names, you can use whatever you want for that
-        
+                    ``ctx`` and ``message`` are just example names, you can use whatever you want for that
+    
         Example
         -------
         
@@ -1261,19 +1258,19 @@ class Components():
     
     Parameters
     -----------
-        client: :class:`discord.Client`
-            The main discord client
+    client: :class:`discord.Client`
+        The main discord client
 
-        override_dpy: :class:`bool`
-            Whether some of discord.py's default methods should be overriden with this libary's; Default ``True``
-                For more information see https://github.com/discord-py-ui/discord-ui/blob/main/discord_ui/override.py
+    override_dpy: :class:`bool`
+        Whether some of discord.py's default methods should be overriden with this libary's; Default ``True``
+            For more information see https://github.com/discord-py-ui/discord-ui/blob/main/discord_ui/override.py
 
-        auto_defer: Tuple[:class:`bool`, :class:`bool`]
-            Settings for the auto-defer; Default ``(True, False)``
+    auto_defer: Tuple[:class:`bool`, :class:`bool`]
+        Settings for the auto-defer; Default ``(True, False)``
 
-            ``[0]``: Whether interactions should be deferred automatically
+        ``[0]``: Whether interactions should be deferred automatically
 
-            ``[1]``: Whether the deferration should be hidden (True) or public (False)
+        ``[1]``: Whether the deferration should be hidden (True) or public (False)
 
     Example
     ------------------
@@ -1488,28 +1485,28 @@ class Components():
         
         Parameters
         ----------
-            webhook: :class:`discord.Webhook`
-                The webhook which will send the message
-            content: :class:`str`, optional
-                the message contents (up to 2000 characters); default None
-            wait: :class:`bool`, optional
-                if `True`, waits for server confirmation of message send before response, and returns the created message body; default False
-            username: :class:`str`, optional
-                override the default username of the webhook; default None
-            avatar_url: :class:`str`, optional
-                override the default avatar of the webhook; default None
-            tts: :class:`bool`, optional
-                true if this is a TTS message; default False
-            files: :class:`discord.File`
-                A list of files which will be sent as attachment
-            embed: :class:`discord.Embed`
-                Embed rich content, optional
-            embeds: List[:class:`discord.Embed`], optional
-                embedded rich content; default None
-            allowed_mentions: :class:`discord.AllowedMentions`, optional
-                allowed mentions for the message; default None
-            components: List[:class:`~Button` | :class:`~LinkButton` | :class:`~SelectMenu`], optional
-                the message components to include with the message; default None
+        webhook: :class:`discord.Webhook`
+            The webhook which will send the message
+        content: :class:`str`, optional
+            the message contents (up to 2000 characters); default None
+        wait: :class:`bool`, optional
+            if `True`, waits for server confirmation of message send before response, and returns the created message body; default False
+        username: :class:`str`, optional
+            override the default username of the webhook; default None
+        avatar_url: :class:`str`, optional
+            override the default avatar of the webhook; default None
+        tts: :class:`bool`, optional
+            true if this is a TTS message; default False
+        files: :class:`discord.File`
+            A list of files which will be sent as attachment
+        embed: :class:`discord.Embed`
+            Embed rich content, optional
+        embeds: List[:class:`discord.Embed`], optional
+            embedded rich content; default None
+        allowed_mentions: :class:`discord.AllowedMentions`, optional
+            allowed mentions for the message; default None
+        components: List[:class:`~Button` | :class:`~LinkButton` | :class:`~SelectMenu`], optional
+            the message components to include with the message; default None
         
         Returns
         -------
@@ -1531,17 +1528,17 @@ class Components():
 
         Parameters
         ----------
-            custom_id: :class:`str`
-                The custom_id of the components to listen to
-            messages: List[:class:`discord.Message` | :class:`int` :class:`str`], Optional
-                A list of messages or message ids to filter the listening component
-            users: List[:class:`discord.User` | :class:`discord.Member` | :class:`int` | :class:`str`], Optional
-                A list of users or user ids to filter
-            omponent_type: Literal[``'button'`` | ``'select'``]
-                What type the used component has to be of (select: SelectMenu, button: Button)
-            check: :class:`function`, Optional
-                A function that has to return True in order to invoke the listening component
-                    The check function takes to parameters, the component and the message
+        custom_id: :class:`str`
+            The custom_id of the components to listen to
+        messages: List[:class:`discord.Message` | :class:`int` :class:`str`], Optional
+            A list of messages or message ids to filter the listening component
+        users: List[:class:`discord.User` | :class:`discord.Member` | :class:`int` | :class:`str`], Optional
+            A list of users or user ids to filter
+        component_type: Literal[``'button'`` | ``'select'``]
+            What type the used component has to be of (select: SelectMenu, button: Button)
+        check: :class:`function`, Optional
+            A function that has to return True in order to invoke the listening component
+                The check function takes to parameters, the component and the message
 
         Decorator
         ---------
@@ -1575,20 +1572,19 @@ class Components():
 
         Parameters
         ----------
-            callback: :class:`function`
-                The callback function that will be called when the component was received
-            custom_id: :class:`str`
-                The custom_id of the components to listen to
-            messages: List[:class:`discord.Message` | :class:`int` :class:`str`], Optional
-                A list of messages or message ids to filter the listening component
-            users: List[:class:`discord.User` | :class:`discord.Member` | :class:`int` | :class:`str`], Optional
-                A list of users or user ids to filter
-            component_type: :class:`str` | :class:`int`
-                The type of which the component has to be
-            check: :class:`function`, Optional
-                A function that has to return True in order to invoke the listening component
-                    The check function takes to parameters, the component and the message
-
+        callback: :class:`function`
+            The callback function that will be called when the component was received
+        custom_id: :class:`str`
+            The custom_id of the components to listen to
+        messages: List[:class:`discord.Message` | :class:`int` :class:`str`], Optional
+            A list of messages or message ids to filter the listening component
+        users: List[:class:`discord.User` | :class:`discord.Member` | :class:`int` | :class:`str`], Optional
+            A list of users or user ids to filter
+        component_type: :class:`str` | :class:`int`
+            The type of which the component has to be
+        check: :class:`function`, Optional
+            A function that has to return True in order to invoke the listening component
+                The check function takes to parameters, the component and the message
         """
         if not inspect.iscoroutinefunction(callback):
             raise NoAsyncCallback()
@@ -1604,8 +1600,8 @@ class Components():
         
         Parameters
         ----------
-            custom_id: :class:`str`
-                The custom_id for the listening component
+        custom_id: :class:`str`
+            The custom_id for the listening component
         
         """
         if self.listening_components.get(custom_id) is not None:
@@ -1616,8 +1612,8 @@ class Components():
         
         Parameters
         ----------
-            listening_component: :class:`ListeningComponent`
-                The listening component which should be removed
+        listening_component: :class:`ListeningComponent`
+            The listening component which should be removed
         
         """
         with contextlib.supress(KeyError): 
@@ -1663,37 +1659,37 @@ class UI():
         
         Parameters
         ----------
-            client: :class:`discord.ext.commands.Bot`
-                The discord bot client
+        client: :class:`discord.ext.commands.Bot`
+            The discord bot client
 
-            override_dpy: :class:`bool`
-                Whether some of discord.py's default methods should be overriden with this libary's; Default ``True``
-                    For more information see https://github.com/discord-py-ui/discord-ui/blob/main/discord_ui/override.py
+        override_dpy: :class:`bool`
+            Whether some of discord.py's default methods should be overriden with this libary's; Default ``True``
+                For more information see https://github.com/discord-py-ui/discord-ui/blob/main/discord_ui/override.py
 
-            slash_options: :class:`dict`, optional
-                Settings for the slash command part; Default `{parse_method: ParseMethod.AUTO, delete_unused: False, wait_sync: 1}`
-                
-                ``parse_method``: :class:`int`, optional
-                    How the received interaction argument data should be treated; Default ``ParseMethod.AUTO``
+        slash_options: :class:`dict`, optional
+            Settings for the slash command part; Default `{parse_method: ParseMethod.AUTO, delete_unused: False, wait_sync: 1}`
+            
+            ``parse_method``: :class:`int`, optional
+                How the received interaction argument data should be treated; Default ``ParseMethod.AUTO``
 
-                ``auto_sync``: :class:`bool`, optional
-                    Whether the libary should sync the slash commands automatically; Default ``True``
+            ``auto_sync``: :class:`bool`, optional
+                Whether the libary should sync the slash commands automatically; Default ``True``
 
-                ``delete_unused``: :class:`bool`, optional
-                    Whether the commands that are not registered by this slash ui should be deleted in the api; Default ``False``
+            ``delete_unused``: :class:`bool`, optional
+                Whether the commands that are not registered by this slash ui should be deleted in the api; Default ``False``
 
-                ``sync_on_cog``: :class:`bool`, optional
-                    Whether the slashcommands should be updated whenever a new cog is added or removed; Default ``False``
+            ``sync_on_cog``: :class:`bool`, optional
+                Whether the slashcommands should be updated whenever a new cog is added or removed; Default ``False``
 
-                ``wait_sync``: :class:`float`, optional
-                    How many seconds will be waited until the commands are going to be synchronized; Default ``1``
+            ``wait_sync``: :class:`float`, optional
+                How many seconds will be waited until the commands are going to be synchronized; Default ``1``
 
-        auto_defer: Tuple[:class:`bool`, :class:`bool`]
-            Settings for the auto-defer; Default ``(True, False)``
+    auto_defer: Tuple[:class:`bool`, :class:`bool`]
+        Settings for the auto-defer; Default ``(True, False)``
 
-            ``[0]``: Whether interactions should be deferred automatically
+        ``[0]``: Whether interactions should be deferred automatically
 
-            ``[1]``: Whether the deferration should be hidden (True) or public (False)
+        ``[1]``: Whether the deferration should be hidden (True) or public (False)
     """
     def __init__(self, client, override_dpy=True, slash_options = {"parse_method": ParseMethod.AUTO, "auto_sync": True, "delete_unused": False, "sync_on_cog": True, "wait_sync": 1}, auto_defer = False) -> None:
         """

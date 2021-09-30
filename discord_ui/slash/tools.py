@@ -195,10 +195,10 @@ def create_choice(name, value) -> dict:
     
     Parameters
     ----------
-        name: :class:`str`
-            The name of the choice
-        value: :class:`Any`
-            The value that will be received when the user selected this choice
+    name: :class:`str`
+        The name of the choice
+    value: :class:`Any`
+        The value that will be received when the user selected this choice
     
     Returns
     -------

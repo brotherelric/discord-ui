@@ -93,8 +93,8 @@ class Interaction():
         
         Parameters
         ----------
-            hidden: :class:`bool`, optional
-                Whether the loading thing should be only visible to the user; default False.
+        hidden: :class:`bool`, optional
+            Whether the loading thing should be only visible to the user; default False.
         
         """
         if self.deferred:
@@ -377,7 +377,6 @@ async def getMessage(state: discord.state.ConnectionState, data, response=True):
 
     Parameters
     -----------------
-
     state: :class:`discord.state.ConnectionState`
         The discord bot client
     data: :class:`dict`
@@ -529,18 +528,18 @@ class Message(discord.Message):
         
         Parameters
         ----------
-            row: :class:`int` |  :class:`range`
-                Which rows to disable, first row is ``0``; 
-                If row parameter is of type :class:`int`, the n-th row will be disabled.
-                If type is :class:`range`, the range all rows in the range will be disabled
+        row: :class:`int` |  :class:`range`
+            Which rows to disable, first row is ``0``; 
+            If row parameter is of type :class:`int`, the n-th row will be disabled.
+            If type is :class:`range`, the range all rows in the range will be disabled
 
-            disable: :class:`bool`, optional
-                Whether to disable (``True``) or enable (``False``) the components; default True
+        disable: :class:`bool`, optional
+            Whether to disable (``True``) or enable (``False``) the components; default True
 
         Raises
         ------
-            :raises: :class:`discord_ui.errors.OutOfValidRange` : The specified range was out of the possible range of the component rows 
-            :raises: :class:`discord_ui.errors.OutOfValidRange` : The specified row was out of the possible range of the component rows
+        :raises: :class:`discord_ui.errors.OutOfValidRange` : The specified range was out of the possible range of the component rows 
+        :raises: :class:`discord_ui.errors.OutOfValidRange` : The specified row was out of the possible range of the component rows
         
         """
         comps = []
@@ -565,8 +564,8 @@ class Message(discord.Message):
         
         Parameters
         ----------
-            disable: :class:`bool`, optional
-                Whether to disable (``True``) or enable (``False``) als components; default True
+        disable: :class:`bool`, optional
+            Whether to disable (``True``) or enable (``False``) als components; default True
         
         """
         if len(self.components) == 0:
@@ -602,34 +601,34 @@ class Message(discord.Message):
 
         Parameters
         -----------
-            event_name: :class:`str`
-                The name of the event which will be awaited [``"select"`` | ``"button"`` | ``"component"``]
-                
-                .. note::
+        event_name: :class:`str`
+            The name of the event which will be awaited [``"select"`` | ``"button"`` | ``"component"``]
+            
+            .. note::
 
-                    ``event_name`` must be ``select`` for a select menu selection, ``button`` for a button press and ``component`` for any component
+                ``event_name`` must be ``select`` for a select menu selection, ``button`` for a button press and ``component`` for any component
 
-            client: :class:`discord.ext.commands.Bot`
-                The discord client
-            custom_id: :class:`str`, Optional
-                Filters the waiting for a custom_id
-            by: :class:`discord.User` | :class:`discord.Member` | :class:`int` | :class:`str`, Optional
-                The user or the user id by that has to create the component interaction
-            check: :class:`function`, Optional
-                A check that has to return True in order to break from the event and return the received component
-                    The function takes the received component as the parameter
-            timeout: :class:`float`, Optional
-                After how many seconds the waiting should be canceled. 
-                Throws an :class:`asyncio.TimeoutError` Exception
+        client: :class:`discord.ext.commands.Bot`
+            The discord client
+        custom_id: :class:`str`, Optional
+            Filters the waiting for a custom_id
+        by: :class:`discord.User` | :class:`discord.Member` | :class:`int` | :class:`str`, Optional
+            The user or the user id by that has to create the component interaction
+        check: :class:`function`, Optional
+            A check that has to return True in order to break from the event and return the received component
+                The function takes the received component as the parameter
+        timeout: :class:`float`, Optional
+            After how many seconds the waiting should be canceled. 
+            Throws an :class:`asyncio.TimeoutError` Exception
 
         Raises
         ------
-            :raises: :class:`discord_ui.errors.InvalidEvent` : The event name passed was invalid 
+        :raises: :class:`discord_ui.errors.InvalidEvent` : The event name passed was invalid 
 
         Returns
         ----------
-            :returns: The component that was waited for
-            :type: :class:`~PressedButton` | :class:`~SelectedMenu`
+        :returns: The component that was waited for
+        :type: :class:`~PressedButton` | :class:`~SelectedMenu`
 
         Example
         ---------
@@ -732,20 +731,20 @@ class EphemeralResponseMessage(Message):
         
         Parameters
         ----------
-            token: :class:`str`
-                The token of the interaction with wich this ephemeral message was sent
-            fields: :class:`kwargs`
-                The fields to edit (ex. `content="...", embed=..., attachments=[...]`)
+        token: :class:`str`
+            The token of the interaction with wich this ephemeral message was sent
+        fields: :class:`kwargs`
+            The fields to edit (ex. `content="...", embed=..., attachments=[...]`)
 
-            Example
+        Example
 
-            .. code-block::
+        .. code-block::
 
-                async def testing(ctx):
-                    msg = await ctx.send("hello hidden world", components=[Button("test")])
-                    btn = await msg.wait_for("button", client)
-                    await btn.message.edit(ctx.token, content="edited", components=None)
-        
+            async def testing(ctx):
+                msg = await ctx.send("hello hidden world", components=[Button("test")])
+                btn = await msg.wait_for("button", client)
+                await btn.message.edit(ctx.token, content="edited", components=None)
+    
         """
         route = BetterRoute("PATCH", f"/webhooks/{self.interaction.application_id}/{token}/messages/{self.id}")
         self._update(await self._state.http.request(route, json=get_message_payload(*args, **fields)))
@@ -757,8 +756,8 @@ class EphemeralResponseMessage(Message):
         
         Parameters
         ----------
-            disable: :class:`bool`, optional
-                Whether to disable (``True``) or enable (``False``) als components; default True
+        disable: :class:`bool`, optional
+            Whether to disable (``True``) or enable (``False``) als components; default True
         
         """
         fixed = []
