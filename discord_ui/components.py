@@ -309,7 +309,7 @@ class SelectMenu(UseableComponent):
         return f"<discord_ui.SelectMenu(custom_id={self.custom_id}, options={self.options})>"
     
     @staticmethod
-    def _fromData(data) -> SelectMenu:
+    def _from_data(data) -> SelectMenu:
         return SelectMenu(data["options"], data["custom_id"], data.get("min_values"), data.get("max_values"), data.get("placeholder"), disabled=data.get("disabled", False))
     # region props
     @property
@@ -319,7 +319,7 @@ class SelectMenu(UseableComponent):
 
         :type: List[:class:`~SelectOption`]
         """
-        return [SelectOption._fromData(x) for x in self._options]
+        return [SelectOption._from_data(x) for x in self._options]
     @options.setter
     def options(self, value: List[SelectOption]):
         if isinstance(value, list):
@@ -528,7 +528,7 @@ class Button(BaseButton, UseableComponent):
         return Button(self.custom_id, self.label, self.color, self.emoji, self.new_line, self.disabled)
 
     @classmethod
-    def _fromData(cls, data, new_line=False) -> Button:
+    def _from_data(cls, data, new_line=False) -> Button:
         """
         Returns a new button initialized from api response data
 
@@ -589,7 +589,7 @@ class LinkButton(BaseButton):
         self._url = str(val)
 
     @classmethod
-    def _fromData(cls, data, new_line=False) -> LinkButton:
+    def _from_data(cls, data, new_line=False) -> LinkButton:
         return LinkButton(data["url"], data.get("label"), data.get("emoji"), new_line, data.get("disabled", False))
 
 
@@ -643,9 +643,9 @@ class ActionRow():
 def make_component(data, new_line = False):
     if ComponentType(data["type"]) == ComponentType.Button:
         if data["style"] == ButtonStyle.URL:
-            return LinkButton._fromData(data, new_line)
-        return Button._fromData(data, new_line)
+            return LinkButton._from_data(data, new_line)
+        return Button._from_data(data, new_line)
     if ComponentType(data["type"]) is ComponentType.Select:
-        return SelectMenu._fromData(data)
+        return SelectMenu._from_data(data)
     # if data["type"] == ComponentType.ACTION_ROW:
-        # return ActionRow._fromData(data)
+        # return ActionRow._from_data(data)
