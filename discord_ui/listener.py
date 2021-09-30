@@ -271,6 +271,7 @@ class Listener():
         """The target message"""
     def __init_subclass__(cls) -> None:
         cls.__listeners__ = []
+        cls._on_error = None
 
     @property
     def target_users(self) -> List[int]:
@@ -279,8 +280,7 @@ class Listener():
     @target_users.setter
     def target_users(self, value):
         self._target_users = [int(getattr(x, 'id', x)) for x in value]
-
-
+    
     @staticmethod
     def button(custom_id=None):
         """A decorator that will setup a callback for a button
@@ -373,7 +373,7 @@ class Listener():
         return listers
    
     def to_components(self):
-        return self.components
+            return self.components
 
     def _stop(self):
         del self._state._component_listeners[self._target_message_id]
@@ -387,7 +387,7 @@ class Listener():
         # region removal
         loop = asyncio.get_event_loop()
         if getattr(self, 'timeout', None) is not None:
-                loop.call_later(self.timeout, self._stop)
+            loop.call_later(self.timeout, self._stop)
     def attach_me_to(self, message):
         """Attaches this listener to a message after it was sent
         

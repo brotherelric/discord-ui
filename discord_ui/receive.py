@@ -2,8 +2,8 @@ from .slash.http import ModifiedSlashState
 from .errors import InvalidEvent, OutOfValidRange, WrongType
 from .slash.errors import AlreadyDeferred, EphemeralDeletion
 from .tools import MISSING, get_index, setup_logger, _none, get, _default
-from .slash.types import ContextCommand, SlashCommand, SlashOption, SlashPermission, SlashSubcommand
-from .http import BetterRoute, jsonifyMessage, send_files
+from .slash.types import ContextCommand, SlashCommand, SlashPermission, SlashSubcommand
+from .http import BetterRoute, get_message_payload, send_files
 from .components import ActionRow, Button, LinkButton, SelectMenu, SelectOption, UseableComponent, make_component
 from .enums import InteractionResponseType
 
@@ -167,7 +167,7 @@ class Interaction():
 
         if components is MISSING and listener is not MISSING:
             components = listener.to_components()        
-        payload = jsonifyMessage(content=content, tts=tts, embed=embed, embeds=embeds, nonce=nonce, allowed_mentions=allowed_mentions, mention_author=mention_author, components=components)
+        payload = get_message_payload(content=content, tts=tts, embed=embed, embeds=embeds, nonce=nonce, allowed_mentions=allowed_mentions, mention_author=mention_author, components=components)
         
         if self._deferred_hidden is hidden:
             if self._deferred_hidden is False and hidden is True:
@@ -250,7 +250,7 @@ class Interaction():
 
         if components is MISSING and listener is not MISSING:
             components = listener.to_components()
-        payload = jsonifyMessage(content=content, tts=tts, embed=embed, embeds=embeds, nonce=nonce, allowed_mentions=allowed_mentions, mention_author=mention_author, components=components)
+        payload = get_message_payload(content=content, tts=tts, embed=embed, embeds=embeds, nonce=nonce, allowed_mentions=allowed_mentions, mention_author=mention_author, components=components)
         
         if hidden:
             payload["flags"] = 64
@@ -498,7 +498,7 @@ class Message(discord.Message):
         components: List[:class:`~Button` | :class:`~LinkButton` | :class:`~SelectMenu`]
             A list of components to be included the message
         """
-        payload = jsonifyMessage(content, embed=embed, embeds=embeds, allowed_mentions=allowed_mentions, attachments=attachments, suppress=suppress, flags=self.flags.value, components=components)
+        payload = get_message_payload(content, embed=embed, embeds=embeds, allowed_mentions=allowed_mentions, attachments=attachments, suppress=suppress, flags=self.flags.value, components=components)
         data = await self._state.http.edit_message(self.channel.id, self.id, **payload)
         self._update(data)
 
@@ -712,7 +712,7 @@ class EphemeralMessage(Message):
         self._interaction_token = token
     async def edit(self, *args, **fields):
         r = BetterRoute("PATCH", f"/webhooks/{self._application_id}/{self._interaction_token}/messages/{self.id}")
-        self._update(await self._state.http.request(r, json=jsonifyMessage(*args, **fields)))        
+        self._update(await self._state.http.request(r, json=get_message_payload(*args, **fields)))        
     async def delete(self):
         """Override for delete function that will throw an exception"""
         raise EphemeralDeletion()
@@ -748,7 +748,7 @@ class EphemeralResponseMessage(Message):
         
         """
         route = BetterRoute("PATCH", f"/webhooks/{self.interaction.application_id}/{token}/messages/{self.id}")
-        self._update(await self._state.http.request(route, json=jsonifyMessage(*args, **fields)))
+        self._update(await self._state.http.request(route, json=get_message_payload(*args, **fields)))
     async def delete(self):
         """Override for delete function that will throw an exception"""
         raise EphemeralDeletion()
