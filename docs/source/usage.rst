@@ -714,5 +714,5 @@ You can set the color of a button with many ways
     Button(..., color="rEd")                        # red button
     Button(..., color="danger")                     # red button
     Button(..., color="DANger")                     # red button
-    Button(..., color=ButtonStyles.red)             # red button
-    Button(..., color=ButtonStyles.Danger)          # red button
+    Button(..., color=ButtonStyle.Red)             # red button
+    Button(..., color=ButtonStyle.Destructive)     # red button

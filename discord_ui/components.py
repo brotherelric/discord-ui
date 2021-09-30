@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from .errors import InvalidLength, OutOfValidRange, WrongType
+from .enums import ButtonStyle, ComponentType
 
 import discord
 from discord.errors import *
@@ -8,7 +9,6 @@ from discord.errors import *
 import inspect
 import string
 from random import choice
-from enum import IntEnum
 from typing import Any, List, Union
 
 
@@ -387,7 +387,7 @@ class BaseButton(Component):
         return self.content
     def to_dict(self):
         payload = {"type": self._component_type, "style": self._style, "disabled": self.disabled, "emoji": self._emoji}
-        if self._style == ButtonStyles.url:
+        if self._style == ButtonStyle.URL:
             payload["url"] = self._url
         else:
             payload["custom_id"] = self._custom_id
@@ -432,14 +432,14 @@ class BaseButton(Component):
         """
         The color for the button
 
-        :type: :class:`int`, one of :class:`~ButtonStyles`
+        :type: :class:`int`, one of :class:`~ButtonStyle`
         """
         return self._style
     @color.setter
     def color(self, val):
-        if ButtonStyles.getColor(val) is None:
+        if ButtonStyle.getColor(val) is None:
             raise InvalidArgument(str(val) + " is not a valid color")
-        self._style = ButtonStyles.getColor(val).value
+        self._style = ButtonStyle.getColor(val).value
     
     @property
     def emoji(self) -> str:
@@ -494,7 +494,7 @@ class Button(BaseButton, UseableComponent):
             You can either use a string for a color or an int. Color strings are: 
             (`primary`, `blurple`), (`secondary`, `grey`), (`succes`, `green`) and (`danger`, `Red`)
             
-            If you want to use integers, take a lot at the :class:`~ButtonStyles` class
+            If you want to use integers, take a lot at the :class:`~ButtonStyle` class
 
     emoji: :class:`discord.Emoji` | :class:`str`, optional
         The emoji displayed before the text; default MISSING
@@ -503,13 +503,13 @@ class Button(BaseButton, UseableComponent):
     disabled: :class:`bool`, optional
         Whether the button is disabled; default False
     """
-    def __init__(self, custom_id=None, label="\u200b", color = "blurple", emoji=None, new_line=False, disabled=False) -> None:
+    def __init__(self, custom_id=None, label="\u200b", color="blurple", emoji=None, new_line=False, disabled=False) -> None:
         """
         Creates a new ui-button
 
         Example:
         ```py
-        Button("my_custom_id", "This is a cool button", "green", new_line=True)
+        Button("my_custom_id", "This is a cool button", "green")
         ```
         """
         BaseButton.__init__(self, label, color, emoji, new_line, disabled)
@@ -558,7 +558,7 @@ class LinkButton(BaseButton):
         LinkButton("https://discord.com/", "press me (if you can)!", emoji="😀", disabled=True)
         ```
         """
-        BaseButton.__init__(self, label, ButtonStyles.url, emoji, new_line, disabled)
+        BaseButton.__init__(self, label, ButtonStyle.URL, emoji, new_line, disabled)
         self._url = None
         self.url = url
 
@@ -586,34 +586,6 @@ class LinkButton(BaseButton):
         return LinkButton(data["url"], data.get("label"), data.get("emoji"), new_line, data.get("disabled", False))
 
 
-class ButtonStyles(IntEnum):
-    """
-    A list of button styles (colors) in message components
-    """
-    Blurple     =     Primary           = 1
-    Grey        =     Secondary         = 2
-    Green       =     Succes            = 3
-    Red         =     Destructive       = 4
-    url         =     Link              = 5
-
-    def __str__(self) -> str:
-        return self.name
-
-    @classmethod
-    def getColor(cls, s):
-        if isinstance(s, int):
-            return cls(s)
-        if isinstance(s, cls):
-            return s
-        s = s.lower()
-        if s in ("blurple", "primary"):
-            return cls.blurple
-        if s in ("grey", "gray", "secondary"):
-            return cls.grey
-        if s in ("green", "succes"):
-            return cls.green
-        if s in ("red", "danger"):
-            return cls.red
 # endregion
 
 
@@ -664,20 +636,9 @@ class ActionRow():
         return [x for x in self.items if check(x)]
 
 
-class ComponentType(IntEnum):
-    """
-    A list of component types
-    """
-    Action_row      =           1
-    Button          =           2
-    Select          =           3
-
-    def __str__(self) -> str:
-        return self.name
-
 def make_component(data, new_line = False):
     if ComponentType(data["type"]) == ComponentType.Button:
-        if data["style"] == ButtonStyles.url:
+        if data["style"] == ButtonStyle.URL:
             return LinkButton._fromData(data, new_line)
         return Button._fromData(data, new_line)
     if ComponentType(data["type"]) is ComponentType.Select:

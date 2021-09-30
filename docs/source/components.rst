@@ -104,10 +104,10 @@ LinkButton
     :exclude-members: to_dict
 
 
-ButtonStyles
+ButtonStyle
 ~~~~~~~~~~~~~~~~~~~~~~
 
-.. autoclass:: ButtonStyles
+.. autoclass:: ButtonStyle
 
     .. note::
 

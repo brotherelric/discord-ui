@@ -10,15 +10,13 @@ class BaseIntEnum(IntEnum):
     def __str__(self) -> str:
         return self.name
 
-class ButtonStyles(BaseIntEnum):
-    """
-    A list of button styles (colors) in message components
-    """
-    Primary     =     	 blurple        = 1
-    Secondary   =         grey          = 2
-    Succes      =        green          = 3
-    Danger      =         red           = 4
-    url                                 = 5
+
+class ButtonStyle(BaseIntEnum):
+    Blurple     =     Primary           = 1
+    Grey        =     Secondary         = 2
+    Green       =     Succes            = 3
+    Red         =     Destructive       = 4
+    URL         =     Link              = 5
 
     @classmethod
     def getColor(cls, s):
@@ -35,6 +33,7 @@ class ButtonStyles(BaseIntEnum):
             return cls.green
         if s in ("red", "danger"):
             return cls.red
+
 class CommandType(BaseIntEnum):
     Slash       =              1
     User        =              2
@@ -56,15 +55,10 @@ class CommandType(BaseIntEnum):
     def __str__(self):
         return self.name
 class ComponentType(BaseIntEnum):
-    """
-    A list of component types
-    """
     Action_row      =           1
     Button          =           2
     Select          =           3
 class OptionType(BaseIntEnum):
-    """The list of possible slash command option types"""
-
     SUB_COMMAND             =          Subcommand           =           1
     SUB_COMMAND_GROUP       =          Subcommand_group     =           2
     STRING                  =          String               =           3

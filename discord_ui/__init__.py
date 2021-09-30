@@ -32,8 +32,9 @@ If you need any help or assist, join our [discord](https://discord.gg/bDJCGD994p
 
 
 from .client import Components, Slash, UI
-from .components import ActionRow, Button, LinkButton, SelectMenu, SelectOption, ButtonStyles
-from .slash.types import OptionType, SlashPermission, SlashOption
+from .components import ActionRow, Button, LinkButton, SelectMenu, SelectOption
+from .enums import ButtonStyle, OptionType
+from .slash.types import SlashPermission, SlashOption
 from .slash.tools import ParseMethod
 from .tools import components_to_dict
 from .slash.tools import create_choice

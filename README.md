@@ -214,6 +214,7 @@ You can find more (and better) examples [here](https://github.com/discord-py-ui/
     # is now
     SelectMenu([options...here], "my_custom_id")
     ```
+    - ButtonStyles is now ButtonStyle
     - `ButtonStyle` value names changed: color names are now capitalized and `Danger` is now `Destructive
 
     </details>
