@@ -37,7 +37,7 @@ async def send_files(route, files, payload, http):
 
     return await http.request(route, form=form, files=files)
 
-def jsonifyMessage(content=MISSING, tts=False, embed: discord.Embed=MISSING, embeds: List[discord.Embed]=MISSING, attachments: List[discord.Attachment]=MISSING, nonce: int=MISSING,
+def get_message_payload(content=MISSING, tts=False, embed: discord.Embed=MISSING, embeds: List[discord.Embed]=MISSING, attachments: List[discord.Attachment]=MISSING, nonce: int=MISSING,
                 allowed_mentions: discord.AllowedMentions=MISSING, reference: discord.MessageReference=MISSING, mention_author: bool=MISSING, components: list=MISSING, stickers: List[discord.Sticker]=MISSING, suppress: bool=MISSING, flags=MISSING):
     """Turns parameters from send functions into a payload for requests"""
     

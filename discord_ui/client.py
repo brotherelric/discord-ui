@@ -1,17 +1,18 @@
-from .cogs import BaseCallable, CogCommand, CogMessageCommand, CogSubCommandGroup, ListeningComponent
+from .cogs import BaseCallable, CogCommand, CogMessageCommand, CogSubCommandGroup, InteractionableCog, ListeningComponent
 from .slash.errors import NoAsyncCallback
 from .errors import MissingListenedComponentParameters, WrongType
 from .slash.tools import ParseMethod, cache_data, format_name, handle_options, handle_thing
 from .slash.http import SlashHTTP
 from .slash.types import CommandType, ContextCommand, MessageCommand, OptionType, SlashCommand, SlashOption, SlashSubcommand, UserCommand
 from .tools import MISSING, _none, _or, get_index, setup_logger, get
-from .http import jsonifyMessage, BetterRoute, send_files
+from .http import get_message_payload, BetterRoute, send_files
 from .receive import ChoiceGeneratorContext, ComponentContext, Interaction, InteractionType, Message, PressedButton, SelectedMenu, SlashedContext, SlashedCommand, SlashedSubCommand, getMessage
 from .override import override_dpy as override_it
 from .listener import Listener
 from .enums import InteractionResponseType, ComponentType
 
 import discord
+from discord.errors import *
 from discord.ext import commands
 try:
     from discord.ext.commands.errors import *
@@ -29,6 +30,12 @@ except ImportError:
     from typing_extensions import Literal
 
 logging = setup_logger(__name__)
+
+__all__ = (
+    'UI',
+    'Slash',
+    'Components',
+)
 
 class Slash():
     """
@@ -118,6 +125,10 @@ class Slash():
         old_add = self._discord.add_cog
         def add_cog_override(*args, **kwargs):
             cog = args[0] if len(args) > 0 else kwargs.get("cog")
+            if not isinstance(cog, InteractionableCog):
+                # adding attributees to cog form InteractionableCog
+                for s in InteractionableCog.__custom_slots__:
+                    setattr(cog, "s", getattr(InteractionableCog, s))
             for com in self._get_cog_commands(cog):
                 com.cog = cog
                 self._add_to_cache(com)
@@ -1455,7 +1466,7 @@ class Components():
             channel_id = channel.id
         else: 
             channel_id = channel
-        payload = jsonifyMessage(content=content, tts=tts, embed=embed, embeds=embeds, nonce=nonce, allowed_mentions=allowed_mentions, reference=reference, mention_author=mention_author, components=components)
+        payload = get_message_payload(content=content, tts=tts, embed=embed, embeds=embeds, nonce=nonce, allowed_mentions=allowed_mentions, reference=reference, mention_author=mention_author, components=components)
 
         route = BetterRoute("POST", f"/channels/{channel_id}/messages")
 
@@ -1506,7 +1517,7 @@ class Components():
             :type: :class:`~WebhookMessage` | :class:`None`
         
         """
-        payload = jsonifyMessage(content, tts=tts, embed=embed, embeds=embeds, allowed_mentions=allowed_mentions, components=components)
+        payload = get_message_payload(content, tts=tts, embed=embed, embeds=embeds, allowed_mentions=allowed_mentions, components=components)
         payload["wait"] = wait
         if username is not None:
             payload["username"] = username

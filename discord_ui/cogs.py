@@ -1,10 +1,11 @@
 from __future__ import annotations
+import inspect
 
-from .slash.types import BaseCommand, MessageCommand, SlashCommand, SlashSubcommand, UserCommand
+from .slash.types import BaseCommand, ContextCommand, MessageCommand, SlashCommand, SlashSubcommand, UserCommand
 from .enums import ComponentType
 
 import discord
-from discord.ext.commands import BucketType, CooldownMapping
+from discord.ext import commands
 try:
     from discord.ext.commands.errors import * 
 except ImportError:
@@ -12,12 +13,12 @@ except ImportError:
 
 import asyncio
 import datetime
-from typing import Optional
+from typing import Optional, List, Union
 try:
     from typing import Literal
 except ImportError:
     from typing_extensions import Literal
-    
+
 class WrongListener(CheckFailure):
     """
     Exception raised when a listening component received a component event that doesn't meet the check conditions
@@ -48,9 +49,9 @@ class BaseCallable():
         if hasattr(self.callback, "__commands_cooldown__"):
             cooldown = self.callback.__commands_cooldown__
         try:
-            self._buckets = CooldownMapping(cooldown)
+            self._buckets = commands.CooldownMapping(cooldown)
         except TypeError:
-            self._buckets = CooldownMapping(cooldown, BucketType.default)
+            self._buckets = commands.CooldownMapping(cooldown, commands.BucketType.default)
 
         self._max_concurrency = None
         if hasattr(self.callback, "__commands_max_concurrency__"):
@@ -331,7 +332,7 @@ class ListeningComponent(BaseCallable):
         self.add_check(predicate)
         self.custom_id = custom_id
 
-def slash_cog(name=None, description=None, options=[], guild_ids=None, default_permission=None, guild_permissions=None):
+def slash_command(name=None, description=None, options=[], guild_ids=None, default_permission=None, guild_permissions=None):
     """
     A decorator for cogs that will register a slashcommand
     
@@ -383,7 +384,7 @@ def slash_cog(name=None, description=None, options=[], guild_ids=None, default_p
         class My_Cog(commands.Cog)
             ... 
 
-            @slash_cog(name="hello_world", options=[
+            @slash_command(name="hello_world", options=[
                 SlashOption(str, name="parameter", description="this is a parameter", choices=[{ "name": "choice 1", "value": "test" }])
             ], guild_ids=[785567635802816595], default_permission=False, 
             guild_permissions={
@@ -396,7 +397,7 @@ def slash_cog(name=None, description=None, options=[], guild_ids=None, default_p
     def wraper(callback):
         return CogCommand(callback, name, description, options, guild_ids=guild_ids, default_permission=default_permission, guild_permissions=guild_permissions)
     return wraper
-def subslash_cog(base_names, name=None, description=None, options=[], guild_ids=None, default_permission=None, guild_permissions=None):
+def subslash_command(base_names, name=None, description=None, options=[], guild_ids=None, default_permission=None, guild_permissions=None):
     """
     A decorator for cogs that will register a subcommand/subcommand-group
   
@@ -453,7 +454,7 @@ def subslash_cog(base_names, name=None, description=None, options=[], guild_ids=
         class My_Cog(commands.Cog):
             ...
 
-            @subslash_cog(base_names="hello", name="world", options=[
+            @subslash_command(base_names="hello", name="world", options=[
                 SlashOption(argument_type="user", name="user", description="the user to tell the holy words")
             ], guild_ids=[785567635802816595])
             async def command(ctx, user):
@@ -466,7 +467,7 @@ def subslash_cog(base_names, name=None, description=None, options=[], guild_ids=
         class My_Cog(commands.Cog):
             ...
 
-            @subslash_cog(base_names=["hello", "beautiful"], name="world", options=[
+            @subslash_command(base_names=["hello", "beautiful"], name="world", options=[
                 SlashOption(argument_type="user", name="user", description="the user to tell the holy words")
             ], guild_ids=[785567635802816595])
             async def command(ctx, user):
@@ -476,57 +477,56 @@ def subslash_cog(base_names, name=None, description=None, options=[], guild_ids=
     def wraper(callback):
         return CogSubCommandGroup(callback, base_names, name, description=description, options=options, guild_ids=guild_ids, default_permission=default_permission, guild_permissions=guild_permissions)
     return wraper
-def context_cog(type: Literal["user", 2, "message", 3], name=None, guild_ids=None, default_permission=None, guild_permissions=None):
+def context_command(type: Literal["user", 2, "message", 3], name=None, guild_ids=None, default_permission=None, guild_permissions=None):
     """
     Decorator for cogs that will register a context command in discord
             ``Right-click message or user`` -> ``apps`` -> ``commands is displayed here``
 
     Parameters
     ----------
-        type: Literal[``'user'``, ``2`` | ``'message'`` | ``3``]
-            The type of the contextcommand. 
-                ``'user'`` and ``2`` are user-commands; ``'message'`` and ``3`` are message-commansd
-        name: :class:`str`, optional
-            The name of the command; default MISSING
-        guild_ids: List[:class:`str` | :class:`int`]
-            A list of guilds where the command can be used
-        default_permission: :class:`bool` | :class:`discord.Permissions`, optional
-            Permissions that a user needs to have in order to execute the command, default ``True``.
-                    If a bool was passed, it will indicate whether all users can use the command (``True``) or not (``False``)
-        guild_permissions: Dict[:class:`SlashPermission`], optional
-            Special permissions for guilds; default MISSING
+    type: Literal[``'user'``, ``2`` | ``'message'`` | ``3``]
+        The type of the contextcommand. 
+            ``'user'`` and ``2`` are user-commands; ``'message'`` and ``3`` are message-commansd
+    name: :class:`str`, optional
+        The name of the command; default MISSING
+    guild_ids: List[:class:`str` | :class:`int`]
+        A list of guilds where the command can be used
+    default_permission: :class:`bool` | :class:`discord.Permissions`, optional
+        Permissions that a user needs to have in order to execute the command, default ``True``.
+                If a bool was passed, it will indicate whether all users can use the command (``True``) or not (``False``)
+    guild_permissions: Dict[:class:`SlashPermission`], optional
+        Special permissions for guilds; default MISSING
 
     Decorator
     ---------
+    callback: :class:`method(ctx, message)`
+        The asynchron function that will be called if the command was used
+            ctx: :class:`~SlashedSubCommand`
+                The used slash command
+            message: :class:`~Message`
+                The message on which the command was used
+            
+            .. note::
 
-        callback: :class:`method(ctx, message)`
-            The asynchron function that will be called if the command was used
-                ctx: :class:`~SlashedSubCommand`
-                    The used slash command
-                message: :class:`~Message`
-                    The message on which the command was used
-                
-                .. note::
-
-                    ``ctx`` and ``message`` are just example names, you can use whatever you want for that
+                ``ctx`` and ``message`` are just example names, you can use whatever you want for that
     
-        Example
-        -------
-        
-        .. code-block::
+    Example
+    -------
+    
+    .. code-block::
 
-            class My_Cog(commands.Cog):
+        class My_Cog(commands.Cog):
+            ...
+
+            # message command
+            @context_command(type="message", name="quote", guild_ids=[785567635802816595])
+            async def quote(ctx, message):
                 ...
-
-                # message command
-                @context_cog(type="message", name="quote", guild_ids=[785567635802816595])
-                async def quote(ctx, message):
-                    ...
-                
-                # user command
-                @context_cog(type="user", name="mention", guild_ids=[785567635802816595])
-                async def mention(ctx, user):
-                    ...
+            
+            # user command
+            @context_command(type="user", name="mention", guild_ids=[785567635802816595])
+            async def mention(ctx, user):
+                ...
         """
     def wraper(callback):
         if type in ["user", 2]:
@@ -536,47 +536,81 @@ def context_cog(type: Literal["user", 2, "message", 3], name=None, guild_ids=Non
         else:
             raise discord.errors.InvalidArgument("Invalid context type! type has to be one of 'user', 1, 'message', 2!")
     return wraper
-def listening_component_cog(custom_id, messages=None, users=None, component_type: Literal['button', 'select']=None, check=lambda _ctx: True):
+def listening_component(custom_id, messages=None, users=None, component_type: Literal['button', 'select']=None, check=lambda _ctx: True):
     """
     Decorator for cogs that will register a listening component
 
     Parameters
     ----------
-        custom_id: :class:`str`
-            The custom_id of the components to listen to
-        messages: List[:class:`discord.Message` | :class:`int` :class:`str`], Optional
-            A list of messages or message ids to filter the listening component
-        users: List[:class:`discord.User` | :class:`discord.Member` | :class:`int` | :class:`str`], Optional
-            A list of users or user ids to filter
-        component_type: Literal[``'button'`` | ``'select'``]
-            What type the used component has to be of (select: SelectMenu, button: Button)
-        check: :class:`function`, Optional
-            A function that has to return True in order to invoke the listening component
-                The check function takes to parameters, the component and the message
+    custom_id: :class:`str`
+        The custom_id of the components to listen to
+    messages: List[:class:`discord.Message` | :class:`int` :class:`str`], Optional
+        A list of messages or message ids to filter the listening component
+    users: List[:class:`discord.User` | :class:`discord.Member` | :class:`int` | :class:`str`], Optional
+        A list of users or user ids to filter
+    component_type: Literal[``'button'`` | ``'select'``]
+        What type the used component has to be of (select: SelectMenu, button: Button)
+    check: :class:`function`, Optional
+        A function that has to return True in order to invoke the listening component
+            The check function takes to parameters, the component and the message
 
     Decorator
     ---------
-        callback: :class:`method(ctx)`
-            The asynchron function that will be called if a component with the custom_id was invoked
+    callback: :class:`method(ctx)`
+        The asynchron function that will be called if a component with the custom_id was invoked
 
-            There will be one parameters passed
+        There will be one parameters passed
 
-                ctx: :class:`~PressedButton` or :class:`~SelectedMenu`
-                    The invoked component
-                
-                .. note::
+            ctx: :class:`~PressedButton` or :class:`~SelectedMenu`
+                The invoked component
+            
+            .. note::
 
-                    ``ctx`` is just an example name, you can use whatever you want for it
+                ``ctx`` is just an example name, you can use whatever you want for it
 
     Example
     -------
     
     .. code-block::
     
-        @ui.components.listening_component("custom_id", [539459006847254542], [53945900682362362])
+        @cogs.listening_component("custom_id", [539459006847254542], [53945900682362362], 'button')
         async def callback(ctx):
             ...
     """
     def wraper(callback):
         return ListeningComponent(callback, messages, users, component_type, check, custom_id)
     return wraper
+
+def _get_instances_for(target, cls=BaseCallable, check=lambda x: True):
+    return [x[1] for x in inspect.getmembers(target, lambda x: isinstance(x, cls) and check(x) is True)]
+
+class InteractionableCog(commands.Cog):
+    # for addint to default cog
+    __custom_slots__ = (
+        'get_listening_components', 
+        'get_slash_commands',
+        'get_sub_commands',
+        'get_chat_commands',
+        'get_message_commands',
+        'get_user_commands',
+        'get_context_commands',
+        'get_application_commands',
+    )
+    def get_listening_components(self) -> List[ListeningComponent]:
+        return _get_instances_for(self, ListeningComponent)
+
+    def get_slash_commands(self) -> List[CogCommand]:
+        return _get_instances_for(self, CogCommand, lambda x: x.__type__ == 1)
+    def get_sub_commands(self) -> List[CogSubCommandGroup]:
+        return _get_instances_for(self, CogSubCommandGroup, lambda x: x.__type__ == 1)
+    def get_chat_commands(self) -> List[Union[CogCommand, CogSubCommandGroup]]:
+        return self.get_slashcommands() + self.get_subcommands()
+    
+    def get_message_commands(self) -> List[CogMessageCommand]:
+        return _get_instances_for(self, CogMessageCommand)
+    def get_user_commands(self) -> List[CogUserCommand]:
+        return _get_instances_for(self, CogUserCommand)
+    def get_context_commands(self) -> List[Union[CogMessageCommand, CogUserCommand]]:
+        return self.get_message_commands() + self.get_user_commands()
+    def get_application_commands(self) -> List[Union[CogCommand, CogSubCommandGroup, CogMessageCommand, CogUserCommand]]:
+        return self.get_chat_commands() + self.get_context_commands()

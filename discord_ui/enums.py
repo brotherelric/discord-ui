@@ -5,7 +5,6 @@ import discord
 import inspect
 from enum import IntEnum
 
-
 class BaseIntEnum(IntEnum):
     def __str__(self) -> str:
         return self.name

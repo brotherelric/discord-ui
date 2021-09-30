@@ -6,12 +6,9 @@
     And last but not least, if you're using dpy 2, the discord.ext.commands.Bot will be overriden with our
     own class, which enables `enable_debug_events` in order for our lib to work
 """
-
-import asyncio
 from .tools import MISSING
 from .receive import Message
-from .http import jsonifyMessage, BetterRoute, send_files
-
+from .http import get_message_payload, BetterRoute, send_files
 
 import discord
 from discord.ext import commands
@@ -38,7 +35,9 @@ def override_dpy2_client():
     # override for dpy forks
     sys.modules[discord.__name__] = module
 def override_dpy():
-    """This method overrides dpy methods. You shouldn't need to use this method by your own, the lib overrides everything by default"""
+    """This function overrides default dpy objects. 
+    You shouldn't need to use this method by your own, the lib overrides everything that needs to be 
+    overriden by default"""
     # override for dpy forks
     module = sys.modules[discord.__name__]
 
@@ -54,7 +53,7 @@ def override_dpy():
             kwargs["components"] = listener.to_components()
         r = None
         if kwargs.get("file") is None and kwargs.get("files") is None:
-            payload = jsonifyMessage(content=content, **kwargs)
+            payload = get_message_payload(content=content, **kwargs)
             r = await self._state.http.request(route, json=payload)
         else:
             if kwargs.get("file") is not None:
@@ -62,7 +61,7 @@ def override_dpy():
             elif kwargs.get("files") is not None:
                 files = kwargs.pop("files")
             
-            payload = jsonifyMessage(content=content, **kwargs)
+            payload = get_message_payload(content=content, **kwargs)
             r = await send_files(route, files=files, payload=payload, http=self._state.http)
         
         msg = Message(state=self._state, channel=channel, data=r)
@@ -86,7 +85,7 @@ def override_dpy():
 
     #region webhook override
     def send_webhook(self: discord.Webhook, content=MISSING, *, wait=False, username=MISSING, avatar_url=MISSING, tts=False, files=None, embed=MISSING, embeds=MISSING, allowed_mentions=MISSING, components=MISSING):
-        payload = jsonifyMessage(content, tts=tts, embed=embed, embeds=embeds, allowed_mentions=allowed_mentions, components=components)
+        payload = get_message_payload(content, tts=tts, embed=embed, embeds=embeds, allowed_mentions=allowed_mentions, components=components)
 
         if username is not None:
             payload["username"] = username

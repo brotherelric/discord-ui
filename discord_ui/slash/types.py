@@ -11,10 +11,14 @@ from .errors import (
 )
 
 import discord
-from discord.ext import commands
 
 import typing
 import inspect
+
+__all__ = (
+    'SlashOption',
+    'SlashPermission',
+)
 
 def format_name(value):
     return str(value).lower().replace(" ", "-")
