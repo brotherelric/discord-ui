@@ -19,19 +19,19 @@ def override_dpy2_client():
     # override for dpy forks
     module = sys.modules[discord.__name__]
 
-    class OverridenV2Bot(commands.Bot):
-        """A overriden client that enables `enable_debug_events` for receiving the events"""
-        def __init__(self, command_prefix, help_command = None, description = None, **options):
-            commands.Bot.__init__(self, command_prefix, help_command=help_command, description=description, enable_debug_events=True, **options)
-
     def client_override(cls, *args, **kwargs):
-        if cls is commands.Bot:
-            return object.__new__(OverridenV2Bot)
+        # create subcclass from cls to set _enable_debug_events
+        class enable_debug_override(cls):
+            def __init__(self, *args, **kwargs) -> None:
+                super().__init__(*args, **kwargs)
+                self._enable_debug_events = True
+        if issubclass(cls, discord.client.Client):
+            return object.__new__(enable_debug_override)
         else:
             return object.__new__(cls)
 
     if discord.__version__.startswith("2"):
-        module.ext.commands.Bot.__new__ = client_override
+        module.client.Client.__new__ = client_override
     # override for dpy forks
     sys.modules[discord.__name__] = module
 def override_dpy():
@@ -96,7 +96,6 @@ def override_dpy():
 
     module.webhook.Webhook.send = send_webhook
     #endregion
-
 
     # override for dpy forks
     sys.modules[discord.__name__] = module
