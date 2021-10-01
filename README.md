@@ -206,6 +206,7 @@ You can find more (and better) examples [here](https://github.com/discord-py-ui/
     - disable_action_row
     - disabling action row
     - subclasses of dpy2 commands.Bot instances, they wouldn't get overriden which lead to not enabling needed debug events 
+    - when no target component in listeners could be found, the events for components wouldn't been dispatched
     
     ## **Changed**
     - Component custom ids are now optional, if no custom id is passed, a 100 character long random string will be used

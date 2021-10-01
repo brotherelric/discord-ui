@@ -72,19 +72,35 @@ There are some more usefull things you can use
 
 
 Class
------
+------
 
 You can add a timeout to the listener after which the listener will be removed from the message
 
 .. code-block::
-
-    .. code-block::
 
     class MyListener(Listener):
         def __init__(self):
             self.timeout = 20   # 20 seconds timeout
 
 If you **set** timeout to ``None``, the listener will never timeout
+
+You can also add a list of target users to the listener
+
+.. code-block::
+
+    class MyListener(Listener):
+        def __init__(self):
+            self.target_users = [a, list, of, users]
+
+And last but not least, you can supress the `discord_ui.listener.NoListenerFound` errors when no 
+listener could be found
+
+.. code-block::
+
+    class MyListener(Listener):
+        def __init__(self):
+            self.supress_no_listener_found = True
+
 
 Sending
 --------
@@ -177,8 +193,8 @@ And the last method:
 """
 
 from .tools import setup_logger
-from .components import Button, ComponentType, LinkButton, SelectMenu
 from .receive import ComponentContext, Message
+from .components import Button, ComponentType, LinkButton, SelectMenu
 
 import discord
 try:
@@ -269,9 +285,11 @@ class Listener():
         """The components that are going to be send together with the listener"""
         self.message: Message = None
         """The target message"""
+        self.supress_no_listener_found: bool = False
+        """Whether `discord_ui.listener.NoListenerFound` should be supressed and not get thrown 
+        when no target component listener could be found"""
     def __init_subclass__(cls) -> None:
         cls.__listeners__ = []
-        cls._on_error = None
 
     @property
     def target_users(self) -> List[int]:
@@ -280,7 +298,7 @@ class Listener():
     @target_users.setter
     def target_users(self, value):
         self._target_users = [int(getattr(x, 'id', x)) for x in value]
-    
+
     @staticmethod
     def button(custom_id=None):
         """A decorator that will setup a callback for a button
@@ -347,7 +365,7 @@ class Listener():
         if len(listeners) > 0:
             for listener in listeners:
                 await listener.invoke(interaction_component, self)
-        else:
+        elif not self.supress_no_listener_found:
             raise NoListenerFound()
     def _get_listeners(self) -> Dict[str, List[_Listener]]:
         all_listeners = [x[1] for x in getmembers(self, predicate=lambda x: isinstance(x, _Listener))]
@@ -357,7 +375,7 @@ class Listener():
                 listeners[lister.custom_id] = []
             listeners[lister.custom_id].append(lister)
         return listeners
-    def _get_listeners_for(self, interaction_component: ComponentContext) -> _Listener:
+    def _get_listeners_for(self, interaction_component: ComponentContext) -> List[_Listener]:
         listeners = self._get_listeners()
         listers = []
         for listener in listeners.get(interaction_component.custom_id, []):
