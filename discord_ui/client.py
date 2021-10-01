@@ -1393,20 +1393,24 @@ class Components():
                     component = SelectedMenu(data, user, x, msg, self._discord)
         component._handle_auto_defer(self.auto_defer)
         
+        
+        # dispatch client events before listeners so the exception wont stop executing the function
+        if ComponentType(data["data"]["component_type"]) is ComponentType.Button:
+            self._discord.dispatch("button_press", component)
+        elif ComponentType(data["data"]["component_type"]) is ComponentType.Select:
+            self._discord.dispatch("menu_select", component)
+        
         # Get listening components with the same custom id
         listening_components = self.listening_components.get(data["data"]["custom_id"])
         if listening_components is not None:
             for listening_component in listening_components:
                 await listening_component.invoke(component)
 
+        
         listener: Listener = self._discord._connection._component_listeners.get(str(msg.id))
         if listener is not None:
             await listener._call_listeners(component)
 
-        if ComponentType(data["data"]["component_type"]) is ComponentType.Button:
-            self._discord.dispatch("button_press", component)
-        elif ComponentType(data["data"]["component_type"]) is ComponentType.Select:
-            self._discord.dispatch("menu_select", component)
 
     async def send(self, channel, content=MISSING, *, tts=False, embed=MISSING, embeds=MISSING, file=MISSING, 
             files=MISSING, delete_after=MISSING, nonce=MISSING, allowed_mentions=MISSING, reference=MISSING, 
