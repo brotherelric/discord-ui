@@ -66,7 +66,7 @@ def override_dpy():
         
         msg = Message(state=self._state, channel=channel, data=r)
         if kwargs.get("delete_after") is not None:
-            await msg.delete(delay=kwargs.get("delete_after"))
+            await msg.delete(delay=kwargs.pop("delete_after"))
     
         if listener is not None:
             listener._start(msg)
