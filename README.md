@@ -202,12 +202,6 @@ You can find more (and better) examples [here](https://github.com/discord-py-ui/
 -   <details>
     <summary>5.1.0</summary>
     
-    ## **Fixed**
-    - disable_action_row
-    - disabling action row
-    - subclasses of dpy2 commands.Bot instances, they wouldn't get overriden which lead to not enabling needed debug events 
-    - when no target component in listeners could be found, the events for components wouldn't been dispatched
-    
     ## **Changed**
     - Component custom ids are now optional, if no custom id is passed, a 100 character long random string will be used
     - The order of SelectMenus init params are changed, custom_id is now after options
@@ -219,6 +213,13 @@ You can find more (and better) examples [here](https://github.com/discord-py-ui/
     - ButtonStyles is now ButtonStyle
     - `ButtonStyle` value names changed: color names are now capitalized and `Danger` is now `Destructive
     - renamed cog decorators: `slash_cog` -> `slash_command`, `subslash_cog` -> `subslash_command`, `context_cog` -> `context_command`, `listening_component_cog` -> `listening_component`
+
+    ## **Fixed**
+    - disable_action_row
+    - disabling action row
+    - subclasses of dpy2 commands.Bot instances, they wouldn't get overriden which lead to not enabling needed debug events 
+    - when no target component in listeners could be found, the events for components wouldn't been dispatched
+    - delete_after keyword in message send overrided
 
     </details>
 
