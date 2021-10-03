@@ -213,6 +213,7 @@ You can find more (and better) examples [here](https://github.com/discord-py-ui/
     - ButtonStyles is now ButtonStyle
     - `ButtonStyle` value names changed: color names are now capitalized and `Danger` is now `Destructive
     - renamed cog decorators: `slash_cog` -> `slash_command`, `subslash_cog` -> `subslash_command`, `context_cog` -> `context_command`, `listening_component_cog` -> `listening_component`
+    - `Listener.target_user` is now `Listener.target_users` and can take users, members and ids as the value
 
     ## **Fixed**
     - disable_action_row
