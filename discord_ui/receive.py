@@ -537,7 +537,8 @@ class Message(discord.Message):
             The custom_id of the target component; default None
         disabled: :class:`bool`, optional
             Whether the component should be disabled (``True``) or enabled (``False``); default True
-        
+        ``**fields``
+            Parameters for editing the message (like `content=`, `embed=`)
         """
         comps = self.components
         if component_index is not None:
@@ -554,9 +555,10 @@ class Message(discord.Message):
             Which rows to disable, first row is ``0``; 
             If row parameter is of type :class:`int`, the n-th row will be disabled.
             If type is :class:`range`, the range all rows in the range will be disabled
-
         disable: :class:`bool`, optional
             Whether to disable (``True``) or enable (``False``) the components; default True
+        ``**fields``
+            Parameters for editing the message (like `content=`, `embed=`)
 
         Raises
         ------
@@ -587,7 +589,8 @@ class Message(discord.Message):
         ----------
         disable: :class:`bool`, optional
             Whether to disable (``True``) or enable (``False``) als components; default True
-        
+        ``**fields``
+            Parameters for editing the message (like `content=`, `embed=`)
         """
         if len(self.components) == 0:
             return
@@ -637,7 +640,7 @@ class Message(discord.Message):
         .. code-block::
 
             # send a message with comoponents
-            msg = await ctx.send("okayy", components=[Button("a_custom_id", ...)])
+            msg = await ctx.send("okay", components=[Button("a_custom_id", ...)])
             try:
                 # wait for the button
                 btn = await msg.wait_for("button", client, "a_custom_id", by=ctx.author, timeout=20)
