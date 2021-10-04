@@ -453,7 +453,13 @@ class BaseCommand():
             Same as `.is_chat_input`
         """
         return self.is_chat_input
-    
+    @property
+    def is_subcommand(self) -> bool:
+        """
+        Whether this command is a subcommand
+        """
+        return self.is_chat_input and hasattr(self, "base_names")
+
     @property
     def original_name(self) -> str:
         """The original name for this command"""
@@ -626,7 +632,7 @@ class SlashSubcommand(BaseCommand):
             raise InvalidLength("base_names", 1, 32)
         BaseCommand.__init__(self, CommandType.Slash, callback, name, description, options, guild_ids=guild_ids, default_permission=default_permission, guild_permissions=guild_permissions)
         self.base_names = [format_name(x) for x in base_names]
-    
+
     def to_option(self) -> SlashOption:
         return SlashOption(OptionType.SUB_COMMAND, self.name, self.description, options=self.options or None, required=False)
     def to_dict(self):

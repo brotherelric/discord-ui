@@ -568,7 +568,7 @@ class Message(discord.Message):
         """
         comps = []
         if isinstance(row, range):
-            for i, r in enumerate(_rows):
+            for i, r in enumerate(self.action_rows):
                 if i >= len(self.action_rows) or i < 0:
                     raise OutOfValidRange("row[" + str(i) + "]", 0, len(self.action_rows) - 1)
                 if i in row:
