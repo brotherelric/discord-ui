@@ -222,6 +222,10 @@ You can find more (and better) examples [here](https://github.com/discord-py-ui/
     - when no target component in listeners could be found, the events for components wouldn't been dispatched
     - delete_after keyword in message send overrided
 
+    ## **Added**
+    - `**fields` to all functions that edit the message components. The **fields parameter can be used to edit other properties of the message without using `.edit` again and send a "useless" request
+
+
     </details>
 
 -   <details>

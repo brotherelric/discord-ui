@@ -440,7 +440,30 @@ class Message(discord.Message):
         return []
     @property
     def action_row(self) -> ActionRow:
-        return ActionRow(self.components)
+        """All of the components put into an action row
+        
+        :type: :class:`~ActionRow`
+        """ 
+        return ActionRow(ActionRow(self.components))
+    @property
+    def action_rows(self) -> List[ActionRow]:
+        """The action rows in the message
+
+        :type: List[:class:`~ActionRow`]
+        """
+        rows = []
+        c_row = []
+        i = 0
+        for x in self.components:
+            if getattr(x, 'new_line', True) == True and i > 0:
+                rows.append(ActionRow(c_row))
+                c_row = []
+            c_row.append(x)
+            i += 1
+        if len(c_row) > 0:
+            rows.append(ActionRow(c_row))
+        return rows
+
     # endregion
 
     def _update_components(self, data):
@@ -465,7 +488,6 @@ class Message(discord.Message):
             # One button
             component = data["components"][0]["components"][0]
             self.components.append(make_component(component))
-
     def _update(self, data):
         super()._update(data)
         self._update_components(data)
@@ -504,7 +526,7 @@ class Message(discord.Message):
         if delete_after is not MISSING:
             await self.delete(delay=delete_after)
 
-    async def disable_component(self, component_index=None, custom_id=None, disabled=True):
+    async def disable_component(self, component_index=None, custom_id=None, disabled=True, **fields):
         """Disables a single component
         
         Parameters
@@ -522,8 +544,8 @@ class Message(discord.Message):
             comps[component_index].disabled = disabled
         elif custom_id is not None:
             comps[get_index(self.components, custom_id, lambda x: x.custom_id)].disabled = disabled
-        await self.edit(components=comps)
-    async def disable_action_row(self, row, disable = True):
+        await self.edit(components=comps, **fields)
+    async def disable_action_row(self, row, disable = True, **fields):
         """Disables an action row of components in the message
         
         Parameters
@@ -544,7 +566,7 @@ class Message(discord.Message):
         """
         comps = []
         if isinstance(row, range):
-            for i, r in enumerate(self.action_rows):
+            for i, r in enumerate(_rows):
                 if i >= len(self.action_rows) or i < 0:
                     raise OutOfValidRange("row[" + str(i) + "]", 0, len(self.action_rows) - 1)
                 if i in row:
@@ -557,9 +579,8 @@ class Message(discord.Message):
                 if i == row:
                     r.disable(disable)
                 comps.append(r)
-        await self.edit(components=comps)
-
-    async def disable_components(self, disable = True):
+        await self.edit(components=comps, **fields)
+    async def disable_components(self, disable = True, **fields):
         """Disables all component in the message
         
         Parameters
@@ -574,27 +595,7 @@ class Message(discord.Message):
         for x in self.components:
             x.disabled = disable
             fixed.append(x)
-        await self.edit(components=fixed)
-
-    @property
-    def action_rows(self) -> List[ActionRow]:
-        """The action rows in the message
-
-        :type: List[:class:`~ActionRow`]
-        """
-        rows = []
-
-        c_row = []
-        i = 0
-        for x in self.components:
-            if getattr(x, 'new_line', True) == True and i > 0:
-                rows.append(ActionRow(c_row))
-                c_row = []
-            c_row.append(x)
-            i += 1
-        if len(c_row) > 0:
-            rows.append(ActionRow(c_row))
-        return rows
+        await self.edit(components=fixed, **fields)
 
     async def wait_for(self, event_name: Literal["select", "button", "component"], client, custom_id=None, by=None, check=lambda component: True, timeout=None) -> Union[PressedButton, SelectedMenu, ComponentContext]:
         """Waits for a message component to be invoked in this message
@@ -679,8 +680,7 @@ class Message(discord.Message):
         """
         if len(self.components) == 0:
             await self.edit(components=listener.to_components())
-        self.attach_listener(listener)
-        
+        self.attach_listener(listener)       
     def attach_listener(self, listener):
         """Attaches a listener to this message after it was sent
         
@@ -751,7 +751,7 @@ class EphemeralResponseMessage(Message):
     async def delete(self):
         """Override for delete function that will throw an exception"""
         raise EphemeralDeletion()
-    async def disable_components(self, token, disable = True):
+    async def disable_components(self, token, disable = True, **fields):
         """Disables all component in the message
         
         Parameters
@@ -764,4 +764,4 @@ class EphemeralResponseMessage(Message):
         for x in self.components:
             x.disabled = disable
             fixed.append(x)
-        await self.edit(token, components=fixed)
+        await self.edit(token, components=fixed, **fields)
