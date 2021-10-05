@@ -204,7 +204,7 @@ You can find more (and better) examples [here](https://github.com/discord-py-ui/
     
     ## **Changed**
     - Component custom ids are now optional, if no custom id is passed, a 100 character long random string will be used
-    - The order of SelectMenus init params are changed, custom_id is now after options
+    - The order of SelectMenus init params changed, custom_id is now after options
     ```py
     SelectMenu("my_custom_id", [options...here])
     # is now
@@ -218,9 +218,9 @@ You can find more (and better) examples [here](https://github.com/discord-py-ui/
     ## **Fixed**
     - disable_action_row
     - disabling action row
-    - subclasses of dpy2 commands.Bot instances, they wouldn't get overriden which lead to not enabling needed debug events 
-    - when no target component in listeners could be found, the events for components wouldn't been dispatched
-    - delete_after keyword in message send overrided
+    - no interaction events being dispatched because subclasses of dpy2 commands.Bot instances wouldn't get overriden which lead to not enabling needed debug events
+    - when no matching component listener in `Listener` could be found, the events for components events wouldn't been dispatched
+    - delete_after keyword in message send override
 
     ## **Added**
     - `**fields` to all functions that edit the message components. The **fields parameter can be used to edit other properties of the message without using `.edit` again and send a "useless" request
