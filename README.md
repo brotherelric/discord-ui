@@ -224,6 +224,8 @@ You can find more (and better) examples [here](https://github.com/discord-py-ui/
 
     ## **Added**
     - `**fields` to all functions that edit the message components. The **fields parameter can be used to edit other properties of the message without using `.edit` again and send a "useless" request
+    - `@Lister.on_error` and `@Listener.wrong_user` decorators for handling Exceptions in Listeners
+    - When no keyword was passed to `@Listener.button` or `@Listener.select`, the function will be called on every button/slect
 
 
     </details>
