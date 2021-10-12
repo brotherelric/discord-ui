@@ -134,6 +134,10 @@ class SlashOption():
 
     @property
     def channel_types(self):
+        """A list of channel types that will restrict the shown channels for this option
+        
+        :type: List[:class:`discord.ChannelType`]
+        """
         return [discord.ChannelType(x) for x in self._json.get("channel_types", [])]
     @channel_types.setter
     def channel_types(self, value):
