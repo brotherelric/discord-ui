@@ -15,12 +15,20 @@ Channel = Union[
     discord.StageChannel,
 ]
 """Typing object for all possible channel types, only for type hinting"""
+
 Mentionable = Union[
-    Channel,
+    discord.abc.GuildChannel,
     discord.Member,
-    discord.Role,
+    discord.Role
 ]
 """Typing object for possible returned classes in :class:`~OptionType.Mentionable`, only for type hinting"""
+# class Mentionable(
+#     discord.abc.GuildChannel,
+#     discord.Member,
+#     discord.Role
+# ):
+#     def __init__(self):
+#         raise NotImplemented
 
 class BaseIntEnum(IntEnum):
     def __str__(self) -> str:
@@ -101,22 +109,26 @@ class OptionType(BaseIntEnum):
             if whatever in [discord.User, discord.Member]:
                 return cls.Member
             if whatever in [discord.TextChannel, discord.VoiceChannel, discord.StageChannel, discord.CategoryChannel]:
-                return cls.Channel
+                ret = cls.Channel
+                ret.__types__ = [cls]
+                return ret
             if whatever is discord.Role:
                 return cls.Role
+            if whatever is Mentionable:
+                return cls.Mentionable
             if whatever is float:
                 return cls.Float
         if isinstance(whatever, str):
             whatever = whatever.lower()
-            if whatever in ["str", "string"]:
+            if whatever in ["str", "string", "text", "char[]"]:
                 return cls.String
-            if whatever in ["int", "integer"]:
+            if whatever in ["int", "integer", "number"]:
                 return cls.Integer
             if whatever in ["bool", "boolean"]:
                 return cls.Boolean
             if whatever in ["user", "discord.user", "member", "discord.member", "usr", "mbr"]:
                 return cls.Member
-            if whatever in ["channel", "textchannel", "discord.textchannel", "txtchannel"]:
+            if whatever in ["channel"]:
                 return cls.Channel
             if whatever in ["role", "discord.role"]:
                 return cls.Role
@@ -124,8 +136,27 @@ class OptionType(BaseIntEnum):
                 return cls.Mentionable
             if whatever in ["float", "floating", "floating number", "f"]:
                 return cls.Float
+        if isinstance(whatever, list):
+            ret = cls.Channel
+            ret.__types__ = whatever
+            return ret
 
-
+    def get_channel_types(self):
+        if self != self.CHANNEL or not hasattr(self, "__types__"):
+            raise Exception("Bro you can't to that, its not a channel")
+        types = []
+        for x in self.__types__:
+            if isinstance(x, discord.TextChannel):
+                types.append(discord.ChannelType.text)
+            if isinstance(x, discord.VoiceChannel):
+                types.append(discord.ChannelType.voice)
+            if isinstance(x, discord.StageChannel):
+                types.append(discord.ChannelType.stage_voice)
+            if isinstance(x, discord.StoreChannel):
+                types.append(discord.ChannelType.store)
+            if isinstance(x, discord.CategoryChannel):
+                types.append(discord.ChannelType.category)
+        return types
 class InteractionResponseType(BaseIntEnum):
     Pong                        =       1
     """respond to ping"""
