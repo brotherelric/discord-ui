@@ -4,6 +4,23 @@ import discord
 
 import inspect
 from enum import IntEnum
+from typing import Union, Callable
+
+Channel = Union[
+    discord.TextChannel, 
+    discord.VoiceChannel, 
+    discord.StageChannel,
+    discord.StoreChannel,
+    discord.CategoryChannel, 
+    discord.StageChannel,
+]
+"""Typing object for all possible channel types, only for type hinting"""
+Mentionable = Union[
+    Channel,
+    discord.Member,
+    discord.Role,
+]
+"""Typing object for possible returned classes in :class:`~OptionType.Mentionable`, only for type hinting"""
 
 class BaseIntEnum(IntEnum):
     def __str__(self) -> str:

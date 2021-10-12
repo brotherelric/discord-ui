@@ -40,7 +40,7 @@ from .slash.tools import *
 from .receive import *
 from .listener import *
 from .slash import ext
-from .enums import ButtonStyle, OptionType
+from .enums import ButtonStyle, OptionType, Channel, Mentionable
 
 
 from .override import override_dpy, override_dpy2_client
