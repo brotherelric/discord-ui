@@ -137,12 +137,7 @@ class SlashOption():
         return [discord.ChannelType(x) for x in self._json.get("channel_types", [])]
     @channel_types.setter
     def channel_types(self, value):
-        if value is None:
-            if self._json.get("channel_types"):
-                del self._json.channel_types
-            else:
-                return
-        self._json["channel_types"] = [getattr(x, "value", x) for x in value]
+        self._json["channel_types"] = [getattr(x, "value", x) for x in (value or [])]
 
     @property
     def name(self) -> str:
