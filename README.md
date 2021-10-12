@@ -221,6 +221,7 @@ You can find more (and better) examples [here](https://github.com/discord-py-ui/
     - no interaction events being dispatched because subclasses of dpy2 commands.Bot instances wouldn't get overriden which lead to not enabling needed debug events
     - when no matching component listener in `Listener` could be found, the events for components events wouldn't been dispatched
     - delete_after keyword in message send override
+    - mentionable slashoptions not being parsed to objects
 
     ## **Added**
     - `**fields` to all functions that edit the message components. The **fields parameter can be used to edit other properties of the message without using `.edit` again and send a "useless" request

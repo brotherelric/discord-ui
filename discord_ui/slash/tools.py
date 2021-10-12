@@ -114,6 +114,8 @@ def resolve_data(value, typ, data, state):
         return resolved["roles"].get(value)
     elif typ == OptionType.CHANNEL:
         return resolved["channels"].get(value)
+    elif typ == OptionType.MENTIONABLE:
+        return list(resolved.values())[0].get(value)
     elif typ == AdditionalType.MESSAGE:
         return resolved["messages"].get(value)
     else:

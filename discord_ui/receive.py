@@ -1,11 +1,11 @@
+from .enums import InteractionResponseType
 from .slash.http import ModifiedSlashState
 from .errors import InvalidEvent, OutOfValidRange, WrongType
+from .http import BetterRoute, get_message_payload, send_files
 from .slash.errors import AlreadyDeferred, EphemeralDeletion
 from .tools import MISSING, get_index, setup_logger, _none, get, _default
 from .slash.types import ContextCommand, SlashCommand, SlashPermission, SlashSubcommand
-from .http import BetterRoute, get_message_payload, send_files
 from .components import ActionRow, Button, LinkButton, SelectMenu, SelectOption, UseableComponent, make_component
-from .enums import InteractionResponseType
 
 import discord
 from discord.ext import commands
@@ -463,7 +463,6 @@ class Message(discord.Message):
         if len(c_row) > 0:
             rows.append(ActionRow(c_row))
         return rows
-
     # endregion
 
     def _update_components(self, data):
