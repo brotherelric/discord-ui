@@ -1,3 +1,4 @@
+
 from .cogs import BaseCallable, CogCommand, CogMessageCommand, CogSubCommandGroup, InteractionableCog, ListeningComponent
 from .slash.errors import NoAsyncCallback
 from .errors import MissingListenedComponentParameters, WrongType
@@ -14,10 +15,6 @@ from .enums import InteractionResponseType, ComponentType
 import discord
 from discord.errors import *
 from discord.ext import commands
-try:
-    from discord.ext.commands.errors import *
-except ImportError:
-    from discord.ext.commands import *
 
 import json
 import inspect
@@ -638,7 +635,7 @@ class Slash():
         else:
             api_command = await self._get_guild_api_command(name, typ, guild_id)
         if api_command is None:
-            raise CommandNotFound("Slash command with name " + str(name) + " and type " + str(typ) + " not found in the api!")
+            raise ClientException("Slash command with name " + str(name) + " and type " + str(typ) + " not found in the api!")
         if permissions is not None:
             await self.http.update_command_permissions(guild_id, api_command["id"], permissions.to_dict())
         if default_permission is not None:
