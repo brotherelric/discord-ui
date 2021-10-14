@@ -226,9 +226,9 @@ You can find more (and better) examples [here](https://github.com/discord-py-ui/
     ## **Fixed**
     - disable_action_row
     - `ActionRow.disable`
-    - no interaction events being dispatched because subclasses of dpy2 commands.Bot instances wouldn't get overriden which lead to not enabling needed debug events
+    - no interaction events being dispatched because subclasses of dpy2 `commands.Bot` instances wouldn't get overriden which lead to not enabling needed debug events
     - when no matching component listener in `Listener` could be found, the events for components events wouldn't be dispatched
-    - delete_after keyword in message send override not working
+    - `delete_after` keyword in message send override not working
     - mentionable type in slashoptions not being parsed to objects
 
     ## **Added**
