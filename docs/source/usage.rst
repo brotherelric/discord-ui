@@ -79,8 +79,8 @@ And to send them, we use
 
     ...
     await ui.components.send(message.channel, "Hello World", components=[
-        Button("my_custom_id", "press me", "green"),
-        Button("my_other_custom_id", "or press me!", emoji="😁", new_line=True),
+        Button("press me", "my_custom_id", "green"),
+        Button("or press me!", "my_other_custom_id", emoji="😁", new_line=True),
         SelectMenu(options=[
                 SelectOption("choose me", 1),
                 SelectOption("or me", 2),
@@ -94,8 +94,8 @@ And to send them, we use
 
     ...
     await message.channel.send(message.channel, "Hello World", components=[
-        Button("my_custom_id", "press me", "green"),
-        Button("my_other_custom_id", "or press me!", emoji="😁", new_line=True),
+        Button("press me", "my_custom_id", "green"),
+        Button("or press me!", "my_other_custom_id", emoji="😁", new_line=True),
         SelectMenu(options=[
                 SelectOption("choose me", 1),
                 SelectOption("or me", 2),
@@ -194,7 +194,7 @@ You can send a message and directly wait for a button press and respond to it
         if message.content == "!test":
             btn = await (
                 await ui.components.send(message.channel, "hello", components=[
-                    Button("custom_id", "there")
+                    Button("there", "custom_id")
                 ])
             ).wait_for("button", client)
             await btn.respond("you pressed a button")
@@ -208,7 +208,7 @@ You can send a message and directly wait for a button press and respond to it
         if message.content == "!test":
             btn = await (
                 await message.channel.send(message.channel, "hello", components=[
-                    Button("custom_id", "there")
+                    Button("there", "custom_id")
                 ])
             ).wait_for("button", client)
             await btn.respond("you pressed a button")
@@ -234,7 +234,7 @@ Sending the components
     async def on_message(message):
         if message.content == "!test":
             await message.channel.send(message.channel, "listening", components=[
-                    Button("listening", "hi there"),
+                    Button("hi there", "listening"),
                     SelectMenu(options=[
                             SelectOption(label="This is a option", value="my_value", description="This is the description of the option")
                         ], custom_id="listening")
@@ -249,7 +249,7 @@ Sending the components
     async def on_message(message):
         if message.content == "!test":
             await message.channel.send(message.channel, "listening", components=[
-                    Button("listening", "hi there"),
+                    Button("hi there", "listening"),
                     SelectMenu(options=[SelectOption(label="This is a option", value="my_value", description="This is the description of the option")], "listening")
                 ]
             )

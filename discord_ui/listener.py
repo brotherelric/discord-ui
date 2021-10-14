@@ -120,7 +120,7 @@ First method:
             async def test(self, ctx):
                 ...
 
-        await message.channel.send("showcase", components=[Button("test", "this is a showcase")], listener=MyListener())
+        await message.channel.send("showcase", components=[Button("this is a showcase", "test")], listener=MyListener())
 
 Second method:
 
@@ -130,7 +130,7 @@ Second method:
     async def on_message(message)
         class MyListener(Listener):
             def __init__(self):
-                self.components = [Button("test", "this is a showcase")]
+                self.components = [Button("this is a showcase", "test")]
             @Listener.button("test")
             async def test(self, ctx):
                 ...
@@ -152,7 +152,7 @@ Third method:
             async def test(self, ctx):
                 ...
 
-        msg = await message.channel.send("showcase", components=[Button("test", "this is a showcase")])
+        msg = await message.channel.send("showcase", components=[Button("this is a showcase", "test")])
         msg.attach_listener(MyListener())
 
 Fourth method:
@@ -170,7 +170,7 @@ Fourth method:
             async def test(self, ctx):
                 ...
 
-        msg = await message.channel.send("showcase", components=[Button("test", "this is a showcase")])
+        msg = await message.channel.send("showcase", components=[Button("this is a showcase", "test")])
         ui.components.attach_listener_to(msg, MyListener())
 
 And the last method:
@@ -188,7 +188,7 @@ And the last method:
             async def test(self, ctx):
                 ...
 
-        msg = await message.channel.send("showcase", components=[Button("test", "this is a showcase")])
+        msg = await message.channel.send("showcase", components=[Button("this is a showcase", "test")])
         MyListener.attach_me_to(msg)
 """
 

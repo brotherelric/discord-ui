@@ -510,13 +510,13 @@ class Button(BaseButton, UseableComponent):
     disabled: :class:`bool`, optional
         Whether the button is disabled; default False
     """
-    def __init__(self, custom_id=None, label="\u200b", color="blurple", emoji=None, new_line=False, disabled=False) -> None:
+    def __init__(self, label="\u200b", custom_id=None, color="blurple", emoji=None, new_line=False, disabled=False) -> None:
         """
         Creates a new ui-button
 
         Example:
         ```py
-        Button("my_custom_id", "This is a cool button", "green")
+        Button("This is a cool button", "my_custom_id", "green")
         ```
         """
         BaseButton.__init__(self, label, color, emoji, new_line, disabled)
@@ -525,7 +525,14 @@ class Button(BaseButton, UseableComponent):
     def __repr__(self) -> str:
         return f"<discord_ui.Button({self.custom_id}:{self.content})>"
     def copy(self) -> Button:
-        return Button(self.custom_id, self.label, self.color, self.emoji, self.new_line, self.disabled)
+        return Button(
+            label=self.label, 
+            custom_id=self.custom_id, 
+            color=self.color, 
+            emoji=self.emoji, 
+            new_line=self.new_line, 
+            disabled=self.disabled
+        )
 
     @classmethod
     def _from_data(cls, data, new_line=False) -> Button:
@@ -537,7 +544,14 @@ class Button(BaseButton, UseableComponent):
         Button
             The initialized button
         """
-        return Button(data["custom_id"], data.get("label"), data["style"], data.get("emoji"), new_line, data.get("disabled", False))
+        return Button(
+            label=data.get("label"),
+            custom_id=data["custom_id"],
+            color=data["style"], 
+            emoji=data.get("emoji"), 
+            new_line=new_line, 
+            disabled=data.get("disabled", False)
+        )
 
 class LinkButton(BaseButton):
     """
@@ -590,7 +604,13 @@ class LinkButton(BaseButton):
 
     @classmethod
     def _from_data(cls, data, new_line=False) -> LinkButton:
-        return LinkButton(data["url"], data.get("label"), data.get("emoji"), new_line, data.get("disabled", False))
+        return LinkButton(
+            url=data["url"], 
+            label=data.get("label"), 
+            emoji=data.get("emoji"), 
+            new_line=new_line, 
+            disabled=data.get("disabled", False)
+        )
 
 
 class ActionRow():

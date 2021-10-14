@@ -327,7 +327,14 @@ class PressedButton(Interaction, Button):
     """A :class:`~Button` object that was pressed"""
     def __init__(self, data, user, b, message, client) -> None:
         Interaction.__init__(self, client._connection, data, user, message)
-        Button.__init__(self, b.custom_id, b.label, b.color, b.emoji, b.new_line, b.disabled)
+        Button.__init__(self, 
+            label=b.label, 
+            custom_id=b.custom_id,
+            color=b.color, 
+            emoji=b.emoji, 
+            new_line=b.new_line, 
+            disabled=b.disabled
+        )
 
         self._json = b.to_dict()
         self.bot: commands.Bot = client
@@ -639,7 +646,7 @@ class Message(discord.Message):
         .. code-block::
 
             # send a message with comoponents
-            msg = await ctx.send("okay", components=[Button("a_custom_id", ...)])
+            msg = await ctx.send("okay", components=[Button(custom_id="a_custom_id", ...)])
             try:
                 # wait for the button
                 btn = await msg.wait_for("button", client, "a_custom_id", by=ctx.author, timeout=20)

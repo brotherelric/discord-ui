@@ -129,8 +129,8 @@ ui = UI(client)
 async def on_message(message: discord.Message):
     if message.content == "!btn":
         msg = await message.channel.send("you", components=[
-            [Button("custom_id", "press me", color="green"), LinkButton("https://discord.com", emoji="😁")],
-            Button("my_custom_id")
+            [Button("press me", color="green"), LinkButton("https://discord.com", emoji="😁")],
+            Button(custom_id="my_custom_id")
         ])
         try:
             btn = await msg.wait_for("button", client, by=message.author, timeout=20)
@@ -202,17 +202,25 @@ You can find more (and better) examples [here](https://github.com/discord-py-ui/
 -   <details>
     <summary>5.1.0</summary>
     
-    ## **Changed**
-    - Component custom ids are now optional, if no custom id is passed, a 100 characters long random string will be used
+    ## **Breaking changes**
+    - Component custom ids are now optional, if no custom id is passed, a 100 characters long random string will be used and because of that the order of Component init params changed
     - The order of SelectMenus init params changed, `custom_id` comes now after `options`
     ```py
     SelectMenu("my_custom_id", [options...here])
     # is now
     SelectMenu([options...here], "my_custom_id")
     ```
+    - Same for Buttons
+    ```py
+    Button("my_custom_id", "label")
+    # is now
+    Button("label", "my_custom_id")
+    ```
     - ButtonStyles is now ButtonStyle
-    - `ButtonStyle` value names changed: color names are now capitalized and `Danger` is now `Destructive`
     - renamed cog decorators: `slash_cog` -> `slash_command`, `subslash_cog` -> `subslash_command`, `context_cog` -> `context_command`, `listening_component_cog` -> `listening_component`
+    
+    ## **Changed**
+    - `ButtonStyle` value names changed: color names are now capitalized and `Danger` is now `Destructive`
     - `Listener.target_user` is now `Listener.target_users` and can take users, members and ids as the value
 
     ## **Fixed**
@@ -267,7 +275,7 @@ You can find more (and better) examples [here](https://github.com/discord-py-ui/
         ...
     ```
     Note: You don't have to use `` `type` ``, you can just use `type`
-    - Empty descriptions for slashcommands and slashoptions. Their default value is now `\u200b` which is an "empty" char
+    - Empty descriptions for slashcommands and slashoptions. The default description value is now `\u200b` which is an "empty" char
 
     </details>
 

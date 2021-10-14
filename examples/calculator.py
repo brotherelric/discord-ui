@@ -20,10 +20,9 @@ ui = UI(client)
 
 # A component list for the calculator
 calculator = [
-    [Button("num_7", "7", "blurple"), Button("num_8", "8", "blurple"), Button("num_9", "9", "blurple"), Button("plu", "+", "green"), Button("close", ")", "green")],
-    [Button("num_4", "4", "blurple"), Button("num_5", "5", "blurple"), Button("num_6", "6", "blurple"), Button("sub", "-", "green"), Button("open", "(", "green")],
-    [Button("num_1", "1", "blurple"), Button("num_2", "2", "blurple"), Button("num_3", "3", "blurple"), Button("mult", "*", "green"), Button("backs", "⌫", "red")],
-    [Button("pun", ".", "green"), Button("num_0", "0", "blurple"), Button("equ", "=", "gray"), Button("div", "/", "green"), Button("cls", "C", "red")],
+    [Button("7", "num_7", "blurple"), Button("8", "num_8", "blurple"), Button("9", "num_9", "blurple"), Button("+", "plu", "green"), Button(")", "close", "green")],
+    [Button("4", "num_4", "blurple"), Button("5", "num_5", "blurple"), Button("6", "num_6", "blurple"), Button("-", "sub", "green"), Button("(", "open", "green")],
+    [Button("1", "num_1", "blurple"), Button("2", "num_2", "blurple"), Button("3", "num_3", "blurple"), Button("*", "mult", "green"), Button("⌫", "backs", "red")],
     LinkButton("https://github.com/discord-py-ui/discord-ui/tree/main/examples/calculator.py", "ヾ(≧▽≦*) click here for source code ヾ(≧▽≦*)")
 ]
 
