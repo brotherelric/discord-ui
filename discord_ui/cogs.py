@@ -398,7 +398,7 @@ def slash_command(name=None, description=None, options=[], guild_ids=None, defau
     def wraper(callback):
         return CogCommand(callback, name, description, options, guild_ids=guild_ids, default_permission=default_permission, guild_permissions=guild_permissions)
     return wraper
-def subslash_command(base_names, name=None, description=None, options=[], guild_ids=None, default_permission=None, guild_permissions=None):
+def subslash_command(base_names, name=None, description=None, options=None, guild_ids=None, default_permission=None, guild_permissions=None):
     """
     A decorator for cogs that will register a subcommand/subcommand-group
   

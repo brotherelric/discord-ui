@@ -12,6 +12,7 @@ from .errors import (
 
 import discord
 
+import re
 import typing
 import inspect
 
@@ -362,7 +363,7 @@ class SlashPermission():
 
 
 class BaseCommand():
-    __slots__ = ('__aliases__', '__sync__', '__original_name__', '__auto_defer__')
+    __slots__ = ('__aliases__', '__sync__', '__auto_defer__', '__guild_changes__', '__original_name__')
     def __init__(self, command_type, callback, name=None, description=None, options=None, guild_ids=None, default_permission=None, guild_permissions=None) -> None:
         self.__aliases__ = getattr(callback, "__aliases__", None)
         self.__sync__ = getattr(callback, "__sync__", True)
@@ -377,7 +378,12 @@ class BaseCommand():
             if not inspect.iscoroutinefunction(callback):
                 raise NoAsyncCallback()
 
-            callback_params = inspect.signature(callback).parameters
+            _params = inspect.signature(callback).parameters
+            keys = list(_params.keys())
+            callback_params = {
+                x: _params[x] for i, x in enumerate(_params)
+                    if i > (0 if keys[0] != "self" else 1)
+            }
             has_kwargs = 4 in [x.kind for x in list(callback_params.values())]
             if self.options is not None:
                 for op in self.options:
@@ -388,27 +394,71 @@ class BaseCommand():
                     param = callback_params[op.name]
                     if not op.required and param.default is param.empty:
                         raise OptionalOptionParameter(param.name)
-            if self.options in [[], None] and self.command_type is CommandType.Slash:
+            # if no options provided via options=[], check callback params instead
+            if options == None and self.command_type is CommandType.Slash:
                 _ops = []
-                has_self = False
+                
+                style = 0
+                results = []
+                doc = '\n'.join(inspect.getdoc(callback).split('\n')[1:]).removeprefix("\n") if inspect.getdoc(callback) != None else ""
+                # check docstring pattern
+                # style 1
+                #
+                #       Slashcommand description
+                #       param1: `type`:
+                #           description here
+                #       param2: `type`:
+                #           description here
+                if len(re.findall(r'\w+: `?\w+`?:?\n.*', doc)) > 0:
+                    results = re.findall(r'\w+: `?\w+`?:?\n.*', doc)
+                    style = 1
+                # style 2
+                #
+                #       Slashcommand description
+                #       param1: description here
+                #       param2: description here
+                elif len(re.findall(r'\w+:\W.*', doc)) > 0:
+                    results = re.findall(r'\w+:\W.*', doc)
+                    style = 2
+                # style 3
+                #
+                #       Slashcommand description
+                #       param1 description
+                #       param2 description
+                elif len(doc.split("\n")) == len(callback_params):
+                    results = doc.split("\n")
+                    style = 3
+
                 for _i, _name in enumerate(callback_params):
-                    # ignore context parameter
-                    if _name == "self":
-                        has_self = True
-                        continue
-                    if _i == (1 if has_self else 0):
-                        continue
                     _val = callback_params.get(_name)
                     op_type = None
+                    op_desc = None
                     if _val.annotation != _val.empty:
                         op_type = _val.annotation
                     elif _val.default != inspect._empty:
                         op_type = type(_val.default)
                     else: 
                         op_type = _name
+
+                    if style != 0 and _i < len(results):
+                        if style == 1:
+                            res = results[_i]
+                            _name = res.split(":")[0]
+                            _type = res.split(":")[1].split("\n")[0].removesuffix(":").removeprefix(" ").replace("`", "").removeprefix(":class:").removeprefix("~")
+                            op_desc = re.split(r'\s\s+', res.split("\n")[1])[1]
+                            if OptionType.any_to_type(op_type) is None:
+                                op_type = _type
+                        elif style == 2:
+                            res = results[_i]
+                            _name = res.split(":")[0]
+                            op_desc = ": ".join(res.split(": ")[1:])
+                        elif style == 3:
+                            res = results[_i]
+                            op_desc = res
+                        
                     if OptionType.any_to_type(op_type) is None:
                         raise discord.errors.InvalidArgument("Could not find a matching option type for parameter '" + str(op_type) + "'")
-                    _ops.append(SlashOption(op_type, _name, required=_val.default == inspect._empty))
+                    _ops.append(SlashOption(op_type, _name, op_desc, required=_val.default == inspect._empty))
                 self.options = _ops
 
         self.callback: function = callback
@@ -544,6 +594,8 @@ class BaseCommand():
         return [SlashOption._from_data(x, self.__choice_generators__.get(x["name"])) for x in self._json.get("options", [])]
     @options.setter
     def options(self, options):
+        if options is None:
+            self._json["options"] = []
         if not isinstance(options, list):
             raise WrongType("options", options, "list")
         if all(isinstance(x, (SlashOption, dict)) for x in options):
@@ -643,7 +695,7 @@ class SlashCommand(BaseCommand):
         return c
 
 class SlashSubcommand(BaseCommand):
-    def __init__(self, callback, base_names, name, description=None, options=[], guild_ids=None, default_permission=None, guild_permissions=None) -> None:
+    def __init__(self, callback, base_names, name, description=None, options=None, guild_ids=None, default_permission=None, guild_permissions=None) -> None:
         if isinstance(base_names, str):
             base_names = [base_names]
         if len(base_names) > 2:

@@ -230,6 +230,55 @@ You can find more (and better) examples [here](https://github.com/discord-py-ui/
     - `channel_type` to SlashOption, list of `discord.ChannelType`. This will restrict the shown channels for channel slash options to this list.
     - support for nextcord. Other libs **should** work too, but they are not tested. 
     - `Mentionable` type for SlashOptions
+    - description for short slashoptions. If you set the options for a slash command via callback params, you can add a description (and a type) to them with your docstring. There are 3 different styles you can use:
+    ```py
+    # style 1
+    @ui.slash.command()
+    async def my_command(ctx, my_option, my_other_option):
+        """This is my command description
+
+        my_option: `int`:
+            This is the description for the my_option parameter
+        my_other_option: `str`:
+            This is the description for another option
+        """
+        ...
+    
+    # style 2
+    @ui.slash.command()
+    async def my_command(ctx, my_option: int, my_other_option: str):
+        """This is my command description
+
+        my_option: This is the description for the my_option parameter
+        my_other_option: This is the description for another option
+        """
+        ...
+
+    # style 3
+    @ui.slash.command()
+    async def my_command(ctx, my_option: int, my_other_option: str):
+        """This is my command description
+
+
+        This is the description for the my_option parameter
+
+        This is the description for another option
+        """
+        ...
+
+    # style 4
+    @ui.slash.command()
+    async def my_command(ctx, my_option, my_other_option):
+        """This is my command description
+
+        `int`:
+            This is the description for the my_option parameter
+        `str`:
+            This is the description for another option
+        """
+        ...        
+    ```
+    Note: You don't have to use `\`type\``, you can just use `type`
 
 
     </details>

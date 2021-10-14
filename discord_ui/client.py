@@ -1048,7 +1048,7 @@ class Slash():
     def add_subcommand(self, base_names, name=None, callback=None, description=None, options=None, guild_ids=None, default_permission=True, guild_permissions=None):
         command = SlashSubcommand(callback, base_names, name, description, options, guild_ids=guild_ids, default_permission=default_permission, guild_permissions=guild_permissions)
         self._add_to_cache(command)
-    def subcommand(self, base_names, name=None, description=None, options=[], guild_ids=None, default_permission=True, guild_permissions=None):
+    def subcommand(self, base_names, name=None, description=None, options=None, guild_ids=None, default_permission=True, guild_permissions=None):
         """
         A decorator for a subcommand group
         
