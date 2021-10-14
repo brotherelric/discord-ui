@@ -278,7 +278,7 @@ You can find more (and better) examples [here](https://github.com/discord-py-ui/
         """
         ...        
     ```
-    Note: You don't have to use `\`type\``, you can just use `type`
+    Note: You don't have to use `` `type` ``, you can just use `type`
 
 
     </details>
