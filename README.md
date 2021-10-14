@@ -267,7 +267,7 @@ You can find more (and better) examples [here](https://github.com/discord-py-ui/
         ...
     ```
     Note: You don't have to use `` `type` ``, you can just use `type`
-
+    - Empty descriptions for slashcommands and slashoptions. Their default value is now `\u200b` which is an "empty" char
 
     </details>
 

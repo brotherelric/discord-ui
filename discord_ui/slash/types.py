@@ -34,7 +34,7 @@ class SlashOption():
     name: :class:`str`
         1-32 lowercase character name for the option.
     description: :class:`str`, optional
-        1-100 character description of the command; default name
+        1-100 character description of the command; default `\u200b`
     required: :class:`bool`, optional
         If the parameter is required or optional; default False
     choices: List[:class:`dict`], optional
@@ -73,7 +73,7 @@ class SlashOption():
         self._json = {}
         self.argument_type = argument_type
         self.name = name
-        self.description = _or(description, self.name)
+        self.description = _or(description, "\u200b")
         self.required = required
         self.options = _default([], options)
         self.autocomplete = autocomplete
@@ -457,8 +457,8 @@ class BaseCommand():
                             if ":" in res:
                                 op_desc = ':'.join(res.split(":")[1:]).removeprefix(" ")
                                 _type = res.split(":")[0].replace("`", "")
-                            if OptionType.any_to_type(op_type) is None:
-                                op_type = _type
+                                if OptionType.any_to_type(op_type) is None:
+                                    op_type = _type
                         
                     if OptionType.any_to_type(op_type) is None:
                         raise discord.errors.InvalidArgument("Could not find a matching option type for parameter '" + str(op_type) + "'")
@@ -469,7 +469,7 @@ class BaseCommand():
         self.name: str = _or(name, self.callback.__name__ if not _none(self.callback) else None)
         # Set the original name to the name once so if the name should be changed, this value still stays to what it is
         self.__original_name__ = self.name
-        self.description: str = _or(description, inspect.getdoc(callback).split("\n")[0] if not _none(callback) and inspect.getdoc(callback) is not None else None, self.name)
+        self.description: str = _or(description, inspect.getdoc(callback).split("\n")[0] if not _none(callback) and inspect.getdoc(callback) is not None else None, "\u200b")
         if default_permission is None:
             default_permission = True
         self.default_permission = default_permission
