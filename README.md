@@ -256,27 +256,15 @@ You can find more (and better) examples [here](https://github.com/discord-py-ui/
 
     # style 3
     @ui.slash.command()
-    async def my_command(ctx, my_option: int, my_other_option: str):
+    async def my_command(ctx, my_option, my_other_option: str):
         """This is my command description
 
 
-        This is the description for the my_option parameter
+        `int`: This is the description for the my_option parameter
 
         This is the description for another option
         """
         ...
-
-    # style 4
-    @ui.slash.command()
-    async def my_command(ctx, my_option, my_other_option):
-        """This is my command description
-
-        `int`:
-            This is the description for the my_option parameter
-        `str`:
-            This is the description for another option
-        """
-        ...        
     ```
     Note: You don't have to use `` `type` ``, you can just use `type`
 

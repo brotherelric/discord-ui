@@ -425,7 +425,7 @@ class BaseCommand():
                 #       Slashcommand description
                 #       param1 description
                 #       param2 description
-                elif len(doc.split("\n")) == len(callback_params):
+                elif len(doc.split("\n")) > 0:
                     results = doc.split("\n")
                     style = 3
 
@@ -454,7 +454,11 @@ class BaseCommand():
                             op_desc = ": ".join(res.split(": ")[1:])
                         elif style == 3:
                             res = results[_i]
-                            op_desc = res
+                            if ":" in res:
+                                op_desc = ':'.join(res.split(":")[1:]).removeprefix(" ")
+                                _type = res.split(":")[0].replace("`", "")
+                            if OptionType.any_to_type(op_type) is None:
+                                op_type = _type
                         
                     if OptionType.any_to_type(op_type) is None:
                         raise discord.errors.InvalidArgument("Could not find a matching option type for parameter '" + str(op_type) + "'")
