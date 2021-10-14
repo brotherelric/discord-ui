@@ -597,7 +597,7 @@ class LinkButton(BaseButton):
     @property
     def url(self) -> str:
         """
-        The link which will be opened upon pressing the button
+        The link which will be opened when the button was pressedd
 
         :type: :class:`str`
         """
