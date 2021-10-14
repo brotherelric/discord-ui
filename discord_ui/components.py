@@ -586,7 +586,13 @@ class LinkButton(BaseButton):
     def __repr__(self) -> str:
         return f"<discord_ui.LinkButton({self.custom_id}:{self.content})>"
     def copy(self) -> LinkButton:
-        return LinkButton(self.url, self.label, self.emoji, self.new_line, self.disabled)
+        return LinkButton(
+            url=self.url, 
+            label=self.label, 
+            emoji=self.emoji, 
+            new_line=self.new_line, 
+            disabled=self.disabled
+        )
 
     @property
     def url(self) -> str:
