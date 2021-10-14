@@ -4,7 +4,7 @@ import discord
 
 import inspect
 from enum import IntEnum
-from typing import Union, Callable
+from typing import Generic, NewType, TypeVar, Union, Callable
 
 Channel = Union[
     discord.TextChannel, 
@@ -16,19 +16,36 @@ Channel = Union[
 ]
 """Typing object for all possible channel types, only for type hinting"""
 
-Mentionable = Union[
-    discord.abc.GuildChannel,
+_Mentionable = Union[
+    Channel,
     discord.Member,
     discord.Role
 ]
 """Typing object for possible returned classes in :class:`~OptionType.Mentionable`, only for type hinting"""
-# class Mentionable(
-#     discord.abc.GuildChannel,
-#     discord.Member,
-#     discord.Role
-# ):
-#     def __init__(self):
-#         raise NotImplemented
+class __Mentionable:
+    """Empty class for comparing a class to `Mentionable`"""
+    pass
+
+Mentionable: _Mentionable = __Mentionable
+"""Type for a SlashOption with argument_type of :class:`Mentionable`
+
+Usage:
+~~~~~~
+
+.. code-block::
+
+    @ui.slash.command(options=[SlashOption(Mentionable, "an_option")])
+    async def test(ctx, an_option):
+        ...
+
+or
+
+.. code-block::
+
+    @ui.slash.command()
+    async def test(ctx, an_option: Mentionable): # OptionType of 'an_option' is now Mentionable
+        ... 
+"""
 
 class BaseIntEnum(IntEnum):
     def __str__(self) -> str:
@@ -109,9 +126,7 @@ class OptionType(BaseIntEnum):
             if whatever in [discord.User, discord.Member]:
                 return cls.Member
             if whatever in [discord.TextChannel, discord.VoiceChannel, discord.StageChannel, discord.CategoryChannel]:
-                ret = cls.Channel
-                ret.__types__ = [cls]
-                return ret
+                return cls.Channel
             if whatever is discord.Role:
                 return cls.Role
             if whatever is Mentionable:
@@ -140,23 +155,6 @@ class OptionType(BaseIntEnum):
             ret = cls.Channel
             ret.__types__ = whatever
             return ret
-
-    def get_channel_types(self):
-        if self != self.CHANNEL or not hasattr(self, "__types__"):
-            raise Exception("Bro you can't to that, its not a channel")
-        types = []
-        for x in self.__types__:
-            if isinstance(x, discord.TextChannel):
-                types.append(discord.ChannelType.text)
-            if isinstance(x, discord.VoiceChannel):
-                types.append(discord.ChannelType.voice)
-            if isinstance(x, discord.StageChannel):
-                types.append(discord.ChannelType.stage_voice)
-            if isinstance(x, discord.StoreChannel):
-                types.append(discord.ChannelType.store)
-            if isinstance(x, discord.CategoryChannel):
-                types.append(discord.ChannelType.category)
-        return types
 class InteractionResponseType(BaseIntEnum):
     Pong                        =       1
     """respond to ping"""

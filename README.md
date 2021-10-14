@@ -18,14 +18,14 @@
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/550953d11c8242b9b7944642a2e292c7)](https://app.codacy.com/gh/discord-py-ui/discord-ui?utm_source=github.com&utm_medium=referral&utm_content=discord-py-ui/discord-ui&utm_campaign=Badge_Grade_Settings)
 
 ```
-This is a preview version and can have some issues
+This is a preview version and can contain some issues
 ```
 
 ## Introduction
 
 
 This is a [discord.py](https://github.com/Rapptz/discord.py) ui extension made by [404kuso](https://github.com/404kuso) and [RedstoneZockt](https://github.com/RedstoneZockt)
-for using discord's newest ui features like buttons, slash commands and context commands (we got dpy2 supported if you want to keep using our libary)
+for using discord's newest ui features like buttons, slash commands and context commands.
 
 [Documentation](https://discord-ui.readthedocs.io/en/preview/)
 
@@ -203,25 +203,25 @@ You can find more (and better) examples [here](https://github.com/discord-py-ui/
     <summary>5.1.0</summary>
     
     ## **Changed**
-    - Component custom ids are now optional, if no custom id is passed, a 100 character long random string will be used
-    - The order of SelectMenus init params changed, custom_id is now after options
+    - Component custom ids are now optional, if no custom id is passed, a 100 characters long random string will be used
+    - The order of SelectMenus init params changed, `custom_id` comes now after `options`
     ```py
     SelectMenu("my_custom_id", [options...here])
     # is now
     SelectMenu([options...here], "my_custom_id")
     ```
     - ButtonStyles is now ButtonStyle
-    - `ButtonStyle` value names changed: color names are now capitalized and `Danger` is now `Destructive
+    - `ButtonStyle` value names changed: color names are now capitalized and `Danger` is now `Destructive`
     - renamed cog decorators: `slash_cog` -> `slash_command`, `subslash_cog` -> `subslash_command`, `context_cog` -> `context_command`, `listening_component_cog` -> `listening_component`
     - `Listener.target_user` is now `Listener.target_users` and can take users, members and ids as the value
 
     ## **Fixed**
     - disable_action_row
-    - disabling action row
+    - `ActionRow.disable`
     - no interaction events being dispatched because subclasses of dpy2 commands.Bot instances wouldn't get overriden which lead to not enabling needed debug events
-    - when no matching component listener in `Listener` could be found, the events for components events wouldn't been dispatched
-    - delete_after keyword in message send override
-    - mentionable slashoptions not being parsed to objects
+    - when no matching component listener in `Listener` could be found, the events for components events wouldn't be dispatched
+    - delete_after keyword in message send override not working
+    - mentionable type in slashoptions not being parsed to objects
 
     ## **Added**
     - `**fields` to all functions that edit the message components. The **fields parameter can be used to edit other properties of the message without using `.edit` again and send a "useless" request
@@ -229,6 +229,7 @@ You can find more (and better) examples [here](https://github.com/discord-py-ui/
     - When no keyword was passed to `@Listener.button` or `@Listener.select`, the function will be called on every button/slect
     - `channel_type` to SlashOption, list of `discord.ChannelType`. This will restrict the shown channels for channel slash options to this list.
     - support for nextcord. Other libs **should** work too, but they are not tested. 
+    - `Mentionable` type for SlashOptions
 
 
     </details>
