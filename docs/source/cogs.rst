@@ -48,19 +48,19 @@ Example
 slash_cog
 ==========
 
-.. automethod:: cogs.slash_cog
+.. automethod:: cogs.slash_command
 
 subslash_cog
 ============
 
-.. automethod:: cogs.subslash_cog
+.. automethod:: cogs.subslash_command
 
 context_cog
 =============
 
-.. automethod:: cogs.context_cog
+.. automethod:: cogs.context_command
 
 listening_component_cog
 ========================
 
-.. automethod:: cogs.listening_component_cog
+.. automethod:: cogs.listening_component

@@ -36,6 +36,9 @@ def _default(default, *args, empty_array=True):
         return args[0]
     return args
 
+def setattribute(object, attribute, value):
+    setattr(object, attribute, value)
+    return object
 
 def get_index(l: list, elem: Any, mapping = lambda x: x, default: int = -1) -> int:
     """Returns the index of an element in the list
