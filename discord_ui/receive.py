@@ -3,7 +3,7 @@ from .slash.http import ModifiedSlashState
 from .errors import InvalidEvent, OutOfValidRange, WrongType
 from .http import BetterRoute, get_message_payload, send_files
 from .slash.errors import AlreadyDeferred, EphemeralDeletion
-from .tools import MISSING, get_index, setup_logger, _none, get, _default
+from .tools import EMPTY_CHECK, MISSING, get_index, setup_logger, _none, get, _default
 from .slash.types import ContextCommand, SlashCommand, SlashPermission, SlashSubcommand
 from .components import ActionRow, Button, LinkButton, SelectMenu, SelectOption, UseableComponent, make_component
 
@@ -29,6 +29,7 @@ __all__ = (
     'SlashedCommand',
     'SlashedSubCommand',
     'SlashedContext',
+    'Interaction',
 )
 
 class InteractionType:
@@ -606,7 +607,7 @@ class Message(discord.Message):
             fixed.append(x)
         await self.edit(components=fixed, **fields)
 
-    async def wait_for(self, event_name: Literal["select", "button", "component"], client, custom_id=None, by=None, check=lambda component: True, timeout=None) -> Union[PressedButton, SelectedMenu, ComponentContext]:
+    async def wait_for(self, event_name: Literal["select", "button", "component"], client, custom_id=None, by=None, check=EMPTY_CHECK, timeout=None) -> Union[PressedButton, SelectedMenu, ComponentContext]:
         """Waits for a message component to be invoked in this message
 
         Parameters

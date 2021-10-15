@@ -69,7 +69,7 @@ def check_failure_response(content=None, hidden=False, **fields):
         # second check
         @ext.check_failure_response("command can only used in nsfw channels", hidden=True)
         @commands.is_nsfw()
-        @cogs.slash_cog(guild_ids=[867699578034716683])
+        @cogs.slash_command(guild_ids=[867699578034716683])
         async def callback(self, ctx):
             ...
     """

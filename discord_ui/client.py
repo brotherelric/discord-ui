@@ -1,11 +1,12 @@
 
-from .cogs import BaseCallable, CogCommand, CogMessageCommand, CogSubCommandGroup, InteractionableCog, ListeningComponent
+from .components import Button, Component, SelectMenu
+from .cogs import BaseCallable, CogCommand, CogSubCommandGroup, InteractionableCog, ListeningComponent
 from .slash.errors import NoAsyncCallback
 from .errors import MissingListenedComponentParameters, WrongType
 from .slash.tools import ParseMethod, cache_data, format_name, handle_options, handle_thing
 from .slash.http import SlashHTTP
 from .slash.types import CommandType, ContextCommand, MessageCommand, OptionType, SlashCommand, SlashOption, SlashSubcommand, UserCommand
-from .tools import MISSING, _none, _or, get_index, setup_logger, get
+from .tools import MISSING, EMPTY_CHECK, _none, _or, get_index, setup_logger, get
 from .http import get_message_payload, BetterRoute, send_files
 from .receive import ChoiceGeneratorContext, ComponentContext, Interaction, InteractionType, Message, PressedButton, SelectedMenu, SlashedContext, SlashedCommand, SlashedSubCommand, getMessage
 from .override import override_dpy as override_it
@@ -20,7 +21,7 @@ import json
 import inspect
 import asyncio
 import contextlib
-from typing import Coroutine, Dict, List, Tuple, Union
+from typing import Any, Callable, Coroutine, Dict, List, Tuple, Union
 try:
     from typing import Literal
 except ImportError:
@@ -1523,7 +1524,10 @@ class Components():
             payload["avatar_url"] = str(avatar_url)
 
         return webhook._adapter.execute_webhook(payload=payload, wait=wait, files=files)
-    def listening_component(self, custom_id, messages=None, users=None, component_type: Literal["button", "select"]=None, check=lambda component: True):
+    def listening_component(self, custom_id, messages=None, users=None, 
+        component_type: Literal["button", "select"]=None,
+        check: Callable[[Union[PressedButton, SelectedMenu]], bool]=EMPTY_CHECK
+    ):
         """
         Decorator for ``add_listening_component``
 
@@ -1564,10 +1568,10 @@ class Components():
                 ...
             
         """
-        def wrapper(callback):
+        def wrapper(callback: Callable[[Union[PressedButton, SelectedMenu]], Coroutine[Any, Any, Any]]):
             self.add_listening_component(callback, custom_id, messages, users, component_type, check)
         return wrapper
-    def add_listening_component(self, callback, custom_id, messages=None, users=None, component_type: Literal["button", 2, "select", 3]=None, check=lambda component: True):
+    def add_listening_component(self, callback, custom_id, messages=None, users=None, component_type: Literal["button", 2, "select", 3]=None, check: Callable[[Union[Component, Button, SelectMenu]], bool]=EMPTY_CHECK):
         """
         Adds a listener to received components
 

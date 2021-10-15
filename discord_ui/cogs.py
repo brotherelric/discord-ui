@@ -1,7 +1,10 @@
 from __future__ import annotations
 import inspect
 
+
+from .tools import EMPTY_CHECK
 from .slash.types import BaseCommand, ContextCommand, MessageCommand, SlashCommand, SlashSubcommand, UserCommand
+from .receive import PressedButton, SelectedMenu
 from .enums import ComponentType
 
 import discord
@@ -14,7 +17,7 @@ except ImportError:
 
 import asyncio
 import datetime
-from typing import Optional, List, Union
+from typing import Any, Callable, Coroutine, Optional, List, Union
 try:
     from typing import Literal
 except ImportError:
@@ -537,7 +540,10 @@ def context_command(type: Literal["user", 2, "message", 3], name=None, guild_ids
         else:
             raise InvalidArgument("Invalid context type! type has to be one of 'user', 1, 'message', 2!")
     return wraper
-def listening_component(custom_id, messages=None, users=None, component_type: Literal['button', 'select']=None, check=lambda _ctx: True):
+def listening_component(custom_id, messages=None, users=None, 
+    component_type: Literal['button', 'select']=None, 
+    check: Callable[[Union[PressedButton, SelectedMenu]], bool]=EMPTY_CHECK
+):
     """
     Decorator for cogs that will register a listening component
 
@@ -578,11 +584,11 @@ def listening_component(custom_id, messages=None, users=None, component_type: Li
         async def callback(ctx):
             ...
     """
-    def wraper(callback):
+    def wraper(callback: Callable[[Cog, Union[PressedButton, SelectedMenu]], Coroutine[Any, Any, Any]]):
         return ListeningComponent(callback, messages, users, component_type, check, custom_id)
     return wraper
 
-def _get_instances_for(target, cls=BaseCallable, check=lambda x: True):
+def _get_instances_for(target, cls=BaseCallable, check=EMPTY_CHECK):
     return [x[1] for x in inspect.getmembers(target, lambda x: isinstance(x, cls) and check(x) is True)]
 
 class InteractionableCog(commands.Cog):

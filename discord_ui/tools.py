@@ -16,10 +16,19 @@ class _MISSING:
         return self.__repr__()
     def __sizeof__(self) -> int:
         return 0
+    def __contains__(self, value):
+        return False
     def get(self, *args):
         return self
+class _EMPTY_CHECK():
+    """An empty check that will always return True"""
+    def __call__(self, *args: Any, **kwds: Any) -> Any:
+        return True
+    def __repr__(self) -> str:
+        return "empty_check"
 
 MISSING = _MISSING()
+EMPTY_CHECK = _EMPTY_CHECK()
 
 
 def _none(*args, empty_array=False):

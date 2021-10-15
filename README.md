@@ -173,7 +173,7 @@ Example for cogs
 ```py
 from discord.ext import commands
 from discord_ui import UI
-from discord_ui.cogs import slash_cog, subslash_cog, listening_component_cog
+from discord_ui.cogs import slash_command, subslash_command, listening_component
 
 bot = commands.Bot(" ")
 ui = UI(bot)
@@ -182,11 +182,11 @@ class Example(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
     
-    @slash_cog(name="example", guild_ids=[785567635802816595])
+    @slash_command(name="example", guild_ids=[785567635802816595])
     async def example(self, ctx):
         await ctx.respond("gotchu")
 
-    @subslash_cog(base_names="example", name="command"):
+    @subslash_command(base_names="example", name="command"):
     async def example_command(self, ctx):
         await ctx.respond("okayy")
     
@@ -217,7 +217,7 @@ You can find more (and better) examples [here](https://github.com/discord-py-ui/
     Button("label", "my_custom_id")
     ```
     - ButtonStyles is now ButtonStyle
-    - renamed cog decorators: `slash_cog` -> `slash_command`, `subslash_cog` -> `subslash_command`, `context_cog` -> `context_command`, `listening_component_cog` -> `listening_component`
+    - renamed cog decorators: `slash_command` -> `slash_command`, `subslash_command` -> `subslash_command`, `context_cog` -> `context_command`, `listening_component` -> `listening_component`
     
     ## **Changed**
     - `ButtonStyle` value names changed: color names are now capitalized and `Danger` is now `Destructive`
@@ -709,7 +709,7 @@ You can find more (and better) examples [here](https://github.com/discord-py-ui/
     > You can add and remove listening components now with the `Components.add_listening_component`, `Components.remove_listening_component` and `Components.remove_listening_components` functions
 
     - Cogs
-    > You can now use cog decorators like `slash_cog`, `subslash_cog` and `listening_component_cog`
+    > You can now use cog decorators like `slash_command`, `subslash_command` and `listening_component`
 
     ## **Fixed**
 
