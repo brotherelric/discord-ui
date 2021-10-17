@@ -1208,4 +1208,4 @@ You can contact us on discord
 
 - `RedstoneZockt#0001`
 - `! kuso#6969`
-- [discord](https://discord.gg/bDJCGD994p)
+- [discord server](https://discord.gg/bDJCGD994p)
