@@ -24,6 +24,18 @@ __all__ = (
 def format_name(value):
     return str(value).lower().replace(" ", "-")
 
+class SlashOptionCollection():
+    def __init__(self, options):
+        self.__options = {x.name: x for x in options}
+    def __getitem__(self, index):
+        if isinstance(index, int):
+            return list(self.__options.values())[index]
+        if isinstance(index, str):
+            return self.__options[index]
+        raise ValueError()
+    def __iter__(self):
+        return iter(self.__options.values())
+
 class SlashOption():
     """An option for a slash command
         
@@ -206,25 +218,31 @@ class SlashOption():
 
     @property
     def options(self) -> typing.List['SlashOption']:
-        """The parameters for the command
+        """The parameters for the command.
+    
+        You can use the option's name (``.options["option name"]``) or the index of the option (``.options[index]``) to get an element.
 
-        :type: List[:class:`~SlashOptions`]
+        :type: :class:`SlashOptionCollection`
         """
-        return [SlashOption._from_data(x, self.__choice_generators__.get(x["name"])) for x in self._json.get("options", [])]
+        return SlashOptionCollection(
+            [SlashOption._from_data(x, self.__choice_generators__.get(x["name"])) for x in self._json.get("options", [])]
+        )
     @options.setter
     def options(self, options):
-        if not isinstance(options, list):
-            raise WrongType("options", options, "list")
+        if not isinstance(options, list) and not isinstance(options, SlashOptionCollection):
+            raise WrongType("options", options, ["list", "SlashOptionCollection"])
         if all(isinstance(x, (SlashOption, dict)) for x in options):
             self._json["options"] = [(x.to_dict() if type(x) is SlashOption else x) for x in options]
         else:
-            i = 0
-            for x in options:
+            for i, x in enumerate(options):
                 if not isinstance(x, SlashOption) and not isinstance(x, dict):
                     raise WrongType("options[" + str(i) + "]", x, ["dict", "SlashOption"])
-                i += 1
-        self.__choice_generators__ = {x.name: x.choice_generator or self.__choice_generators__.get(x.name) for x in [SlashOption._from_data(o) if isinstance(o, dict) else o for o in options]}
-
+        # set autocomplete generators
+        self.__choice_generators__ = {
+            x.name: x.choice_generator or self.__choice_generators__.get(x.name) for x in 
+                [SlashOption._from_data(o) if isinstance(o, dict) else o for o in options]
+            }
+        
     @property
     def autocomplete(self) -> bool:
         """Whether the choices for this option should be autocompleted
@@ -591,27 +609,30 @@ class BaseCommand():
         self._json["description"] = value
     @property
     def options(self) -> typing.List['SlashOption']:
-        """The parameters for the command
-        
-        :type: List[:class:`~SlashOption`]
+        """The parameters for the command.
+    
+        You can use the option's name (``.options["option name"]``) or the index of the option (``.options[index]``) to get an element.
+
+        :type: :class:`SlashOptionCollection`
         """
-        return [SlashOption._from_data(x, self.__choice_generators__.get(x["name"])) for x in self._json.get("options", [])]
+        return SlashOptionCollection(
+            [SlashOption._from_data(x, self.__choice_generators__.get(x["name"])) for x in self._json.get("options", [])]
+        )
     @options.setter
     def options(self, options):
-        if options is None:
-            self._json["options"] = []
-        if not isinstance(options, list):
-            raise WrongType("options", options, "list")
+        if not isinstance(options, list) and not isinstance(options, SlashOptionCollection):
+            raise WrongType("options", options, ["list", "SlashOptionCollection"])
         if all(isinstance(x, (SlashOption, dict)) for x in options):
-            self._json["options"] = [(x.to_dict() if isinstance(x, SlashOption) else x) for x in options]
+            self._json["options"] = [(x.to_dict() if type(x) is SlashOption else x) for x in options]
         else:
-            i = 0
-            for x in options:
-                if not isinstance(x, (SlashOption, dict)):
+            for i, x in enumerate(options):
+                if not isinstance(x, SlashOption) and not isinstance(x, dict):
                     raise WrongType("options[" + str(i) + "]", x, ["dict", "SlashOption"])
-                i += 1
-        self.__choice_generators__ = {x.name: x.choice_generator or self.__choice_generators__.get(x.name) for x in [SlashOption._from_data(o) if isinstance(o, dict) else o for o in options]}
-    # endregion
+        # set autocomplete generators
+        self.__choice_generators__ = {
+            x.name: x.choice_generator or self.__choice_generators__.get(x.name) for x in 
+                [SlashOption._from_data(o) if isinstance(o, dict) else o for o in options]
+            }# endregion
     # region permissions
     @property
     def default_permission(self) -> typing.Union[str, bool]:
