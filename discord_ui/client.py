@@ -981,7 +981,7 @@ class Slash():
                 raise Exception("Slashcommands are not ready yet")
             return self.create_command(command) 
         return command
-    def command(self, name=None, description=None, options=None, guild_ids=None, default_permission=True, guild_permissions=None):
+    def command(self, name=None, description=None, options=None, guild_ids=None, default_permission=True, guild_permissions=None) -> SlashCommand:
         """
         A decorator for a slash command
         

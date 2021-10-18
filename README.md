@@ -222,6 +222,29 @@ You can find more (and better) examples [here](https://github.com/discord-py-ui/
     ## **Changed**
     - `ButtonStyle` value names changed: color names are now capitalized and `Danger` is now `Destructive`
     - `Listener.target_user` is now `Listener.target_users` and can take users, members and ids as the value
+    - `BaseCommand.options` and `SlashOption.options` is now of type `SlashOptionCollection`, which allows you to acces options by index and name
+    ```py
+    my_command.options["option name"]
+    # or
+    my_command.options[0]
+    ```
+    You can also use some methods like `.get`, `.set` (which will return itself after it set something, so `SlashOption.set(key, value).set(key, value)` would work) and `SlashOption.options + SlashOption.option` will add both SlashOptions together
+    - Modifying slashcommand options is now WWAAYYYY easier. You can just do `.options[name or index].name = "new name"` and the option will be updated
+    - You can set the autocomplete choice generator with a decorator now
+    ```py
+        ui.slash.command(options=[SlashOption(str, "my_option")])
+        async def my_command(ctx, my_option):
+            ...
+
+
+        @my_command.options["my_option"].autocomplete_function
+        async def my_generator(ctx):
+            ...
+        # or
+        @my_command.options[0].autocomplete_function
+        async def my_generator(ctx):
+            ...
+    ```
 
     ## **Fixed**
     - disable_action_row

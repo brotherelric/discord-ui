@@ -26,15 +26,62 @@ def format_name(value):
 
 class SlashOptionCollection():
     def __init__(self, options):
-        self.__options = {x.name: x for x in options}
+        self.__options = {x.name if isinstance(x, SlashOption) else x["name"]: SlashOption._from_data(x) if isinstance(x, dict) else x for x in options}
+    
+    def __repr__(self) -> str:
+        return "<SlashOptionCollection[" + ', '.join([x.__repr__() for x in self]) + "]>"
+    def __eq__(self, o):
+        if isinstance(o, SlashOptionCollection):
+            return len(self) == len(o) and self.__options == o.__options
+        if isinstance(o, list):
+            return len(o) == len(self.__options) and list(self.__options.values()) == o
+        return False
+    def __ne__(self, o) -> bool:
+        return self.__eq__(o)
+    def __len__(self):
+        return len(self.__options)
+    def __iter__(self):
+        return iter(self.__options.values())
     def __getitem__(self, index):
         if isinstance(index, int):
             return list(self.__options.values())[index]
-        if isinstance(index, str):
+        elif isinstance(index, str):
             return self.__options[index]
-        raise ValueError()
-    def __iter__(self):
-        return iter(self.__options.values())
+        raise TypeError()
+    def __setitem__(self, index, value):
+        if isinstance(index, int):
+            self.__options[list(self.__options.keys())[index]] = value
+        elif isinstance(index, str):
+            self.__options[index] = value
+        else:
+            raise WrongType("index", index, ["int", "str"])
+    def __delitem__(self, index):
+        if isinstance(index, int):
+            del self.__options[list(self.__options.keys())[index]]
+        elif isinstance(index, str):
+            del self.__options[index]
+        else:
+            raise WrongType("index", index, ["int", "str"])
+    def __add__(self, value):
+        if isinstance(value, SlashOption):
+            return self.copy().set(value.name, value)
+        elif isinstance(value, dict):
+            return self.copy().set(value["name"], SlashOption._from_data(value))
+        else:
+            raise WrongType("value", value, ["SlashOption", "dict"])
+
+    def copy(self):
+        return SlashOptionCollection(list(self.__options.values()))
+    def get(self, index, default=None):
+        try:
+            return self.__getitem__(index)
+        except (IndexError, KeyError):
+            return default
+    def set(self, index, value):
+        self.__setitem__(index, value)
+        return self
+    def to_dict(self):
+        return [x.to_dict() for x in self]
 
 class SlashOption():
     """An option for a slash command
@@ -82,6 +129,7 @@ class SlashOption():
 
         self.__choice_generators__ = {}
 
+        self._options: SlashOptionCollection = None # set later
         self._json = {}
         self.argument_type = argument_type
         self.name = name
@@ -134,6 +182,10 @@ class SlashOption():
     def __ne__(self, o: object) -> bool:
         return not self.__eq__(o)
 
+    def autocomplete_function(self, callback):
+        self.choice_generator = callback
+        return callback
+
     @property
     def argument_type(self) -> int:
         """Parameter type that the option accepts
@@ -165,6 +217,8 @@ class SlashOption():
         return self._json["name"]
     @name.setter
     def name(self, value):
+        if not isinstance(value, str):
+            raise WrongType("name", value, "str")
         if len(value) > 32 or len(value) < 1:
             raise InvalidLength("name", 1, 32)
         self._json["name"] = value.lower().replace(" ", "_")
@@ -217,22 +271,24 @@ class SlashOption():
                 raise WrongType("choices", value, ["List[dict]", "List[tuple]"])
 
     @property
-    def options(self) -> typing.List['SlashOption']:
+    def options(self) -> SlashOptionCollection:
         """The parameters for the command.
     
         You can use the option's name (``.options["option name"]``) or the index of the option (``.options[index]``) to get an element.
 
         :type: :class:`SlashOptionCollection`
         """
-        return SlashOptionCollection(
-            [SlashOption._from_data(x, self.__choice_generators__.get(x["name"])) for x in self._json.get("options", [])]
-        )
+        return self._options
     @options.setter
     def options(self, options):
         if not isinstance(options, list) and not isinstance(options, SlashOptionCollection):
             raise WrongType("options", options, ["list", "SlashOptionCollection"])
         if all(isinstance(x, (SlashOption, dict)) for x in options):
-            self._json["options"] = [(x.to_dict() if type(x) is SlashOption else x) for x in options]
+            self._options = (
+                SlashOptionCollection([(x.to_dict() if type(x) is SlashOption else x) for x in options]) 
+                    if not isinstance(options, SlashOptionCollection) else 
+                options
+            )
         else:
             for i, x in enumerate(options):
                 if not isinstance(x, SlashOption) and not isinstance(x, dict):
@@ -263,7 +319,7 @@ class SlashOption():
         return SlashOption(data["type"], data["name"], data["description"], data.get("required", False), data.get("choices"), data.get("autocomplete", False), generator, data.get("options"), data.get("channel_types", []))
 
     def to_dict(self):
-        return self._json
+        return self._json | {"options": self._options.to_dict()}
 
 class AdditionalType:
     MESSAGE     =       44
@@ -389,6 +445,7 @@ class BaseCommand():
         self.__guild_changes__ = getattr(callback, "__guild_changes__", {})
         self.__choice_generators__ = {}
 
+        self._options: SlashOptionCollection = None # set later
         self._json = {"type": getattr(command_type, "value", command_type)}
 
         self.options = _default([], options)
@@ -623,7 +680,11 @@ class BaseCommand():
         if not isinstance(options, list) and not isinstance(options, SlashOptionCollection):
             raise WrongType("options", options, ["list", "SlashOptionCollection"])
         if all(isinstance(x, (SlashOption, dict)) for x in options):
-            self._json["options"] = [(x.to_dict() if type(x) is SlashOption else x) for x in options]
+            self._options = (
+                SlashOptionCollection([(x.to_dict() if type(x) is SlashOption else x) for x in options]) 
+                    if not isinstance(options, SlashOptionCollection) else 
+                options
+            )
         else:
             for i, x in enumerate(options):
                 if not isinstance(x, SlashOption) and not isinstance(x, dict):
@@ -632,7 +693,8 @@ class BaseCommand():
         self.__choice_generators__ = {
             x.name: x.choice_generator or self.__choice_generators__.get(x.name) for x in 
                 [SlashOption._from_data(o) if isinstance(o, dict) else o for o in options]
-            }# endregion
+        }
+    # endregion
     # region permissions
     @property
     def default_permission(self) -> typing.Union[str, bool]:
@@ -659,7 +721,7 @@ class BaseCommand():
         raise NotImplementedError()
 
     def to_dict(self):
-        return self._json
+        return self._json | {"options": self._options.to_dict()}
 
 class SlashCommand(BaseCommand):
     """A basic slash command
