@@ -228,7 +228,7 @@ You can find more (and better) examples [here](https://github.com/discord-py-ui/
     # or
     my_command.options[0]
     ```
-    You can also use some methods like `.get`, `.set` (which will return itself after it set something, so `SlashOption.set(key, value).set(key, value)` would work) and ``SlashOption.options + SlashOption.option`+` will add both SlashOptions together
+    You can also use some methods like `.get`, `.set` (which will return itself after it set something, so `SlashOption.set(key, value).set(key, value)` would work) and ``SlashOption.options + SlashOption.option`` will add both SlashOptions together
     - Modifying slashcommand options is now WWAAYYYY easier. You can just do `.options[name or index].name = "new name"` and the option will be updated
     - You can set the autocomplete choice generator with a decorator now
     ```py
