@@ -1231,4 +1231,4 @@ You can contact us on discord
 
 - [**Redstone**](https://discord.com/users/355333222596476930)
 - [**kuso**](https://discord.com/users/539459006847254542)
-- [discord server](https://discord.gg/bDJCGD994p)
+- [**discord server**](https://discord.gg/bDJCGD994p)
