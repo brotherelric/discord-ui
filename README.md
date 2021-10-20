@@ -1229,6 +1229,6 @@ You can find more (and better) examples [here](https://github.com/discord-py-ui/
 
 You can contact us on discord
 
-- `RedstoneZockt#0001`
-- `! kuso#6969`
-- [discord server](https://discord.gg/bDJCGD994p)
+- [**Redstone**](https://discord.com/users/355333222596476930)
+- [**kuso**](https://discord.com/users/539459006847254542)
+- [**discord server**](https://discord.gg/bDJCGD994p)
