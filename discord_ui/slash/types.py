@@ -69,7 +69,9 @@ class SlashOptionCollection():
             return self.copy().set(value["name"], SlashOption._from_data(value))
         else:
             raise WrongType("value", value, ["SlashOption", "dict"])
-
+    
+    def append(self, value):
+        self.__options[value.name] = value
     def copy(self):
         return SlashOptionCollection(list(self.__options.values()))
     def get(self, index, default=None):
@@ -135,12 +137,12 @@ class SlashOption():
         self.name = name
         self.description = _or(description, "\u200b")
         self.required = required
-        self.options = _default([], options)
+        self.options = options or []
         self.autocomplete = autocomplete
         self.choices = choices if self.autocomplete is False else None
         self.choice_generator: typing.Callable[[typing.Any], typing.List[typing.Union[dict, tuple]]] = choice_generator
-        self.channel_types = channel_types
         """A function which will generate choices for this option"""
+        self.channel_types = channel_types
     def __repr__(self) -> str:
         return f"<discord_ui.SlashOption({str(self.to_dict())})>"
     def __eq__(self, o: object) -> bool:
@@ -183,6 +185,19 @@ class SlashOption():
         return not self.__eq__(o)
 
     def autocomplete_function(self, callback):
+        """Decorator for the autocomplete choice generator
+        
+        Usage
+        ------
+
+        .. code-block::
+
+            op = SlashOption(...)
+            
+            @op.autocomplete_function
+            async def generator(ctx):
+                ... 
+        """
         self.choice_generator = callback
         return callback
 
@@ -665,16 +680,14 @@ class BaseCommand():
             raise InvalidLength("description", 1, 100)
         self._json["description"] = value
     @property
-    def options(self) -> typing.List['SlashOption']:
+    def options(self) -> SlashOptionCollection:
         """The parameters for the command.
     
         You can use the option's name (``.options["option name"]``) or the index of the option (``.options[index]``) to get an element.
 
         :type: :class:`SlashOptionCollection`
         """
-        return SlashOptionCollection(
-            [SlashOption._from_data(x, self.__choice_generators__.get(x["name"])) for x in self._json.get("options", [])]
-        )
+        return self._options
     @options.setter
     def options(self, options):
         if not isinstance(options, list) and not isinstance(options, SlashOptionCollection):
@@ -789,7 +802,7 @@ class SlashSubcommand(BaseCommand):
             raise discord.errors.InvalidArgument("subcommand groups are currently limited to 2 bases")
         if any([len(x) > 32 or len(x) < 1 for x in base_names]):
             raise InvalidLength("base_names", 1, 32)
-        BaseCommand.__init__(self, CommandType.Slash, callback, name, description, options, guild_ids=guild_ids, default_permission=default_permission, guild_permissions=guild_permissions)
+        BaseCommand.__init__(self, CommandType.Slash, callback, name, description, options=options, guild_ids=guild_ids, default_permission=default_permission, guild_permissions=guild_permissions)
         self.base_names = [format_name(x) for x in base_names]
 
     def to_option(self) -> SlashOption:

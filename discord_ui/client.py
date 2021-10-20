@@ -1166,7 +1166,10 @@ class Slash():
             if sub is not None and self.subcommands[base].get(sub) is None:
                 self.subcommands[base][sub] = {}
             
-            command = SlashSubcommand(callback, base_names, name, description, options=options, guild_ids=guild_ids, default_permission=default_permission, guild_permissions=guild_permissions)
+            command = SlashSubcommand(
+                callback, base_names, name, description, options=options, 
+                guild_ids=guild_ids, default_permission=default_permission, guild_permissions=guild_permissions
+            )
             self._add_to_cache(command)
 
         return wrapper
