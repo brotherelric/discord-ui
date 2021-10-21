@@ -63,12 +63,27 @@ class SlashOptionCollection():
         else:
             raise WrongType("index", index, ["int", "str"])
     def __add__(self, value):
+        if isinstance(value, list):
+            if all(isinstance(x, SlashOption) for x in value):
+                copy = self.copy()
+                for x in value:
+                   copy.set(x.name, x)
+                return copy
+            elif all(isinstance(x, dict)):
+                copy = self.copy()
+                for x in value:
+                   copy.set(x["name"], SlashOption._from_data(x))
+                return copy
+            else:
+                for i, x in enumerate(value):
+                    if not isinstance(value, (dict, SlashOption)):
+                        raise WrongType(f"value[{i}]", x, ["list", "SlashOption", "dict"])
         if isinstance(value, SlashOption):
             return self.copy().set(value.name, value)
         elif isinstance(value, dict):
             return self.copy().set(value["name"], SlashOption._from_data(value))
         else:
-            raise WrongType("value", value, ["SlashOption", "dict"])
+            raise WrongType("value", value, ["list", "SlashOption", "dict"])
     
     def append(self, value):
         self.__options[value.name] = value
