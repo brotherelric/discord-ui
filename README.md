@@ -245,6 +245,22 @@ You can find more (and better) examples [here](https://github.com/discord-py-ui/
     async def my_generator(ctx):
         ...
     ```
+    - All apllication command decorators will now return the created Command
+    ```py
+    @ui.slash.command(...)
+    async my_command(ctx):
+        ...
+    type(my_command) # SlashCommand
+    ```
+    - Added edit and delete method to slashcommand. You can use this for editing or deleting the command later
+    ```py
+    # edit
+    await my_command.edit(name="test")
+    # delete
+    await my_command.delete()
+    ```
+    - Added `command_id` to SlashCommand
+    - If an invalid guild id was passed to a slashcommand, no exception will be raised anymore, it will just be printed into the console and ignored `logging.error()`
 
     ## **Fixed**
     - disable_action_row

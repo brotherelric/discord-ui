@@ -158,7 +158,7 @@ class Interaction():
                 return
             except discord.errors.HTTPException as x:
                 if "value must be one of (4, 5)" in str(x).lower():
-                    logging.warning(str(x) + "\n" + "The 'ninja_mode' parameter is not supported for slash commands!")
+                    logging.error(str(x) + "\n" + "The 'ninja_mode' parameter is not supported for slash commands!")
                     ninja_mode = False
                 else:
                     raise x
@@ -346,11 +346,15 @@ class SlashedCommand(Interaction, SlashCommand):
     """A :class:`~SlashCommand` object that was used"""
     def __init__(self, client, command: SlashCommand, data, user, args = None) -> None:
         Interaction.__init__(self, client._connection, data, user)
-        SlashCommand.__init__(self, command.callback, command.name, command.description, command.options, guild_ids=command.guild_ids, guild_permissions=command.guild_permissions)
+        SlashCommand.__init__(self, 
+            command.callback, command.name, command.description, command.options, guild_ids=command.guild_ids, guild_permissions=command.guild_permissions, 
+            http=client._connection.slash_http
+        )
         for x in self.__slots__:
             setattr(self, x, getattr(command, x))
 
         self.bot: commands.Bot = client
+        # overwrite some json values that maybe weren't updated
         self._json = command.to_dict()
         self.author: discord.Member = user
         """The user who used the command"""
@@ -362,12 +366,17 @@ class SlashedSubCommand(SlashedCommand, SlashSubcommand):
     """A Sub-:class:`~SlashCommand` command that was used"""
     def __init__(self, client, command, data, user, args = None) -> None:
         SlashedCommand.__init__(self, client, command, data, user, args)
-        SlashSubcommand.__init__(self, command.callback, command.base_names, command.name, command.description, command.options, command.guild_ids, command.default_permission, command.guild_permissions)
+        SlashSubcommand.__init__(self, 
+            command.callback, command.base_names, command.name, command.description, command.options, 
+            command.guild_ids, command.default_permission, command.guild_permissions, client._connection.slash_http
+        )
 
 class SlashedContext(Interaction, ContextCommand):
     def __init__(self, client, command: ContextCommand, data, user, param) -> None:
         Interaction.__init__(self, client._connection, data, user)
-        ContextCommand.__init__(self, command.command_type, command.callback, command.name, guild_ids=command.guild_ids, guild_permissions=command.guild_permissions)
+        ContextCommand.__init__(self, command.command_type, command.callback, command.name, guild_ids=command.guild_ids, 
+            guild_permissions=command.guild_permissions, http=client._connection.slash_http
+        )
         for x in self.__slots__:
             setattr(self, x, getattr(command, x))
         

@@ -398,9 +398,9 @@ def slash_command(name=None, description=None, options=[], guild_ids=None, defau
             async def hello_world(self, ctx, parameter = None):
                 ...
     """
-    def wraper(callback):
+    def wrapper(callback):
         return CogCommand(callback, name, description, options, guild_ids=guild_ids, default_permission=default_permission, guild_permissions=guild_permissions)
-    return wraper
+    return wrapper
 def subslash_command(base_names, name=None, description=None, options=None, guild_ids=None, default_permission=None, guild_permissions=None):
     """
     A decorator for cogs that will register a subcommand/subcommand-group
@@ -478,9 +478,9 @@ def subslash_command(base_names, name=None, description=None, options=None, guil
                 ...
 
     """
-    def wraper(callback):
+    def wrapper(callback):
         return CogSubCommandGroup(callback, base_names, name, description=description, options=options, guild_ids=guild_ids, default_permission=default_permission, guild_permissions=guild_permissions)
-    return wraper
+    return wrapper
 def context_command(type: Literal["user", 2, "message", 3], name=None, guild_ids=None, default_permission=None, guild_permissions=None):
     """
     Decorator for cogs that will register a context command in discord
@@ -532,14 +532,14 @@ def context_command(type: Literal["user", 2, "message", 3], name=None, guild_ids
             async def mention(ctx, user):
                 ...
         """
-    def wraper(callback):
+    def wrapper(callback):
         if type in ["user", 2]:
             return CogUserCommand(callback, name, guild_ids=guild_ids, default_permission=default_permission, guild_permissions=guild_permissions)
         elif type in ["message", 3]:
             return CogMessageCommand(callback, name, guild_ids=guild_ids, default_permission=default_permission, guild_permissions=guild_permissions)
         else:
             raise InvalidArgument("Invalid context type! type has to be one of 'user', 1, 'message', 2!")
-    return wraper
+    return wrapper
 def listening_component(custom_id, messages=None, users=None, 
     component_type: Literal['button', 'select']=None, 
     check: Callable[[Union[PressedButton, SelectedMenu]], bool]=EMPTY_CHECK
@@ -584,9 +584,9 @@ def listening_component(custom_id, messages=None, users=None,
         async def callback(ctx):
             ...
     """
-    def wraper(callback: Callable[[Cog, Union[PressedButton, SelectedMenu]], Coroutine[Any, Any, Any]]):
+    def wrapper(callback: Callable[[Cog, Union[PressedButton, SelectedMenu]], Coroutine[Any, Any, Any]]):
         return ListeningComponent(callback, messages, users, component_type, check, custom_id)
-    return wraper
+    return wrapper
 
 def _get_instances_for(target, cls=BaseCallable, check=EMPTY_CHECK):
     return [x[1] for x in inspect.getmembers(target, lambda x: isinstance(x, cls) and check(x) is True)]

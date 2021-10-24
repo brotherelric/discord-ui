@@ -2,6 +2,7 @@ from .errors import WrongType
 from .tools import MISSING, _or, components_to_dict, setup_logger
 
 import discord
+from discord.http import Route
 
 import json
 import asyncio
@@ -9,7 +10,7 @@ from typing import List
 
 logging = setup_logger(__name__)
 
-class BetterRoute(discord.http.Route):
+class BetterRoute(Route):
     BASE = "https://discord.com/api/v9"
 
 async def send_files(route, files, payload, http):

@@ -73,7 +73,7 @@ def check_failure_response(content=None, hidden=False, **fields):
         async def callback(self, ctx):
             ...
     """
-    def wraper(cog):
+    def wrapper(cog):
         # get last check
         check = cog.checks[-1]
         _invoke = cog.invoke
@@ -90,7 +90,7 @@ def check_failure_response(content=None, hidden=False, **fields):
 
         cog.invoke = invoke
         return cog
-    return wraper
+    return wrapper
 
 def any_failure_response(content, hidden=False, **fields):
     """Decorator for autoresponding to all checks of a cog command that failed.
@@ -126,7 +126,7 @@ def any_failure_response(content, hidden=False, **fields):
     
     
     """
-    def wraper(cog):
+    def wrapper(cog):
         _invoke = cog.invoke
 
         async def invoke(ctx, *args, **kwargs):
@@ -141,7 +141,7 @@ def any_failure_response(content, hidden=False, **fields):
 
         cog.invoke = invoke
         return cog
-    return wraper
+    return wrapper
 
 def guild_change(guild_id, *, name=None, description=None, default_permission=True):
     """A decorator for slashcommands that will apply changes to a specific guild
@@ -162,12 +162,12 @@ def guild_change(guild_id, *, name=None, description=None, default_permission=Tr
             If a bool was passed, it will indicate whether all users can use the command (``True``) or not (``False``)
     
     """
-    def wraper(callback):
+    def wrapper(callback):
         if not hasattr(callback, "__guild_changes__"):
             callback.__guild_changes__ = {}
         callback.__guild_changes__[str(guild_id)] = (name, description, default_permission)
         return callback
-    return wraper
+    return wrapper
 
 def alias(aliases):
     """Decorator for slashcommand aliases that will add the same command but with different names.
@@ -185,13 +185,13 @@ def alias(aliases):
         @ui.slash.alias(["catz", "cute_things"])
     
     """
-    def wraper(command):
+    def wrapper(command):
         if not hasattr(command, "__aliases__"):
             command.__aliases__ = []
         # Allow multiple alias decorators
         command.__aliases__.extend(aliases if not isinstance(aliases, str) else [aliases])
         return command
-    return wraper
+    return wrapper
 
 def no_sync():
     """Decorator that will prevent an application-command to be synced with the api.
@@ -210,10 +210,10 @@ def no_sync():
             ...
 
     """
-    def wraper(callback):
+    def wrapper(callback):
         callback.__sync__ = False
         return callback
-    return wraper
+    return wrapper
 
 def auto_defer(hidden=False):
     """A decorator for auto deferring a interaction. This decorator has to be placed before the main decorator
@@ -241,11 +241,11 @@ def auto_defer(hidden=False):
     def decorator(func):
         func.__auto_defer__ = True
         @functools.wraps(func)
-        async def wraper(*args, **kwargs):
+        async def wrapper(*args, **kwargs):
             # if there is self param use the next one
             ctx = args[1 if list(inspect.signature(func).parameters.keys())[0] == "self" else 0]
             # use defer for "auto_defering"
             await ctx.defer(hidden=hidden)
             return await func(*args, **kwargs)
-        return wraper
+        return wrapper
     return decorator

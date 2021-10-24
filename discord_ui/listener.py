@@ -336,9 +336,9 @@ class Listener():
                     ...
         
         """
-        def wraper(callback):
+        def wrapper(callback):
             return _Listener(callback, custom_id, ComponentType.Button)
-        return wraper
+        return wrapper
     @staticmethod
     def select(custom_id=None, values=None):
         """A decorator that will set a callback up for a select menu
@@ -369,9 +369,9 @@ class Listener():
             async def othere_callback(self, ctx):
                 ...
         """
-        def wraper(callback):
+        def wrapper(callback):
             return _Listener(callback, custom_id or callback.__name__, ComponentType.Select, values)
-        return wraper
+        return wrapper
     
     @staticmethod
     def on_error(exception_cls=BaseException):

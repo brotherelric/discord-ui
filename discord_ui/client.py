@@ -1,4 +1,5 @@
 
+import sys
 from .slash.http import SlashHTTP
 from .slash.errors import NoAsyncCallback
 from .components import Button, Component, SelectMenu
@@ -9,7 +10,7 @@ from .slash.tools import ParseMethod, cache_data, format_name, handle_options, h
 from .cogs import BaseCallable, CogCommand, CogSubCommandGroup, InteractionableCog, ListeningComponent
 from .slash.types import (
     CommandType, OptionType, SlashOption,
-    ContextCommand, MessageCommand , SlashCommand, SlashSubcommand, UserCommand
+    MessageCommand , SlashCommand, SlashSubcommand, UserCommand
 )
 from .receive import (
     ChoiceGeneratorContext, ComponentContext, 
@@ -26,8 +27,6 @@ from .listener import Listener
 from .enums import InteractionResponseType, ComponentType
 
 
-
-
 import discord
 from discord.errors import *
 from discord.ext import commands
@@ -36,7 +35,7 @@ import json
 import inspect
 import asyncio
 import contextlib
-from typing import Any, Callable, Coroutine, Dict, List, Tuple, Union
+from typing import Any, Callable, Coroutine, Dict, List, Tuple, Union, TypeVar
 try:
     from typing import Literal
 except ImportError:
@@ -49,6 +48,9 @@ __all__ = (
     'Slash',
     'Components',
 )
+
+# Command Type
+_C = TypeVar("_C")
 
 class Slash():
     """
@@ -128,8 +130,8 @@ class Slash():
         self.http: SlashHTTP = None # set it when bot is connected
         self._discord._connection.slash_http = None # set when bot is connected
         self.commands: Dict[(str, SlashCommand)] = {}
-        self.subcommands: Dict[(str, Dict[(str, Union[dict, SlashSubcommand])])] = {}
-        self.context_commands: Dict[str, ContextCommand] = {"message": {}, "user": {}}
+        self.subcommands: Dict[(str, Dict[(str, Union[Dict[str, SlashSubcommand], SlashSubcommand])])] = {}
+        self.context_commands: Dict[str, Dict[str, Union[MessageCommand, UserCommand]]] = {"message": {}, "user": {}}
         if discord.__version__.startswith("2"):
             self._discord.add_listener(self._on_slash_response, "on_socket_raw_receive")
         elif discord.__version__.startswith("1"):
@@ -169,6 +171,7 @@ class Slash():
                 return
             await asyncio.sleep(_or(self.wait_sync, 1))
             await self.sync_commands(self.delete_unused)
+            self._discord.dispatch("commands_synced")
         self._discord.add_listener(on_connect)
 
     async def _on_slash_response(self, msg):
@@ -394,9 +397,11 @@ class Slash():
                 if command.guild_permissions is not None:
                     for x in list(command.guild_permissions.keys()):
                         if int(x) not in own_guild_ids:
-                            raise InvalidArgument("guild_permissions invalid! Client is not in a guild with the id " + str(x))
+                            logging.error(f"Skipping permissions for {x}, because client is not in this guild")
+                            continue
                 if int(x) not in own_guild_ids:
-                    raise InvalidArgument("guild_ids invalid! Client is not in a server with the id '" + str(x) + "'")
+                    logging.error(f"guild_ids are invalid, client is not in the guild {x}, this guild will be skipped")
+                    continue
             
                 if added_commands["guilds"].get(x) is None:
                     added_commands["guilds"][x] = {}
@@ -466,13 +471,22 @@ class Slash():
                         logging.debug("deleting guild command '" + str(apic["name"]) + "' in guild " + str(_id))
                         await self.http.delete_guild_command(apic["id"], _id)
 
+        for x in self.commands:
+            await self.commands[x]._update_id(self._discord._connection.slash_http)
+        for x in self.subcommands:
+            for y in self.subcommands[x]:
+                if isinstance(self.subcommands[x][y], dict):
+                    for z in self.subcommands[x][y]:
+                        await self.subcommands[x][y][z]._update_id(self._discord._connection.slash_http)
+                    continue
+                await self.subcommands[x][y]._update_id(self._discord._connection.slash_http)
+        for x in self.context_commands:
+            for y in self.context_commands[x]:
+                await self.context_commands[x][y]._update_id(self._discord._connection.slash_http)
         logging.info("synchronized slash commands")
     
-    async def _get_api_command(self, name) -> Union[dict, None]:
-        for x in await self._get_commands():
-            if x["name"] == name:
-                return x
     async def _get_guild_api_command(self, name, typ, guild_id) -> Union[dict, None]:
+        # returns all commands in a guild
         for x in await self._get_guild_commands(guild_id):
             if hasattr(typ, "value"):
                 typ = typ.value
@@ -528,11 +542,10 @@ class Slash():
                                 commands[_base].options += [SlashOption(OptionType.SUB_COMMAND_GROUP, _sub, options=[group.to_option()])]
                         # if no base command
                         else:
-                            # create base0 command together with base1 option and groupcommand option
                             commands[_base] = SlashCommand(None, _base, None, [
-                                    SlashOption(OptionType.SUB_COMMAND_GROUP, _sub, options=[group.to_option()])
-                                ],
-                                guild_ids=group.guild_ids, default_permission=group.default_permission, guild_permissions=group.guild_permissions)
+                                        SlashOption(OptionType.SUB_COMMAND_GROUP, _sub, options=[group.to_option()])
+                                ], guild_ids=group.guild_ids, default_permission=group.default_permission, guild_permissions=group.guild_permissions
+                            )
                 # if is basic subcommand
                 else:
                     # If base exists
@@ -565,7 +578,8 @@ class Slash():
                 if command.guild_permissions is not None:
                     for x in list(command.guild_permissions.keys()):
                         if int(x) not in own_guild_ids:
-                            raise InvalidArgument("guild_permissions invalid! Client is not in a guild with the id " + str(x))
+                            logging.error(f"Skipping guild {x}, because client is not in this guild")
+                            continue
                 if int(x) not in own_guild_ids:
                     raise InvalidArgument("guild_ids invalid! Client is not in a server with the id '" + str(x) + "'")
 
@@ -848,7 +862,7 @@ class Slash():
         else:
             del self.context_commands["user"][old_name]
             self.context_commands["user"][command.name] = command
-    def _add_to_cache(self, base: Union[SlashCommand, SlashSubcommand], is_base=False):
+    def _add_to_cache(self, base: _C, is_base=False) -> _C:
         if base.has_aliases and is_base is False:
             for a in base.__aliases__:
                 cur = base.copy()
@@ -892,6 +906,7 @@ class Slash():
         # context message command
         elif base.command_type is CommandType.Message:
             self.context_commands["message"][base.name] = base
+        return base
     def _remove_from_cache(self, base: Union[SlashCommand, SlashSubcommand]):
         # slash command
         if base.command_type is CommandType.Slash:
@@ -943,7 +958,7 @@ class Slash():
         logging.info("nuked all commands")
 
 
-    def add_command(self, name=None, callback=None, description=None, options=None, guild_ids=None, default_permission=True, guild_permissions=None, api=False) -> Union[None, Coroutine]:
+    def add_command(self, name=None, callback=None, description=None, options=None, guild_ids=None, default_permission=True, guild_permissions=None, api=False) -> Union[SlashCommand, Coroutine]:
         """
         Adds a new slashcommand
 
@@ -974,14 +989,15 @@ class Slash():
                 If it's added to the internal cache, it will be registered to the api when calling the `sync_commands` function.
                 If ``api`` is True, this function will return a promise
         """
-        command = SlashCommand(callback, name, description, options, guild_ids=guild_ids, default_permission=default_permission, guild_permissions=guild_permissions)
+        command = SlashCommand(callback, name, description, options, guild_ids=guild_ids, default_permission=default_permission, 
+            guild_permissions=guild_permissions, http=self._discord._connection.slash_http)
         self._add_to_cache(command)
         if api is True:
             if self.ready is False:
                 raise Exception("Slashcommands are not ready yet")
             return self.create_command(command) 
         return command
-    def command(self, name=None, description=None, options=None, guild_ids=None, default_permission=True, guild_permissions=None) -> SlashCommand:
+    def command(self, name=None, description=None, options=None, guild_ids=None, default_permission=True, guild_permissions=None) -> Callable[..., SlashCommand]:
         """
         A decorator for a slash command
         
@@ -1062,8 +1078,7 @@ class Slash():
             return self.add_command(name, callback, description, options, guild_ids, default_permission, guild_permissions)
         return wrapper
     def add_subcommand(self, base_names, name=None, callback=None, description=None, options=None, guild_ids=None, default_permission=True, guild_permissions=None):
-        command = SlashSubcommand(callback, base_names, name, description, options, guild_ids=guild_ids, default_permission=default_permission, guild_permissions=guild_permissions)
-        self._add_to_cache(command)
+        return self._add_to_cache(SlashSubcommand(callback, base_names, name, description, options, guild_ids=guild_ids, default_permission=default_permission, guild_permissions=guild_permissions))
     def subcommand(self, base_names, name=None, description=None, options=None, guild_ids=None, default_permission=True, guild_permissions=None):
         """
         A decorator for a subcommand group
@@ -1168,10 +1183,10 @@ class Slash():
             
             command = SlashSubcommand(
                 callback, base_names, name, description, options=options, 
-                guild_ids=guild_ids, default_permission=default_permission, guild_permissions=guild_permissions
+                guild_ids=guild_ids, default_permission=default_permission, guild_permissions=guild_permissions,
+                http=self._discord._connection.slash_http
             )
-            self._add_to_cache(command)
-
+            return self._add_to_cache(command)
         return wrapper
     def user_command(self, name=None, guild_ids=None, default_permission=True, guild_permissions=None):
         """
@@ -1217,9 +1232,9 @@ class Slash():
             async def call(ctx, message):
                 ...
         """
-        def wraper(callback):
-            self._add_to_cache(UserCommand(callback, name, guild_ids, default_permission, guild_permissions))
-        return wraper
+        def wrapper(callback) -> UserCommand:
+            return self._add_to_cache(UserCommand(callback, name, guild_ids, default_permission, guild_permissions, http=self._discord._connection.slash_http))
+        return wrapper
     def message_command(self, name=None, guild_ids=None, default_permission=True, guild_permissions=None):
         """
         Decorator for message context commands in discord.
@@ -1264,9 +1279,9 @@ class Slash():
             async def quote(ctx, message):
                 ...
         """
-        def wraper(callback):
-            self._add_to_cache(MessageCommand(callback, name, guild_ids, default_permission, guild_permissions))
-        return wraper
+        def wrapper(callback):
+            return self._add_to_cache(MessageCommand(callback, name, guild_ids, default_permission, guild_permissions, http=self._discord._connection.slash_http))
+        return wrapper
 
 class Components():
     """
@@ -1702,7 +1717,7 @@ class UI():
                 Whether the commands that are not registered by this slash ui should be deleted in the api; Default ``False``
 
             ``sync_on_cog``: :class:`bool`, optional
-                Whether the slashcommands should be updated whenever a new cog is added or removed; Default ``False``
+                Whether the slashcommands should be updated whenever a new cog is added or removed; Default ``True``
 
             ``wait_sync``: :class:`float`, optional
                 How many seconds will be waited until the commands are going to be synchronized; Default ``1``

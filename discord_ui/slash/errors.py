@@ -1,5 +1,7 @@
 from discord.errors import *
 
+class NoCommandFound(ClientException):
+    """Exception that is raised when you try to get a command with a name that doesn't exists"""
 class AlreadyDeferred(ClientException):
     """Exception that is raised when you try to defer an interaction that was already deferred."""
     def __init__(self, *args: object) -> None:
