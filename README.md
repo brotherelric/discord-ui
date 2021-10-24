@@ -229,37 +229,6 @@ You can find more (and better) examples [here](https://github.com/discord-py-ui/
     my_command.options[0]
     ```
     You can also use some methods like `.get`, `.set` (which will return itself after it set something, so `SlashOption.set(key, value).set(key, value)` would work) and ``SlashOption.options + SlashOption.option`` will add both SlashOptions together
-    - Modifying slashcommand options is now WWAAYYYY easier. You can just do `.options[name or index].name = "new name"` and the option will be updated
-    - You can set the autocomplete choice generator with a decorator now
-    ```py
-    ui.slash.command(options=[SlashOption(str, "my_option")])
-    async def my_command(ctx, my_option):
-        ...
-
-
-    @my_command.options["my_option"].autocomplete_function
-    async def my_generator(ctx):
-        ...
-    # or
-    @my_command.options[0].autocomplete_function
-    async def my_generator(ctx):
-        ...
-    ```
-    - All apllication command decorators will now return the created Command
-    ```py
-    @ui.slash.command(...)
-    async my_command(ctx):
-        ...
-    type(my_command) # SlashCommand
-    ```
-    - Added edit and delete method to slashcommand. You can use this for editing or deleting the command later
-    ```py
-    # edit
-    await my_command.edit(name="test")
-    # delete
-    await my_command.delete()
-    ```
-    - Added `command_id` to SlashCommand
     - If an invalid guild id was passed to a slashcommand, no exception will be raised anymore, it will just be printed into the console and ignored `logging.error()`
 
     ## **Fixed**
@@ -315,6 +284,37 @@ You can find more (and better) examples [here](https://github.com/discord-py-ui/
     ```
     Note: You don't have to use `` `type` ``, you can just use `type`
     - Empty descriptions for slashcommands and slashoptions. The default description value is now `\u200b` which is an "empty" char
+    - Modifying slashcommand options is now WWAAYYYY easier. You can just do `.options[name or index].name = "new name"` and the option will be updated
+    - You can set the autocomplete choice generator with a decorator now
+    ```py
+    ui.slash.command(options=[SlashOption(str, "my_option")])
+    async def my_command(ctx, my_option):
+        ...
+
+
+    @my_command.options["my_option"].autocomplete_function
+    async def my_generator(ctx):
+        ...
+    # or
+    @my_command.options[0].autocomplete_function
+    async def my_generator(ctx):
+        ...
+    ```
+    - All apllication command decorators will now return the created Command
+    ```py
+    @ui.slash.command(...)
+    async my_command(ctx):
+        ...
+    type(my_command) # SlashCommand
+    ```
+    - Added edit and delete method to slashcommand. You can use this for editing or deleting the command later
+    ```py
+    # edit
+    await my_command.edit(name="test")
+    # delete
+    await my_command.delete()
+    ```
+    - Added `command_id` to SlashCommand
 
     </details>
 
