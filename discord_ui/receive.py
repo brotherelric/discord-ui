@@ -351,7 +351,7 @@ class SlashedCommand(Interaction, SlashCommand):
             http=client._connection.slash_http
         )
         for x in self.__slots__:
-            setattr(self, x, getattr(command, x))
+            setattr(self, x, getattr(command, x, None))
 
         self.bot: commands.Bot = client
         # overwrite some json values that maybe weren't updated
@@ -370,6 +370,8 @@ class SlashedSubCommand(SlashedCommand, SlashSubcommand):
             command.callback, command.base_names, command.name, command.description, command.options, 
             command.guild_ids, command.default_permission, command.guild_permissions, client._connection.slash_http
         )
+        for x in self.__slots__:
+            setattr(self, x, getattr(command, x, None))
 
 class SlashedContext(Interaction, ContextCommand):
     def __init__(self, client, command: ContextCommand, data, user, param) -> None:

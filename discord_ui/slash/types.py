@@ -477,7 +477,10 @@ class SlashPermission():
 
 
 class BaseCommand():
-    __slots__ = ('__aliases__', '__sync__', '__auto_defer__', '__guild_changes__', '__original_name__')
+    __slots__ = ('__aliases__', '__sync__', '__auto_defer__', '__guild_changes__', '__original_name__', 
+        '__choice_generators__', '_http', '_id', '_options', '_json', 'callback', 'guild_ids',
+        'guild_permissions', 'permissions', 'run'
+    )
     def __init__(self, command_type, callback, name=None, description=None, options=None, guild_ids=None, default_permission=None, guild_permissions=None, http=None) -> None:
         self.__aliases__ = getattr(callback, "__aliases__", None)
         self.__sync__ = getattr(callback, "__sync__", True)
@@ -585,10 +588,10 @@ class BaseCommand():
         self.callback: typing.Callable[..., typing.Coroutine[typing.Any, typing.Any, typing.Any]] = callback
         self.run = self.callback
         """Alias for ``.callback``"""
-        self.name: str = _or(name, self.callback.__name__ if not _none(self.callback) else None)
+        self.name = _or(name, self.callback.__name__ if not _none(self.callback) else None)
         # Set the original name to the name once so if the name should be changed, this value still stays to what it is
         self.__original_name__ = self.name
-        self.description: str = _or(description, inspect.getdoc(callback).split("\n")[0] if not _none(callback) and inspect.getdoc(callback) is not None else None, "\u200b")
+        self.description = _or(description, inspect.getdoc(callback).split("\n")[0] if not _none(callback) and inspect.getdoc(callback) is not None else None, "\u200b")
         self.default_permission = default_permission if default_permission is not None else True
         if guild_permissions is not None:
             for _id, perm in list(guild_permissions.items()):
@@ -601,8 +604,8 @@ class BaseCommand():
         self.permissions: SlashPermission = SlashPermission()
         self.guild_ids: typing.List[int] = _default(None, [int(x) for x in _or(guild_ids, [])])
         """The ids of the guilds where the command is available"""
-    def __str__(self) -> str:
-        return str(self.to_dict())
+    def __repr__(self) -> str:
+        return f"<SlashCommand({self.to_dict()})>"
     def __eq__(self, o: object) -> bool:
         if isinstance(o, dict):
             return (
@@ -778,8 +781,12 @@ class BaseCommand():
         :type: :class:`int`
         """
         return self._id
-    async def update_apicommand(self, guild_id=None):
-        """Updates the local changes with the api-command"""
+    async def update(self, guild_id=None):
+        """Updates the api-command with the local changes
+        
+        guild_id: :class:`int`, optional:
+            The guild id to which the command update should be limited
+        """
         if self.guild_only:
             [await self._http.edit_guild_command(self._id, guild, self.to_dict(), self.permissions.to_dict()) for guild in ([guild_id] if guild_id else self.guild_ids)]
         else:
@@ -905,6 +912,8 @@ class SlashCommand(BaseCommand):
         
 
 class SlashSubcommand(BaseCommand):
+    __slots__ = BaseCommand.__slots__ + ('base_names', '_base')
+
     def __init__(self, callback, base_names, name, description=None, options=None, guild_ids=None, default_permission=None, guild_permissions=None, http=None) -> None:
         if isinstance(base_names, str):
             base_names = [base_names]
@@ -919,24 +928,29 @@ class SlashSubcommand(BaseCommand):
         )
         self.base_names = [format_name(x) for x in base_names]
         self._base = None # a base instance shared with all subcommands
-    async def fetch_base(self, guild_id=None) -> SlashCommand:
+    async def fetch_base(self, guild_id=None, overwrite_base=True) -> SlashCommand:
         """Fetches the base command from the api
         
         `guild_id`: :class:`int`, optional
             The guild from which the base should be fetched
+        `overwrite_base`: :class:`bool`, optional
+            Whether `self.base` should be updated to the newly fetched base
         """
         command: SlashCommand = await SlashCommand._from_api(
             self._id, self._http, guild_id or self.guild_ids[0] if self.guild_only else None, 
             guild_ids=self.guild_ids
         )
         command.guild_permissions = self.guild_permissions
+        if overwrite_base:
+            self._base = command
         return command
     @property
     def base(self) -> SlashCommand:
+        """A shared :class:`~SlashCommand` instance for all subcommands which holds information about the base command"""
         return self._base
-    async def update_apicommand(self):
+    async def update(self):
         for guild in self.guild_ids:
-            base = await self.fetch_base(guild)
+            base = self.base or await self.fetch_base(guild)
             if len(self.base_names) > 1:
                 if base.options.get(self.base_names[1]) is None:
                     base.options[self.base_names[1]] = SlashOption(OptionType.SUB_COMMAND_GROUP, self.name)

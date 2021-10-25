@@ -516,8 +516,10 @@ class Slash():
         return await self.http.get_guild_commands(guild_id)
     
     def gather_commands(self) -> Dict[str, SlashCommand]:
-        commands = self.commands.copy()
+        commands = self.commands
         for _base in self.subcommands:
+            # baase for the subcommands
+            basic_base = SlashCommand(None, _base)
             # get first base
             for _sub in self.subcommands[_base]:
                 # get second base/command
@@ -526,7 +528,10 @@ class Slash():
                 if isinstance(sub, dict):
                     for _group in self.subcommands[_base][_sub]:
                         # the subcommand group
-                        group = self.subcommands[_base][_sub][_group]
+                        group = self.subcommands[_base][_sub][_group]        
+                        basic_base.guild_permissions = group.guild_permissions
+                        basic_base.guild_ids = group.guild_ids
+                        group._base = basic_base
                         # if there's already a base command
                         if commands.get(_base) is not None:
                             # Check if base already has an option with the subs name
@@ -548,10 +553,15 @@ class Slash():
                                 ], guild_ids=group.guild_ids, default_permission=group.default_permission, guild_permissions=group.guild_permissions
                             )
                 # if is basic subcommand
-                else:
+                else:    
+                    basic_base.guild_permissions = sub.guild_permissions
+                    basic_base.guild_ids = sub.guild_ids
+                    sub._base = basic_base
+                    print("set base", basic_base)
                     # If base exists
                     if commands.get(_base) is not None:
                         commands[_base].options += [sub.to_option()]
+                    # if no base exsists in commands
                     else:
                         # create base0 command with name option
                         commands[_base] = SlashCommand(None, _base, options=[sub.to_dict()], guild_ids=sub.guild_ids, default_permission=sub.default_permission, guild_permissions=sub.guild_permissions)

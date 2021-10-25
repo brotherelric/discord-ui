@@ -47,7 +47,7 @@ from .override import override_dpy
 
 
 __title__ = "discord-ui"
-__version__ = "5.1.0"
+__version__ = "a5.1.0"
 
 if __version__.endswith("a"):
     print("Warning: This version is a preview version and can contain some issues!")
