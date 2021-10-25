@@ -218,7 +218,8 @@ You can find more (and better) examples [here](https://github.com/discord-py-ui/
     ```
     - ButtonStyles is now ButtonStyle
     - renamed cog decorators: `slash_command` -> `slash_command`, `subslash_command` -> `subslash_command`, `context_cog` -> `context_command`, `listening_component` -> `listening_component`
-    
+    - Removed `Slash.edit_command` and `Slash.edit_subcommand`, "moved" to `BaseCommand.edit`
+
     ## **Changed**
     - `ButtonStyle` value names changed: color names are now capitalized and `Danger` is now `Destructive`
     - `Listener.target_user` is now `Listener.target_users` and can take users, members and ids as the value
@@ -322,7 +323,6 @@ You can find more (and better) examples [here](https://github.com/discord-py-ui/
 
     ## **Removed**
     - `discord.ext.commands.Bot` override for enabling the debug event, this will be enabled when creating a UI instance from the bot
-    - `Slash.edit_command` and `Slash.edit_subcommand`, "moved" to `BaseCommand.edit`
 
     </details>
 
