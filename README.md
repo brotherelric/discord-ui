@@ -314,7 +314,8 @@ You can find more (and better) examples [here](https://github.com/discord-py-ui/
     # delete
     await my_command.delete()
     ```
-    - Added `command_id` to SlashCommand
+    - `command_id` to SlashCommand
+    - `commands_synced` event which will be dispatched when all commands where synced with the api (`UI.Slash.sync_commands`)
 
     ## **Removed**
     - `discord.ext.commands.Bot` override for enabling the debug event, this will be enabled when creating a UI instance from the bot

@@ -171,7 +171,6 @@ class Slash():
                 return
             await asyncio.sleep(_or(self.wait_sync, 1))
             await self.sync_commands(self.delete_unused)
-            self._discord.dispatch("commands_synced")
         self._discord.add_listener(on_connect)
 
     async def _on_slash_response(self, msg):
@@ -483,8 +482,10 @@ class Slash():
         for x in self.context_commands:
             for y in self.context_commands[x]:
                 await self.context_commands[x][y]._update_id(self._discord._connection.slash_http)
+        
         logging.info("synchronized slash commands")
-    
+        self._discord.dispatch("commands_synced")
+
     async def _get_guild_api_command(self, name, typ, guild_id) -> Union[dict, None]:
         # returns all commands in a guild
         for x in await self._get_guild_commands(guild_id):
