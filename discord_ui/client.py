@@ -1738,6 +1738,9 @@ class UI():
         UI(client, slash_options={"delete_unused": True, "wait_sync": 2}, auto_defer=True)
         ```
         """
+        if discord.__version__.startswith("2"):
+            client._enable_debug_events = True
+
         self.components: Components = Components(client, override_dpy=override_dpy, auto_defer=auto_defer)
         """
         For using message components

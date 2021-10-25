@@ -43,8 +43,7 @@ from .slash import ext
 from .enums import ButtonStyle, OptionType, Channel, Mentionable
 
 
-from .override import override_dpy, override_dpy2_client
-override_dpy2_client()
+from .override import override_dpy
 
 
 __title__ = "discord-ui"

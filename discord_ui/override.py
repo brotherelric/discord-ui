@@ -11,29 +11,9 @@ from .receive import Message
 from .http import get_message_payload, BetterRoute, send_files
 
 import discord
-from discord.ext import commands
 
 import sys
 
-def override_dpy2_client():
-    # override for dpy forks
-    module = sys.modules[discord.__name__]
-
-    def client_override(cls, *args, **kwargs):
-        # create subcclass from cls to set _enable_debug_events
-        class enable_debug_override(cls):
-            def __init__(self, *args, **kwargs) -> None:
-                super().__init__(*args, **kwargs)
-                self._enable_debug_events = True
-        if issubclass(cls, discord.client.Client):
-            return object.__new__(enable_debug_override)
-        else:
-            return object.__new__(cls)
-
-    if discord.__version__.startswith("2"):
-        module.client.Client.__new__ = client_override
-    # override for dpy forks
-    sys.modules[discord.__name__] = module
 def override_dpy():
     """This function overrides default dpy objects. 
     You shouldn't need to use this method by your own, the lib overrides everything that needs to be 
