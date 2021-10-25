@@ -1738,6 +1738,7 @@ class UI():
         UI(client, slash_options={"delete_unused": True, "wait_sync": 2}, auto_defer=True)
         ```
         """
+        # enable debug events if needed
         if discord.__version__.startswith("2"):
             client._enable_debug_events = True
 
@@ -1758,3 +1759,11 @@ class UI():
         
         :type: :class:`~Slash`
         """
+        
+        # region shortcuts
+        self.listening_component = self.components.listening_component
+        self.command = self.slash.command
+        self.subcommand = self.slash.subcommand
+        self.message_command = self.slash.message_command
+        self.user_command = self.slash.user_command
+        # endregion
