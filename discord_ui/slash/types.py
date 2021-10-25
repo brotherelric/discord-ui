@@ -919,7 +919,7 @@ class SlashSubcommand(BaseCommand):
             http=http
         )
         self.base_names = [format_name(x) for x in base_names]
-        self._base = None # the base instance
+        self._base = None # a base instance shared with all subcommands
     async def fetch_base(self, guild_id=None) -> SlashCommand:
         """Fetches the base command from the api
         

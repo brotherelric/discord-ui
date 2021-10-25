@@ -1764,7 +1764,7 @@ class UI():
         # region shortcuts
         self.listening_component = self.components.listening_component
         self.command = self.slash.command
-        self.subcommand = self.slash.subcommand
+        self.sub_command = self.slash.subcommand
         self.message_command = self.slash.message_command
         self.user_command = self.slash.user_command
         # endregion
