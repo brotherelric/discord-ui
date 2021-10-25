@@ -599,7 +599,6 @@ class BaseCommand():
         
         self.guild_permissions: typing.Dict[(typing.Union[str, int], SlashPermission)] = guild_permissions
         self.permissions: SlashPermission = SlashPermission()
-        assert(guild_ids != None)
         self.guild_ids: typing.List[int] = _default(None, [int(x) for x in _or(guild_ids, [])])
         """The ids of the guilds where the command is available"""
     def __str__(self) -> str:
