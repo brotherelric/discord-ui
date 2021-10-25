@@ -322,6 +322,7 @@ You can find more (and better) examples [here](https://github.com/discord-py-ui/
 
     ## **Removed**
     - `discord.ext.commands.Bot` override for enabling the debug event, this will be enabled when creating a UI instance from the bot
+    - `Slash.edit_command` and `Slash.edit_subcommand`, "moved" to `BaseCommand.edit`
 
     </details>
 
