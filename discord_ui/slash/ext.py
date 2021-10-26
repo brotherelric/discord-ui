@@ -143,7 +143,7 @@ def any_failure_response(content, hidden=False, **fields):
         return cog
     return wrapper
 
-def guild_change(guild_id, *, name=None, description=None, default_permission=True):
+def guild_change(guild_id, *, name=None, description=None, default_permission=True, options=None, callback=None):
     """A decorator for slashcommands that will apply changes to a specific guild
 
     Note that this decorator should mainly be used for guild commands, because if used with
@@ -165,7 +165,7 @@ def guild_change(guild_id, *, name=None, description=None, default_permission=Tr
     def wrapper(callback):
         if not hasattr(callback, "__guild_changes__"):
             callback.__guild_changes__ = {}
-        callback.__guild_changes__[str(guild_id)] = (name, description, default_permission)
+        callback.__guild_changes__[str(guild_id)] = (name, description, default_permission, options, callback)
         return callback
     return wrapper
 

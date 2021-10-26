@@ -35,7 +35,7 @@ import json
 import inspect
 import asyncio
 import contextlib
-from typing import Any, Callable, Coroutine, Dict, List, Tuple, Union, TypeVar
+from typing import Any, Callable, Coroutine, Dict, List, Tuple, Union, TypeVar, overload
 try:
     from typing import Literal
 except ImportError:
@@ -179,18 +179,19 @@ class Slash():
                 raise NotImplementedError("decompressing was removed! Please upgrade your discord.py version")
             if isinstance(msg, str):
                 msg = json.loads(msg)
-
         if msg["t"] != "INTERACTION_CREATE":
             return
         data = msg["d"]
 
         if int(data["type"]) not in [InteractionType.PING, InteractionType.APPLICATION_COMMAND, InteractionType.APPLICATION_COMMAND_AUTOCOMPLETE]:
             return
-        
+
+
         user = discord.Member(data=data["member"], guild=self._discord._connection._get_guild(int(data["guild_id"])), state=self._discord._connection) if data.get("member") is not None else discord.User(state=self._discord._connection, data=data["user"])
         if user.dm_channel is None:
             await user.create_dm()
 
+        # autocomplete
         if int(data["type"]) == InteractionType.APPLICATION_COMMAND_AUTOCOMPLETE:
             raw_options = {}
             """The options that were already selected"""
@@ -251,6 +252,7 @@ class Slash():
 
 
         #region basic commands
+        # slash command
         if CommandType(data["data"]["type"]) is CommandType.Slash and not (data["data"].get("options") and data["data"]["options"][0]["type"] in [OptionType.SUB_COMMAND, OptionType.SUB_COMMAND_GROUP]):
             x = self.commands.get(data["data"]["name"])
             if x is None:
@@ -272,6 +274,7 @@ class Slash():
                 elif x.callback is not None:
                     await x.callback(context, **options)
                 return
+        # UserContext command
         elif CommandType(data["data"]["type"]) is CommandType.User:
             x = self.context_commands["user"].get(data["data"]["name"])
             if x is not None:
@@ -288,6 +291,7 @@ class Slash():
                     else:
                         await x.callback(context, member)
                 return
+        # MessageContext command
         elif CommandType(data["data"]["type"]) is CommandType.Message:
             x = self.context_commands["message"].get(data["data"]["name"])
             if x is not None:
@@ -306,6 +310,7 @@ class Slash():
                 return
         #endregion
 
+        # subcommands
         fixed_options = []
         x_base = self.subcommands.get(data["data"]["name"])
         if not x_base:
@@ -313,13 +318,14 @@ class Slash():
             for x in self._discord.cogs:
                 cog_commands = self._get_cog_subgroup_commands(x)
             x_base = cog_commands.get(data["data"]["name"])
+        
 
         if x_base:
             op = data["data"]["options"][0]
             while op["type"] != 1:
                 op = op["options"][0]
             fixed_options = op.get("options", [])
-            
+
             x = x_base.get(data["data"]["options"][0]["name"])
             if isinstance(x, dict):
                 x = x.get(data["data"]["options"][0]["options"][0]["name"])
@@ -420,7 +426,7 @@ class Slash():
                 return
             if command.__guild_changes__ != {}:
                 for guild_id in command.__guild_changes__:
-                    _name, _description, _default_permission = command.__guild_changes__[guild_id]
+                    _name, _description, _default_permission, _options, _callback = command.__guild_changes__[guild_id]
                     cur = command.copy()
                     if _name is not None:
                         cur.name = _name
@@ -428,6 +434,10 @@ class Slash():
                         cur.description = _description
                     if _default_permission is not None:
                         cur.default_permission = _default_permission
+                    if _options is not None:
+                        cur.options = _options
+                    if _callback:
+                        cur.callback = _callback
                     cur.guild_ids = [int(guild_id)]
                     await guild_stuff(cur, [int(guild_id)], is_change=True)
             # guild only command
@@ -516,10 +526,11 @@ class Slash():
         return await self.http.get_guild_commands(guild_id)
     
     def gather_commands(self) -> Dict[str, SlashCommand]:
-        commands = self.commands
+        commands = self.commands.copy()
         for _base in self.subcommands:
+            bbase_exists = commands.get(_base) is not None
             # baase for the subcommands
-            basic_base = SlashCommand(None, _base)
+            basic_base = commands.get(_base) or SlashCommand(None, _base)
             # get first base
             for _sub in self.subcommands[_base]:
                 # get second base/command
@@ -528,10 +539,11 @@ class Slash():
                 if isinstance(sub, dict):
                     for _group in self.subcommands[_base][_sub]:
                         # the subcommand group
-                        group = self.subcommands[_base][_sub][_group]        
-                        basic_base.guild_permissions = group.guild_permissions
-                        basic_base.guild_ids = group.guild_ids
-                        group._base = basic_base
+                        group = self.subcommands[_base][_sub][_group]
+                        if not bbase_exists:    
+                            basic_base.guild_permissions = group.guild_permissions
+                            basic_base.guild_ids = group.guild_ids
+                            group._base = basic_base
                         # if there's already a base command
                         if commands.get(_base) is not None:
                             # Check if base already has an option with the subs name
@@ -553,11 +565,11 @@ class Slash():
                                 ], guild_ids=group.guild_ids, default_permission=group.default_permission, guild_permissions=group.guild_permissions
                             )
                 # if is basic subcommand
-                else:    
-                    basic_base.guild_permissions = sub.guild_permissions
-                    basic_base.guild_ids = sub.guild_ids
+                else:
+                    if not bbase_exists:    
+                        basic_base.guild_permissions = sub.guild_permissions
+                        basic_base.guild_ids = sub.guild_ids
                     sub._base = basic_base
-                    print("set base", basic_base)
                     # If base exists
                     if commands.get(_base) is not None:
                         commands[_base].options += [sub.to_option()]
@@ -629,11 +641,12 @@ class Slash():
             The ID of the guild where the command is going to be added
         
         """
+
         target_guild = guild_id
-        api_command = await self._get_guild_api_command(base.name, base._json["type"], guild_id)
+        api_command = await self._get_guild_api_command(base.name, base.command_type, guild_id)
         if api_command is not None:
             api_permissions = await self.http.get_command_permissions(api_command["id"], guild_id)
-        global_command = await self._get_global_api_command(base.name, base._json["type"])
+        global_command = await self._get_global_api_command(base.name, base.command_type)
         # If no command in that guild or a global one was found
         if api_command is None or global_command is not None:
             # # Check global commands
@@ -714,7 +727,7 @@ class Slash():
                 self._add_to_cache(cur, is_base=True)
         if base.__guild_changes__ != {} and is_base is False:
             for guild_id in base.__guild_changes__:
-                _name, _description, _default_permission = base.__guild_changes__.get(guild_id)
+                _name, _description, _default_permission, _options, _callback = base.__guild_changes__.get(guild_id)
                 cur = base.copy()
                 if _name is not None:
                     cur.name = _name
@@ -722,6 +735,10 @@ class Slash():
                     cur.description = _description
                 if _default_permission is not None:
                     cur.default_permission = _default_permission
+                if _options is not None:
+                    cur.options = _options
+                if _callback is not None:
+                    cur.callback = _callback
                 cur.guild_ids = [int(guild_id)]
                 self.commands[cur.name] = cur
         if base.command_type is CommandType.Slash:
@@ -800,7 +817,9 @@ class Slash():
             await self.delete_guild_commands(guild.id)
             logging.debug("nuked commands in" + str(guild.name) + " (" + str(guild.id) + ")")
         logging.info("nuked all commands")
-
+    
+    def add_build(self, builder):
+        builder.register(self)
 
     def add_command(self, name=None, callback=None, description=None, options=None, guild_ids=None, default_permission=True, guild_permissions=None, api=False) -> Union[SlashCommand, Coroutine]:
         """

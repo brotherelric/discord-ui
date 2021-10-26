@@ -28,7 +28,7 @@ def format_name(value):
     return str(value).lower().replace(" ", "-")
 
 class SlashOptionCollection():
-    def __init__(self, options):
+    def __init__(self, options=[]):
         self.__options = {x.name if isinstance(x, SlashOption) else x["name"]: SlashOption._from_data(x) if isinstance(x, dict) else x for x in options}
     
     def __repr__(self) -> str:
@@ -336,7 +336,7 @@ class SlashOption():
     def autocomplete(self) -> bool:
         """Whether the choices for this option should be autocompleted
         
-        type: :class:`bool`
+        :type: :class:`bool`
         """
         return self._json.get("autocomplete", False)
     @autocomplete.setter
@@ -605,7 +605,7 @@ class BaseCommand():
         self.guild_ids: typing.List[int] = _default(None, [int(x) for x in _or(guild_ids, [])])
         """The ids of the guilds where the command is available"""
     def __repr__(self) -> str:
-        return f"<SlashCommand({self.to_dict()})>"
+        return f"<{self.__class__.__name__.split('.')[-1]}({self.to_dict()})>"
     def __eq__(self, o: object) -> bool:
         if isinstance(o, dict):
             return (
@@ -820,13 +820,15 @@ class BaseCommand():
         else:
             await self._http.slash_http.delete_global_command(self.id)
     
+    async def _fetch_id(self):
+        try:
+            return int(await self._http.get_id(getattr(self, 'base_names', [self.name,])[0], self.guild_ids[0] if self.guild_only else None, self.command_type))
+        except NoCommandFound:
+            return None
     async def _update_id(self, _http=None):
         if _http is not None:
             self._http = _http
-        try:
-            self._id = await self._http.get_id(getattr(self, 'base_names', [self.name])[0], self.guild_ids[0] if self.guild_only else None, self.command_type)
-        except NoCommandFound:
-            self._id = None
+        self._id = await self._fetch_id()
         return self._id
     def _patch(self, command):
         self.__aliases__ = command.__aliases__
@@ -909,8 +911,7 @@ class SlashCommand(BaseCommand):
         if guild_id:
             permissions = await slash_http.get_command_permissions(id, guild_id)
         return SlashCommand._from_data(api, permissions, slash_http, guild_id, guild_ids)
-        
-
+   
 class SlashSubcommand(BaseCommand):
     __slots__ = BaseCommand.__slots__ + ('base_names', '_base')
 

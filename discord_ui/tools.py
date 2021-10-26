@@ -44,6 +44,11 @@ def _default(default, *args, empty_array=True):
     if len(args) == 1:
         return args[0]
     return args
+def try_get(value, index, default):
+    try:
+        return value[index]
+    except (IndexError, TypeError):
+        return default
 
 def setattribute(object, attribute, value):
     setattr(object, attribute, value)

@@ -77,8 +77,11 @@ class ButtonStyle(BaseIntEnum):
 
 class CommandType(BaseIntEnum):
     Slash       =              1
+    """Chat-input command"""
     User        =              2
+    """User-context command"""
     Message     =              3
+    """Message-context command"""
 
     @staticmethod
     def from_string(typ):
