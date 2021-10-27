@@ -70,8 +70,8 @@ def get_index(l: list, elem: Any, mapping = lambda x: x, default: int = -1) -> i
 
     Returns
     -------
-    :returns: The found element
-    :type: :class:`Any`
+    :class:`Any`
+        The found element
     
 
     Example:
@@ -103,8 +103,8 @@ def get(l: list, elem: Any = True, mapping = lambda x: True, default: Any = None
 
     Returns
     -------
-    :returns: The found element
-    :type: :class:`Any`
+    :class:`Any`
+        The found element
 
 
     Example:
@@ -137,12 +137,13 @@ def components_to_dict(*components) -> List[dict]:
 
     Raises
     ------
-    :raises: :class:`Exception` : Invalid Data was passed
+    :class:`Exception`
+        Invalid data was passed
     
     Returns
     -------
-    :returns: The converted data
-    :type: List[:class:`dict`]
+    List[:class:`dict`]
+        The converted data
 
 
     """

@@ -149,8 +149,8 @@ class Interaction():
         
         Returns
         -------
-        :return: Returns the sent message
-        :type: :class:`~Message` | :class:`EphemeralMessage`
+        :class:`~Message` | :class:`EphemeralMessage`
+            Returns the sent message
         """
         if ninja_mode is True or all(y in [MISSING, False] for x, y in locals().items() if x not in ["self"]):
             try:
@@ -243,8 +243,8 @@ class Interaction():
         
         Returns
         -------
-        :return: Returns the sent message
-        :type: :class:`~Message` | :class:`EphemeralMessage`
+        :class:`~Message` | :class:`EphemeralMessage`
+            Returns the sent message
         """
         if self.responded is False:
             return await self.respond(content=content, tts=tts, embed=embed, embeds=embeds, file=file, files=files, nonce=nonce, allowed_mentions=allowed_mentions, mention_author=mention_author, components=components, delete_after=delete_after, listener=listener, hidden=hidden)
@@ -580,8 +580,10 @@ class Message(discord.Message):
 
         Raises
         ------
-        :raises: :class:`discord_ui.errors.OutOfValidRange` : The specified range was out of the possible range of the component rows 
-        :raises: :class:`discord_ui.errors.OutOfValidRange` : The specified row was out of the possible range of the component rows
+        :class:`discord_ui.errors.OutOfValidRange`
+            The specified range was out of the possible range of the component rows 
+        :class:`discord_ui.errors.OutOfValidRange`
+            The specified row was out of the possible range of the component rows
         
         """
         comps = []
@@ -645,15 +647,16 @@ class Message(discord.Message):
 
         Raises
         ------
-        :raises: :class:`discord_ui.errors.InvalidEvent` : The event name passed was invalid 
+        :class:`discord_ui.errors.InvalidEvent`
+            The event name passed was invalid 
 
         Returns
-        ----------
-        :returns: The component that was waited for
-        :type: :class:`~PressedButton` | :class:`~SelectedMenu`
+        --------
+        :class:`~PressedButton` | :class:`~SelectedMenu`
+            The component that was waited for
 
         Example
-        ---------
+        -------
 
         .. code-block::
 

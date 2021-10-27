@@ -217,7 +217,7 @@ You can find more (and better) examples [here](https://github.com/discord-py-ui/
     Button("label", "my_custom_id")
     ```
     - ButtonStyles is now ButtonStyle
-    - renamed cog decorators: `slash_command` -> `slash_command`, `subslash_command` -> `subslash_command`, `context_cog` -> `context_command`, `listening_component` -> `listening_component`
+    - renamed cog decorators, old ones still work but will shoow a DeprecationWarninig: `slash_command` -> `slash_command`, `subslash_command` -> `subslash_command`, `context_cog` -> `context_command`, `listening_component` -> `listening_component`
     - Removed `Slash.edit_command` and `Slash.edit_subcommand`, "moved" to `BaseCommand.edit`
 
     ## **Changed**

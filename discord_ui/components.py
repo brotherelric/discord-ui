@@ -33,6 +33,15 @@ class SelectOption():
         An additional description of the option, max 50 characters
     emoji : :class:`discord.Emoji` | :class:`str`, optional
         Emoji appearing before the label; default MISSING
+
+    Raises
+    -------
+    :class:`WrongType`
+        A value you want to set is not an instance of a valid type
+    :class:`InvalidLenght`
+        The lenght of a value is not valid
+    :class:`OutOfValidRange`
+        A value is out of its valid range
     """
     def __init__(self, value, label="\u200b", description=None, emoji=None) -> None:
         """
@@ -48,11 +57,7 @@ class SelectOption():
         self._description = None
         self._emoji = None
         self.default: bool = False
-        """
-        Whether this option is selected by default in the menu or not
-
-        :type: :class:`bool`
-        """
+        """Whether this option is selected by default in the menu or not"""
 
         self.label = label
         self.value = value
@@ -63,20 +68,12 @@ class SelectOption():
 
     @property
     def content(self) -> str:
-        """
-        The complete option content, consisting of the emoji and label
-
-        :type: :class:`str`
-        """
+        """The complete option content, consisting of the emoji and label"""
         return (self.emoji + " ") if self.emoji is not None else "" + (self.label or '')
     
     @property
     def label(self) -> str:
-        """
-        The main text appearing on the option 
-
-        :type: :class:`str`
-        """
+        """The main text appearing on the option """
         return self._label
     @label.setter
     def label(self, value: str):
@@ -89,12 +86,8 @@ class SelectOption():
         self._label = value
 
     @property
-    def value(self) -> Any:
-        """
-        A unique value for the option, which will be usedd to identify the selected value
-
-        :type: :class:`str`
-        """
+    def value(self) -> str:
+        """A unique value for the option, which will be usedd to identify the selected value"""
         return self._value
     @value.setter
     def value(self, value):
@@ -509,6 +502,17 @@ class Button(BaseButton, UseableComponent):
         Whether a new line should be added before the button; default False
     disabled: :class:`bool`, optional
         Whether the button is disabled; default False
+
+    Raises
+    -------
+    :class:`WrongType`
+        A value you want to set is not an instance of a valid type
+    :class:`InvalidLenght`
+        The lenght of a value is not valid
+    :class:`OutOfValidRange`
+        A value is out of its valid range
+    :class:`InvalidArgument`
+        The color you provided is not a valid color alias
     """
     def __init__(self, label="\u200b", custom_id=None, color="blurple", emoji=None, new_line=False, disabled=False) -> None:
         """
@@ -555,7 +559,7 @@ class Button(BaseButton, UseableComponent):
 
 class LinkButton(BaseButton):
     """
-    A discord-ui linkbutton
+    A button that will open a link when it's pressed
 
     Parameters
     ----------
@@ -569,6 +573,15 @@ class LinkButton(BaseButton):
         Whether a new line should be added before the button; default False
     disabled: :class:`bool`, optional
         Whether the button is disabled; default False
+
+    Raises
+    -------
+    :class:`WrongType`
+        A value you want to set is not an instance of a valid type
+    :class:`InvalidLenght`
+        The lenght of a value is not valid
+    :class:`OutOfValidRange`
+        A value is out of its valid range
     """
     def __init__(self, url, label="\u200b", emoji=None, new_line=False, disabled=False) -> None:
         """
@@ -596,11 +609,7 @@ class LinkButton(BaseButton):
 
     @property
     def url(self) -> str:
-        """
-        The link which will be opened when the button was pressedd
-
-        :type: :class:`str`
-        """
+        """The link which will be opened when the button was pressed"""
         return self._url
     @url.setter
     def url(self, val: str):
@@ -659,8 +668,8 @@ class ActionRow():
         
         Returns
         -------
-        :returns: The filtered components
-        :type: List[:class:`~Button` | :class:`~LinkButton`]
+        List[:class:`~Button` | :class:`~LinkButton`]
+            The filtered components
         
         """
         return [x for x in self.items if check(x)]

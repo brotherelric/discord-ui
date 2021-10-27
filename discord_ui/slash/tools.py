@@ -205,8 +205,8 @@ def create_choice(name, value) -> dict:
     
     Returns
     -------
-        :returns: The created choice
-        :type: :class:`dict`
+    :class:`dict`
+        The created choice
     
     """
     return {"name": name, "value": value}

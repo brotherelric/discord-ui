@@ -1,5 +1,3 @@
-
-import sys
 from .slash.http import SlashHTTP
 from .slash.errors import NoAsyncCallback
 from .components import Button, Component, SelectMenu
@@ -34,13 +32,15 @@ from discord.ext import commands
 import json
 import inspect
 import asyncio
+import warnings
 import contextlib
-from typing import Any, Callable, Coroutine, Dict, List, Tuple, Union, TypeVar, overload
+from typing import Any, Callable, Coroutine, Dict, List, Tuple, Union, TypeVar
 try:
     from typing import Literal
 except ImportError:
     from typing_extensions import Literal
 
+warnings.simplefilter("always", DeprecationWarning)
 logging = setup_logger(__name__)
 
 __all__ = (
@@ -382,8 +382,10 @@ class Slash():
         
         Raises
         ------
-        :raises: :class:`InvalidArgument` : A slash command has an invalid guild_id
-        :raises: :class:`InvalidArgument` : A slash command has an invalid id specified in the guild_permissions
+        :class:`InvalidArgument`
+            A slash command has an invalid guild_id
+        :class:`InvalidArgument`
+            A slash command has an invalid id specified in the guild_permissions
         
         """
         delete_unused = delete_unused or self.delete_unused
@@ -587,12 +589,7 @@ class Slash():
         ----------
         command: :class:`SlashCommand` | :class:`ContextCommand`
             The command that should be added
-        
-        Raises
-        ------
-        :raises: :class:`InvalidArgument` : When a guild-id in ``guild_ids`` is not a valid server where the bot client is in it
-        :raises: :class:`InvalidArgument` : When a guild-id in ``guild_permissions`` is not a valid server where the bot client is in it
-        
+
         """
         if command.guild_ids is not None:
             guild_ids = command.guild_ids
@@ -604,7 +601,7 @@ class Slash():
                             logging.error(f"Skipping guild {x}, because client is not in this guild")
                             continue
                 if int(x) not in own_guild_ids:
-                    raise InvalidArgument("guild_ids invalid! Client is not in a server with the id '" + str(x) + "'")
+                    logging.error("SKipping guild, because client is not in a server with the id '" + str(x) + "'")
 
                 if command.guild_permissions is not None:
                     command.permissions = command.guild_permissions.get(x)
@@ -679,6 +676,11 @@ class Slash():
             The new permissions for the command
         global_command: :class:`bool`, optional
             If the command is a global command or a guild command; default ``False``
+
+        Raises
+        -------
+        :class:`ClientException`
+            No command with that name was found 
     
         """
         if guild_id is not None:
@@ -819,6 +821,14 @@ class Slash():
         logging.info("nuked all commands")
     
     def add_build(self, builder):
+        """Adds a subclass of `SlashBuilder` to the internal cache and creates the command in the api
+        
+        Parameters
+        ----------
+        builder: :class:`~SlashBuilder`
+            The built SlashCommand you want to add
+        
+        """
         builder.register(self)
 
     def add_command(self, name=None, callback=None, description=None, options=None, guild_ids=None, default_permission=True, guild_permissions=None, api=False) -> Union[SlashCommand, Coroutine]:
@@ -851,13 +861,18 @@ class Slash():
             Whether the command should be registered to the api (True) or just added in the internal cache
                 If it's added to the internal cache, it will be registered to the api when calling the `sync_commands` function.
                 If ``api`` is True, this function will return a promise
+
+        Raises
+        -------
+        :class:`ClientException`
+            Commands should be synced but the client is not ready yet
         """
         command = SlashCommand(callback, name, description, options, guild_ids=guild_ids, default_permission=default_permission, 
             guild_permissions=guild_permissions, http=self._discord._connection.slash_http)
         self._add_to_cache(command)
         if api is True:
             if self.ready is False:
-                raise Exception("Slashcommands are not ready yet")
+                raise ClientException("Slashcommands are not ready yet")
             return self.create_command(command) 
         return command
     def command(self, name=None, description=None, options=None, guild_ids=None, default_permission=True, guild_permissions=None) -> Callable[..., SlashCommand]:
@@ -1341,14 +1356,20 @@ class Components():
         components: List[:class:`~Button` | :class:`~LinkButton` | :class:`~SelectMenu`], optional
             A list of message components included in this message; default None
 
+        Raises
+        ------
+        :class:`WrongType`
+            Channel is not an instance of :class:`discord.abc.GuildChannel`, :class:`discord.abc.PrivateChannel:, :class:`int`, :class:`str` 
+
+
         Returns
         -------
-        :return: Returns the sent message
-        :type: :class:`~Message`
+        :class:`~Message`
+            Returns the sent message
         """
 
-        if not isinstance(channel, (discord.TextChannel, int, str, discord.User)):
-            raise WrongType("channel", channel, ["discord.TextChannel", "discord.User"])
+        if not isinstance(channel, (discord.abc.GuildChannel, int, str, discord.User, discord.abc.PrivateChannel)):
+            raise WrongType("channel", channel, ["discord.abc.PrivateChannel", "discord.abc.GuildChannel", "discord.User", "int"])
 
         channel_id = None
         if isinstance(channel, discord.User):
@@ -1408,8 +1429,8 @@ class Components():
         
         Returns
         -------
-            :returns: The message sent, if wait was True, else nothing will be returned
-            :type: :class:`~WebhookMessage` | :class:`None`
+        :class:`~WebhookMessage` | :class:`None`
+            The message which was sent, if wait was True, else nothing will be returned
         
         """
         payload = get_message_payload(content, tts=tts, embed=embed, embeds=embeds, allowed_mentions=allowed_mentions, components=components)
@@ -1486,6 +1507,13 @@ class Components():
         check: :class:`function`, Optional
             A function that has to return True in order to invoke the listening component
                 The check function takes to parameters, the component and the message
+
+        Raises
+        -------
+        :class:`MissingListenedComponentParameters`
+            The callback for the listening component is missing required parameters
+        :class:`NoAsyncCallback`
+            The callback is not defined with the `async` keyword
         """
         if not inspect.iscoroutinefunction(callback):
             raise NoAsyncCallback()

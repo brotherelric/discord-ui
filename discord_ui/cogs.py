@@ -1,6 +1,4 @@
 from __future__ import annotations
-import inspect
-
 
 from .tools import EMPTY_CHECK
 from .slash.types import BaseCommand, ContextCommand, MessageCommand, SlashCommand, SlashSubcommand, UserCommand
@@ -15,14 +13,17 @@ try:
 except ImportError:
     from discord.ext.commands import *
 
+import inspect
 import asyncio
 import datetime
+from warnings import warn
 from typing import Any, Callable, Coroutine, Optional, List, Union
 try:
     from typing import Literal
 except ImportError:
     from typing_extensions import Literal
 
+# region classes
 class WrongListener(CheckFailure):
     """
     Exception raised when a listening component received a component event that doesn't meet the check conditions
@@ -335,8 +336,9 @@ class ListeningComponent(BaseCallable):
             return True
         self.add_check(predicate)
         self.custom_id = custom_id
+# endregion
 
-def slash_command(name=None, description=None, options=[], guild_ids=None, default_permission=None, guild_permissions=None):
+def slash_command(name=None, description=None, options=None, guild_ids=None, default_permission=None, guild_permissions=None):
     """
     A decorator for cogs that will register a slashcommand
     
@@ -587,6 +589,25 @@ def listening_component(custom_id, messages=None, users=None,
     def wrapper(callback: Callable[[Cog, Union[PressedButton, SelectedMenu]], Coroutine[Any, Any, Any]]):
         return ListeningComponent(callback, messages, users, component_type, check, custom_id)
     return wrapper
+
+# region deprecated
+def slash_cog(*args, **kwargs):
+    """Deprecated, use :meth:`~slash_command` insetad"""
+    warn("'slash_cog' is deprecated! Use 'slash_command' instead", category=DeprecationWarning, stacklevel=0)
+    return slash_command(*args, **kwargs)
+def subslash_cog(*args, **kwargs):
+    """Deprecated, use :meth:`~subslash_command` instead"""
+    warn("'subslash_cog' is deprecated! Use 'subslash_command' instead", category=DeprecationWarning, stacklevel=0)
+    return subslash_command(*args, **kwargs)
+def context_cog(*args, **kwargs):
+    """Deprecated, use :meth:`~context_command` instead"""
+    warn("'context_cog' is deprecated! Use 'context_command' instead", category=DeprecationWarning, stacklevel=0)
+    return subslash_command(*args, **kwargs)
+def listening_component_cog(*args, **kwargs):
+    """Deprecated, use :meth:`~listetning_component` instead"""
+    warn("'subslash_cog' is deprecated! Use 'subslash_command' instead", category=DeprecationWarning, stacklevel=0)
+    return subslash_command(*args, **kwargs)
+# endregion
 
 def _get_instances_for(target, cls=BaseCallable, check=EMPTY_CHECK):
     return [x[1] for x in inspect.getmembers(target, lambda x: isinstance(x, cls) and check(x) is True)]
