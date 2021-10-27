@@ -27,7 +27,7 @@ setuptools.setup(
     long_description=get_readme(),
     long_description_content_type="text/markdown",
     url="https://github.com/discord-py-ui/discord-ui/",
-    packages=["discord_ui", "discord.ext.discord_ui"],
+    packages=["discord_ui"],
     # packages=setuptools.find_packages(),
     python_requires='>=3.6',
     classifiers=[
