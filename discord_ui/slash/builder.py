@@ -8,7 +8,7 @@ from .http import SlashHTTP
 from ..tools import try_get
 from .types import SlashCommand, SlashOption, SlashOptionCollection, SlashPermission, SlashSubcommand, format_name
 
-from typing import Callable, List, Dict
+from typing import List, Dict
 
 
 
@@ -20,12 +20,15 @@ class Subcommand(SlashSubcommand):
         self.build: SlashBuilder = None
     @property
     def group_name(self) -> str:
+        """The name of the parent group"""
         return try_get(self.__group__, 0, None)
     @property
     def group_description(self) -> str:
+        """The description of the parent group"""
         return try_get(self.__group__, 1, "\u200b")
     @property
     def has_group(self) -> bool:
+        """Whether this command has a parent group"""
         return self.__group__ != None
     def to_super_dict(self):
         base = super().to_dict()
@@ -43,6 +46,24 @@ class Subcommand(SlashSubcommand):
         return id
 
 class SlashBuilder():
+    """A Superclass for building custom Slashcommands
+    
+    
+    Usage
+    ------
+
+    .. code-block::
+
+        class MyCommand(SlashBuilder):
+            def __init__(self):
+                super().__init__()
+                self.name = "base_name"
+                self.description = "This is the base"
+
+            @SlashBuilder.subcommand("sub")
+            async def my_sub(self, ctx):
+                ...
+    """
     def __init__(self, name=None, description=None, guild_ids=None, guild_permissions=None, default_permission=True) -> None:
         self.__sync__ = True
         self.__guild_changes__ = {}
@@ -56,15 +77,20 @@ class SlashBuilder():
         self._http: SlashHTTP = None # set later
         self.name = name
 
+        
         self.description: str = description
+        """The description of the base slashcommand"""
         self.guild_ids: List[int] = guild_ids
+        """The guild ids in which the command is available. 
+        If no guild ids are provided, this command will be a global slashcommand"""
         self.guild_permissions: Dict[int, SlashPermission] = guild_permissions
-        self.default_permission = default_permission
+        """The permisions for different guilds"""
+        self.default_permission: bool = default_permission
+        """Whether this command can be used by default or not"""
         self.permissions = SlashPermission()
-        # region no_sub
-        # self.callback: Callable = None
+        """The current permissions"""
         self._options = SlashOptionCollection()
-        # endregion
+
     def __init_subclass__(cls) -> None:
         cls.command_type = CommandType.Slash
     
@@ -73,6 +99,7 @@ class SlashBuilder():
 
     @property
     def options(self) -> SlashOptionCollection:
+        """The options for this slashcommand"""
         return self._options
     @options.setter
     def options(self, value):
@@ -84,9 +111,11 @@ class SlashBuilder():
 
     @property
     def id(self):
+        """The ID of thte slashcommand"""
         return self._id
     @property
     def name(self):
+        """The name of the base slashcommamnd"""
         return self._name
     @name.setter
     def name(self, value):
@@ -142,15 +171,58 @@ class SlashBuilder():
         else:
             slash.commands[self.name] = self
     @property
-    def guild_only(self):
+    def guild_only(self) -> bool:
+        """Whether this command is only available in some guilds or is a global command"""
         return SlashCommand.guild_only.getter(self)
+    
     @staticmethod
-    def subcommand(name, description=None, options=None):
+    def subcommand(name=None, description=None, options=None):
+        """Decorator to a callback for a subcommand
+        
+        Parameters
+        ----------
+        name: :class:`str`, optional
+            The name for the subcommand; default None
+        description: :class:`str`, optional
+            The description for the subcommand; default None
+        options: List[:class:`SlashOption`], optional
+            Options for the subcoommand; default None
+        
+        Usage
+        ------
+
+        .. code-block::
+
+            @SlashBuilder.subcommand("subcommand", "This is a subcoommand", [SlashOption(...)])
+            async def sub_callback(self, ctx, ...):
+                ...
+        """
         def wrapper(callback) -> Subcommand:
             return Subcommand(callback, name, description, options)
         return wrapper
     @staticmethod
     def group(name, description=None):
+        """Decorator for a subcommand group
+        
+        Parameters
+        ----------
+        name: :class:`str`
+            The name of the group
+        description: :class:`str`, optional
+            The description of the group; default None
+
+
+        Usage
+        -----
+
+        .. code-block::
+
+            @SlashBuilder.group("group_name")
+            @SlashBuilder.subcommand(...)
+            async def sub_callback(self, ctx, ...):
+                ...
+        
+        """
         def wrapper(callback):
             callback.__group__ = (format_name(name), description,)
             return callback

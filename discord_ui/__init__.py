@@ -2,14 +2,14 @@
 discord-ui extension
 ~~~~~~~~~~~~~~~~~~~~
 
-A discord.py extension for discord's ui features like Buttons, SelectMenus, LinkButtons slash-commands and context-commands (message-commands and user-commands)
+A discord.py extension for discord's ui features like Buttons, SelectMenus, LinkButtons, 
+slash-commands and context-commands (message-commands and user-commands).
 
-This libary features sending components, creating application-commands and receiving them
 
 - - -
 
 Links
-    [Docs](https://discord-ui.rtfd.io/) | [Github](https://github.com/discord-py-ui/discord-ui/) | [PyPi](https://pypi.org/project/discord-ui/) | [License](https://github.com/git/git-scm.com/blob/main/MIT-LICENSE.txt)
+    [**Docs**](https://discord-ui.rtfd.io/) | [**Github**](https://github.com/discord-py-ui/discord-ui/) | [**PyPi**](https://pypi.org/project/discord-ui/) | [**License**](https://github.com/git/git-scm.com/blob/main/MIT-LICENSE.txt)
 
 - Made by [404kuso](https://github.com/404kuso) and [RedstoneZockt](https://github.com/RedstoneZockt)
 - Made for [discord.py](https://github.com/Rapptz/discord.py) and you
@@ -47,7 +47,7 @@ from .override import override_dpy
 
 
 __title__ = "discord-ui"
-__version__ = "a5.1.0"
+__version__ = "p5.1.0"
 
-if __version__.endswith("a"):
+if __version__.endswith("p"):
     print("Warning: This version is a preview version and can contain some issues!")
