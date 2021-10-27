@@ -39,7 +39,6 @@ try:
 except ImportError:
     from typing_extensions import Literal
 
-# warnings.simplefilter("module", DeprecationWarning)
 logging = setup_logger(__name__)
 
 __all__ = (

@@ -81,7 +81,7 @@ class BaseCallable():
         self.on_error = None
         
     async def __call__(self, *args, **kwds):
-        return self.callback(*args, **kwds)
+        return await self.invoke(*args, **kwds)
     async def invoke(self, ctx, *args, **kwargs):
         if not await self.can_run(ctx):
             raise CheckFailure()

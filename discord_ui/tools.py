@@ -51,8 +51,6 @@ def deprecated(instead=None) -> Callable[[Callable[P, R]], Callable[P, R]]:
                 msg = f"{callback.__name__} is deprecated, use {instead} instead!"
             else:
                 msg = f"{callback.__name__} is deprecated!"
-            
-
             # region warning
             # turn filter off
             warnings.simplefilter('always', DeprecationWarning)
