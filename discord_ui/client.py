@@ -32,7 +32,6 @@ from discord.ext import commands
 import json
 import inspect
 import asyncio
-import warnings
 import contextlib
 from typing import Any, Callable, Coroutine, Dict, List, Tuple, Union, TypeVar
 try:
@@ -40,7 +39,7 @@ try:
 except ImportError:
     from typing_extensions import Literal
 
-warnings.simplefilter("always", DeprecationWarning)
+# warnings.simplefilter("module", DeprecationWarning)
 logging = setup_logger(__name__)
 
 __all__ = (

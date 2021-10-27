@@ -1,5 +1,9 @@
+from __future__ import annotations
+
+import functools
 import logging
-from typing import Any, List
+import warnings
+from typing import TYPE_CHECKING, Any, Callable, List, TypeVar
 
 __all__ = (
     'components_to_dict',
@@ -29,6 +33,38 @@ class _EMPTY_CHECK():
 
 MISSING = _MISSING()
 EMPTY_CHECK = _EMPTY_CHECK()
+
+R = TypeVar("R")
+
+if TYPE_CHECKING:
+    from typing_extensions import ParamSpec
+    P = ParamSpec('P')
+
+
+
+
+def deprecated(instead=None) -> Callable[[Callable[P, R]], Callable[P, R]]:
+    def wrapper(callback: Callable[P, R]) -> Callable[P, R]:
+        @functools.wraps(callback)
+        def wrapped(*args: P.args, **kwargs: P.kwargs):
+            if instead is not None:
+                msg = f"{callback.__name__} is deprecated, use {instead} instead!"
+            else:
+                msg = f"{callback.__name__} is deprecated!"
+            
+
+            # region warning
+            # turn filter off
+            warnings.simplefilter('always', DeprecationWarning)
+            # warn the user, use stacklevel 2
+            warnings.warn(msg, stacklevel=2, category=DeprecationWarning)
+            # turn filter on again
+            warnings.simplefilter('default', DeprecationWarning) 
+            # endregion
+
+            return callback(*args, **kwargs)
+        return wrapped
+    return wrapper
 
 
 def _none(*args, empty_array=False):

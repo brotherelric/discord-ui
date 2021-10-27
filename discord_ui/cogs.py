@@ -4,6 +4,7 @@ from .tools import EMPTY_CHECK
 from .slash.types import BaseCommand, ContextCommand, MessageCommand, SlashCommand, SlashSubcommand, UserCommand
 from .receive import PressedButton, SelectedMenu
 from .enums import ComponentType
+from .tools import deprecated
 
 import discord
 from discord.ext import commands
@@ -16,7 +17,6 @@ except ImportError:
 import inspect
 import asyncio
 import datetime
-from warnings import warn
 from typing import Any, Callable, Coroutine, Optional, List, Union
 try:
     from typing import Literal
@@ -591,21 +591,21 @@ def listening_component(custom_id, messages=None, users=None,
     return wrapper
 
 # region deprecated
+@deprecated("slash_command")
 def slash_cog(*args, **kwargs):
     """Deprecated, use :meth:`~slash_command` insetad"""
-    warn("'slash_cog' is deprecated! Use 'slash_command' instead", category=DeprecationWarning, stacklevel=0)
     return slash_command(*args, **kwargs)
+@deprecated("subslash_command")
 def subslash_cog(*args, **kwargs):
     """Deprecated, use :meth:`~subslash_command` instead"""
-    warn("'subslash_cog' is deprecated! Use 'subslash_command' instead", category=DeprecationWarning, stacklevel=0)
     return subslash_command(*args, **kwargs)
+@deprecated("context_command")
 def context_cog(*args, **kwargs):
     """Deprecated, use :meth:`~context_command` instead"""
-    warn("'context_cog' is deprecated! Use 'context_command' instead", category=DeprecationWarning, stacklevel=0)
     return subslash_command(*args, **kwargs)
+@deprecated("listening_component")
 def listening_component_cog(*args, **kwargs):
     """Deprecated, use :meth:`~listetning_component` instead"""
-    warn("'subslash_cog' is deprecated! Use 'subslash_command' instead", category=DeprecationWarning, stacklevel=0)
     return subslash_command(*args, **kwargs)
 # endregion
 
