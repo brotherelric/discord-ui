@@ -475,7 +475,6 @@ class SlashPermission():
     def forbidden(self) -> dict:
         return [x for x in self._json if x["permission"] == False]
 
-
 class BaseCommand():
     __slots__ = ('__aliases__', '__sync__', '__auto_defer__', '__guild_changes__', '__original_name__', 
         '__choice_generators__', '_http', '_id', '_options', '_json', 'callback', 'guild_ids',
@@ -982,13 +981,13 @@ class ContextCommand(BaseCommand):
     def description(self) -> str:
         return ""
     @description.setter
-    def description(self, value):
+    def description(self, _):
         pass
     @property
     def options(self) -> list:
         return self._options
     @options.setter
-    def options(self, value):
+    def options(self, _):
         pass
 
 class UserCommand(ContextCommand):
