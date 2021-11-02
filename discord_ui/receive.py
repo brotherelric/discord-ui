@@ -1,11 +1,12 @@
 from __future__ import annotations
 
+
 from .enums import InteractionResponseType
-from .slash.http import ModifiedSlashState, SlashHTTP
+from .slash.http import ModifiedSlashState
 from .errors import InvalidEvent, OutOfValidRange, WrongType
 from .http import BetterRoute, get_message_payload, send_files
 from .slash.errors import AlreadyDeferred, EphemeralDeletion
-from .tools import EMPTY_CHECK, MISSING, get_index, setup_logger, _none, get, _default
+from .tools import EMPTY_CHECK, MISSING, get_index, setup_logger, _none, get
 from .slash.types import ContextCommand, SlashCommand, SlashPermission, SlashSubcommand
 from .components import ActionRow, Button, LinkButton, SelectMenu, SelectOption, UseableComponent, make_component
 
@@ -559,8 +560,8 @@ class Message(discord.Message):
         
         Parameters
         ----------
-        component_index: :class:`int`, optional
-            The list index of the target component; default None
+        component_index: :class:`int` | :class:`range`, optional
+            The index or a range of indexes for the target component(s); default None
         custom_id: :class:`str`, optional
             The custom_id of the target component; default None
         disabled: :class:`bool`, optional
@@ -570,7 +571,11 @@ class Message(discord.Message):
         """
         comps = self.components
         if component_index is not None:
-            comps[component_index].disabled = disabled
+            if isinstance(component_index, range):
+                for x in component_index:
+                    comps[x].disabled = disabled
+            else:
+                comps[component_index].disabled = disabled
         elif custom_id is not None:
             comps[get_index(self.components, custom_id, lambda x: x.custom_id)].disabled = disabled
         await self.edit(components=comps, **fields)
