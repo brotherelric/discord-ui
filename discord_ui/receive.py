@@ -1,5 +1,7 @@
+from __future__ import annotations
+
 from .enums import InteractionResponseType
-from .slash.http import ModifiedSlashState
+from .slash.http import ModifiedSlashState, SlashHTTP
 from .errors import InvalidEvent, OutOfValidRange, WrongType
 from .http import BetterRoute, get_message_payload, send_files
 from .slash.errors import AlreadyDeferred, EphemeralDeletion
@@ -110,8 +112,8 @@ class Interaction():
         await self._state.slash_http.respond_to(self.id, self.token, InteractionResponseType.Deferred_channel_message, payload)
         self.deferred = True
 
-    async def respond(self, content=MISSING, *, tts=False, embed=MISSING, embeds=MISSING, file=MISSING, files=MISSING, nonce=MISSING,
-    allowed_mentions=MISSING, mention_author=MISSING, components=MISSING, delete_after=MISSING, listener=MISSING, 
+    async def respond(self, content=None, *, tts=False, embed=None, embeds=None, file=None, files=None, nonce=None,
+    allowed_mentions=None, mention_author=None, components=None, delete_after=None, listener=None, 
     hidden=False, ninja_mode=False) -> Union['Message', 'EphemeralMessage']:
         """
         Responds to the interaction
@@ -152,7 +154,7 @@ class Interaction():
         :class:`~Message` | :class:`EphemeralMessage`
             Returns the sent message
         """
-        if ninja_mode is True or all(y in [MISSING, False] for x, y in locals().items() if x not in ["self"]):
+        if ninja_mode is True or all(y in [None, False] for x, y in locals().items() if x not in ["self"]):
             try:
                 await self._state.slash_http.respond_to(self.id, self.token, InteractionResponseType.Deferred_message_update)
                 return
@@ -164,11 +166,15 @@ class Interaction():
                     raise x
 
         if self.responded is True:
-            return await self.send(content=content, tts=tts, embed=embed, embeds=embeds, nonce=nonce, allowed_mentions=allowed_mentions, mention_author=mention_author, components=components, listener=listener, hidden=hidden)
+            return await self.send(content=content, tts=tts, embed=embed, embeds=embeds, nonce=nonce, allowed_mentions=allowed_mentions, mention_author=mention_author, 
+                components=components, listener=listener, hidden=hidden
+            )
 
-        if components is MISSING and listener is not MISSING:
+        if components is None and listener is not None:
             components = listener.to_components()        
-        payload = get_message_payload(content=content, tts=tts, embed=embed, embeds=embeds, nonce=nonce, allowed_mentions=allowed_mentions, mention_author=mention_author, components=components)
+        payload = get_message_payload(content=content, tts=tts, embed=embed, embeds=embeds, nonce=nonce, allowed_mentions=allowed_mentions, 
+            mention_author=mention_author, components=components
+        )
         
         if self._deferred_hidden is hidden:
             if self._deferred_hidden is False and hidden is True:
@@ -179,7 +185,7 @@ class Interaction():
 
 
         r = None
-        if delete_after is not MISSING and hide_message is True:
+        if delete_after is not None and hide_message is True:
             raise EphemeralDeletion()
 
         if hide_message:
@@ -187,12 +193,12 @@ class Interaction():
         
         if self.deferred:
             route = BetterRoute("PATCH", f'/webhooks/{self.application_id}/{self.token}/messages/@original')
-            if file is not MISSING or files is not MISSING:
-                await send_files(route=route, files=[file] if files is MISSING else files, payload=payload, http=self._state.http)
+            if file is not None or files is not None:
+                await send_files(route=route, files=files or ([file] if file is None else None), payload=payload, http=self._state.http)
             else:
                 await self._state.http.request(route, json=payload)    
         else:
-            await self._state.slash_http.respond_to(self.id, self.token, InteractionResponseType.Channel_message, payload, files=[file] if file is not MISSING else _default(None, files))
+            await self._state.slash_http.respond_to(self.id, self.token, InteractionResponseType.Channel_message, payload, files=files or [file] if file is not None else None)
         self.responded = True
         
         r = await self._state.http.request(BetterRoute("GET", f"/webhooks/{self.application_id}/{self.token}/messages/@original"))
@@ -200,13 +206,13 @@ class Interaction():
             msg = EphemeralMessage(state=self._state, channel=self.channel, data=r, application_id=self.application_id, token=self.token)
         else:
             msg = await getMessage(self._state, data=r, response=False)
-        if listener is not MISSING:
+        if listener is not None:
             listener._start(msg)
-        if not _none(delete_after):
+        if delete_after is not None:
             await msg.delete(delete_after)
         return msg
-    async def send(self, content=None, *, tts=False, embed=MISSING, embeds=MISSING, file=MISSING, files=MISSING, nonce=MISSING,
-    allowed_mentions=MISSING, mention_author=MISSING, components=MISSING, delete_after=MISSING, listener=MISSING, hidden=False) -> Union['Message', 'EphemeralMessage']:
+    async def send(self, content=None, *, tts=None, embed=None, embeds=None, file=None, files=None, nonce=None,
+        allowed_mentions=None, mention_author=None, components=None, delete_after=None, listener=None, hidden=False) -> Union[Message, EphemeralMessage]:
         """
         Sends a message to the interaction using a webhook
         
@@ -249,7 +255,7 @@ class Interaction():
         if self.responded is False:
             return await self.respond(content=content, tts=tts, embed=embed, embeds=embeds, file=file, files=files, nonce=nonce, allowed_mentions=allowed_mentions, mention_author=mention_author, components=components, delete_after=delete_after, listener=listener, hidden=hidden)
 
-        if components is MISSING and listener is not MISSING:
+        if components is None and listener is not None:
             components = listener.to_components()
         payload = get_message_payload(content=content, tts=tts, embed=embed, embeds=embeds, nonce=nonce, allowed_mentions=allowed_mentions, mention_author=mention_author, components=components)
         
@@ -257,8 +263,8 @@ class Interaction():
             payload["flags"] = 64
 
         route = BetterRoute("POST", f'/webhooks/{self.application_id}/{self.token}')
-        if file is not MISSING or files is not MISSING:
-            r = await send_files(route=route, files=[file] if files is MISSING else files, payload=payload, http=self._state.http)
+        if file is not None or files is not None:
+            r = await send_files(route=route, files=files or ([file] if file is None else None), payload=payload, http=self._state.http)
         else:
             r = await self._state.http.request(route, json=payload)
 
@@ -266,9 +272,9 @@ class Interaction():
             msg = EphemeralMessage(state=self._state, channel=self._state.get_channel(int(r["channel_id"])), data=r, application_id=self.application_id, token=self.token)
         else:
             msg = await getMessage(self._state, r, response=False)
-        if delete_after is not MISSING:
+        if delete_after is not None:
             await msg.delete(delete_after)
-        if listener is not MISSING:
+        if listener is not None:
             listener._start(msg)
         return msg
     def _handle_auto_defer(self, auto_defer):
@@ -348,14 +354,16 @@ class SlashedCommand(Interaction, SlashCommand):
         Interaction.__init__(self, client._connection, data, user)
         SlashCommand.__init__(self, 
             command.callback, command.name, command.description, command.options, guild_ids=command.guild_ids, guild_permissions=command.guild_permissions, 
-            http=client._connection.slash_http
+            state=client._connection
         )
-        for x in self.__slots__:
-            setattr(self, x, getattr(command, x, None))
-
-        self.bot: commands.Bot = client
+        # update self slots
+        self._patch(command)
         # overwrite some json values that maybe weren't updated
         self._json = command.to_dict()
+
+        self.invoked_command: SlashCommand = command
+        """The original command instance that was used"""
+        self.bot: commands.Bot = client
         self.author: discord.Member = user
         """The user who used the command"""
         self.args: Dict[str, Union[str, int, bool, discord.Member, discord.TextChannel, discord.Role, float]] = args
@@ -364,25 +372,27 @@ class SlashedCommand(Interaction, SlashCommand):
         """The permissions for this guild"""
 class SlashedSubCommand(SlashedCommand, SlashSubcommand):
     """A Sub-:class:`~SlashCommand` command that was used"""
+    
+    invoked_command: SlashSubcommand
     def __init__(self, client, command, data, user, args = None) -> None:
         SlashedCommand.__init__(self, client, command, data, user, args)
         SlashSubcommand.__init__(self, 
             command.callback, command.base_names, command.name, command.description, command.options, 
-            command.guild_ids, command.default_permission, command.guild_permissions, client._connection.slash_http
+            command.guild_ids, command.default_permission, command.guild_permissions, client._connection
         )
-        for x in self.__slots__:
-            setattr(self, x, getattr(command, x, None))
 
 class SlashedContext(Interaction, ContextCommand):
     def __init__(self, client, command: ContextCommand, data, user, param) -> None:
         Interaction.__init__(self, client._connection, data, user)
         ContextCommand.__init__(self, command.command_type, command.callback, command.name, guild_ids=command.guild_ids, 
-            guild_permissions=command.guild_permissions, http=client._connection.slash_http
+            guild_permissions=command.guild_permissions, state=client._connection
         )
-        for x in self.__slots__:
-            setattr(self, x, getattr(command, x))
-        
+        # update self slots
+        self._patch(command)
         self._json = command.to_dict()
+
+        self.invoked_command: ContextCommand = command
+        """The original command instance that was used"""
         self.bot: commands.Bot = client
         self.param: Union[Message, discord.Member, discord.User] = param
         """The parameter that was received"""

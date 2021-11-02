@@ -1,13 +1,10 @@
-import inspect
-from re import A, S
-
-
-from discord_ui.client import Slash
-from ..enums import CommandType, OptionType
 from .http import SlashHTTP
-from ..tools import try_get
 from .types import SlashCommand, SlashOption, SlashOptionCollection, SlashPermission, SlashSubcommand, format_name
+from ..client import Slash
+from ..enums import CommandType, OptionType
+from ..tools import try_get
 
+import inspect
 from typing import List, Dict
 
 
@@ -39,8 +36,8 @@ class Subcommand(SlashSubcommand):
         if self.build != None:
             return await self.callback(self.build, ctx, *args, **kwargs)
         return await self.callback(ctx, *args, **kwargs)
-    async def _update_id(self, _http=None):
-        id = await super()._update_id(_http=_http)
+    async def update_id(self):
+        id = await super().update_id()
         if self.build != None:
             self.build._id = id
         return id
@@ -106,8 +103,8 @@ class SlashBuilder():
         self._options = SlashOptionCollection(value)
     async def _fetch_id(self):
         return await SlashCommand._fetch_id(self)
-    async def _update_id(self, _http=None):
-        return await SlashCommand._update_id(self, _http)
+    async def update_id(self):
+        return await SlashCommand.update_id(self)
 
     @property
     def id(self):

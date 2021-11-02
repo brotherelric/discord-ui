@@ -19,8 +19,8 @@ not only the slash cog commands, but if you use them for the normal commands, th
 doesn't work
 """
 
-import functools
 import inspect
+import functools
 from discord.ext import commands
 
 

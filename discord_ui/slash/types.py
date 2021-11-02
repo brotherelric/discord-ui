@@ -1,10 +1,6 @@
 from __future__ import annotations
 
-
-from ..tools import _or, _default, _none
-from ..errors import InvalidLength, WrongType
-from ..enums import CommandType, OptionType
-from .http import SlashHTTP
+from .http import ModifiedSlashState
 from .errors import (
     CallbackMissingContextCommandParameters, 
     MissingOptionParameter, 
@@ -12,11 +8,14 @@ from .errors import (
     OptionalOptionParameter,
     NoCommandFound
 )
+from ..errors import InvalidLength, WrongType
+from ..enums import CommandType, OptionType
 
 import discord
+from discord.ext.commands import Bot
 
 import re
-import typing
+import typing as t
 import inspect
 
 __all__ = (
@@ -24,12 +23,38 @@ __all__ = (
     'SlashPermission',
 )
 
+
+class OptionDataPayload(t.TypedDict):
+    type: int 
+    name: str
+    options: t.Optional[OptionDataPayload]
+class InteractionDataPayload(t.TypedDict):
+    type: int
+    options: t.List[OptionDataPayload]
+    name: str
+    id: str
+class InteractionPayload(t.TypedDict):
+    version: int
+    type: int
+    token: str
+    member: discord.member.MemberPayload
+    id: str
+    guild_id: t.Optional[str]
+    data: InteractionDataPayload
+    channel_id: str
+    application_id: str
+
 def format_name(value):
     return str(value).lower().replace(" ", "-")
 
+
 class SlashOptionCollection():
     def __init__(self, options=[]):
-        self.__options = {x.name if isinstance(x, SlashOption) else x["name"]: SlashOption._from_data(x) if isinstance(x, dict) else x for x in options}
+        self.__options = {
+            x.name if isinstance(x, SlashOption) else x["name"]: 
+                SlashOption._from_data(x, x.choice_generator if isinstance(x, SlashOption) else None) if isinstance(x, dict) else x 
+            for x in options
+        }
     
     def __repr__(self) -> str:
         return "<SlashOptionCollection[" + ', '.join([x.__repr__() for x in self]) + "]>"
@@ -92,7 +117,7 @@ class SlashOptionCollection():
         self.__options[value.name] = value
     def copy(self):
         return SlashOptionCollection(list(self.__options.values()))
-    def get(self, index: typing.Union[str, int], default=None):
+    def get(self, index: t.Union[str, int], default=None):
         try:
             return self.__getitem__(index)
         except (IndexError, KeyError):
@@ -100,6 +125,20 @@ class SlashOptionCollection():
     def set(self, index, value):
         self.__setitem__(index, value)
         return self
+    def remove(self, command: BaseCommand):
+        type_key = str(command.command_type)
+        if command.is_global:
+            try:
+                del self["globals"][type_key][command.name]
+            except KeyError:
+                pass
+            return
+        for x in command.guild_ids:
+            guild = str(x)
+            try:
+                del self[guild][type_key][command.name]
+            except KeyError:
+                continue
     def to_dict(self):
         return [x.to_dict() for x in self]
 
@@ -153,12 +192,12 @@ class SlashOption():
         self._json = {}
         self.argument_type = argument_type
         self.name = name
-        self.description = _or(description, "\u200b")
+        self.description = description or "\u200b"
         self.required = required
         self.options = options or []
         self.autocomplete = autocomplete
         self.choices = choices if self.autocomplete is False else None
-        self.choice_generator: typing.Callable[[typing.Any], typing.List[typing.Union[dict, tuple]]] = choice_generator
+        self.choice_generator: t.Callable[[t.Any], t.List[t.Union[dict, tuple]]] = choice_generator
         """A function which will generate choices for this option"""
         self.channel_types = channel_types
     def __repr__(self) -> str:
@@ -216,15 +255,13 @@ class SlashOption():
             async def generator(ctx):
                 ... 
         """
+        self.autocomplete = True
         self.choice_generator = callback
         return callback
 
     @property
     def argument_type(self) -> int:
-        """Parameter type that the option accepts
-        
-        :type: :class:`int`
-        """
+        """Parameter type that the option accepts"""
         return OptionType(self._json["type"])
     @argument_type.setter
     def argument_type(self, value: OptionType):
@@ -243,10 +280,7 @@ class SlashOption():
 
     @property
     def name(self) -> str:
-        """The name of the option appearing in discord
-        
-        :type: :class:`str`
-        """
+        """The name of the option appearing in discord"""
         return self._json["name"]
     @name.setter
     def name(self, value):
@@ -258,10 +292,7 @@ class SlashOption():
 
     @property
     def description(self) -> str:
-        """The description of the option appearing under the name
-        
-        :type: :class:`str`
-        """
+        """The description of the option appearing under the name"""
         return self._json["description"]
     @description.setter
     def description(self, value):
@@ -271,10 +302,7 @@ class SlashOption():
 
     @property
     def required(self) -> bool:
-        """Whether this parameter is required to use or not
-
-        :type: :class:`bool`
-        """
+        """Whether this parameter is required to use or not"""
         return self._json.get("required", False)
     @required.setter
     def required(self, value):
@@ -283,7 +311,7 @@ class SlashOption():
         self._json["required"] = value
 
     @property
-    def choices(self) -> typing.List[dict]:
+    def choices(self) -> t.List[dict]:
         """Choices for string and int types for the user to pick from
         
         .. note::
@@ -306,10 +334,7 @@ class SlashOption():
     @property
     def options(self) -> SlashOptionCollection:
         """The parameters for the command.
-    
-        You can use the option's name (``.options["option name"]``) or the index of the option (``.options[index]``) to get an element.
-
-        :type: :class:`SlashOptionCollection`
+            You can use the option's name (``.options["option name"]``) or the index of the option (``.options[index]``) to get an element.
         """
         return self._options
     @options.setter
@@ -317,11 +342,7 @@ class SlashOption():
         if not isinstance(options, list) and not isinstance(options, SlashOptionCollection):
             raise WrongType("options", options, ["list", "SlashOptionCollection"])
         if all(isinstance(x, (SlashOption, dict)) for x in options):
-            self._options = (
-                SlashOptionCollection([(x.to_dict() if type(x) is SlashOption else x) for x in options]) 
-                    if not isinstance(options, SlashOptionCollection) else 
-                options
-            )
+            self._options = SlashOptionCollection(options)
         else:
             for i, x in enumerate(options):
                 if not isinstance(x, SlashOption) and not isinstance(x, dict):
@@ -334,10 +355,7 @@ class SlashOption():
         
     @property
     def autocomplete(self) -> bool:
-        """Whether the choices for this option should be autocompleted
-        
-        :type: :class:`bool`
-        """
+        """Whether the choices for this option should be autocompleted"""
         return self._json.get("autocomplete", False)
     @autocomplete.setter
     def autocomplete(self, value):
@@ -349,7 +367,9 @@ class SlashOption():
     
     @staticmethod
     def _from_data(data: dict, generator=None):
-        return SlashOption(data["type"], data["name"], data["description"], data.get("required", False), data.get("choices"), data.get("autocomplete", False), generator, data.get("options"), data.get("channel_types", []))
+        return SlashOption(data["type"], data["name"], data["description"], data.get("required", False), data.get("choices"), data.get("autocomplete", False), 
+            generator, data.get("options"), data.get("channel_types", [])
+        )
 
     def to_dict(self):
         return self._json | {"options": self._options.to_dict()}
@@ -476,26 +496,26 @@ class SlashPermission():
         return [x for x in self._json if x["permission"] == False]
 
 class BaseCommand():
-    __slots__ = ('__aliases__', '__sync__', '__auto_defer__', '__guild_changes__', '__original_name__', 
-        '__choice_generators__', '_http', '_id', '_options', '_json', 'callback', 'guild_ids',
+    __slots__ = ('__aliases__', '__sync__', '__auto_defer__', '__original_name__', '__choice_generators__', 
+        '__subcommands__', '_state', '_id', '_options', '_json', 'callback', 'guild_ids',
         'guild_permissions', 'permissions', 'run'
     )
-    def __init__(self, command_type, callback, name=None, description=None, options=None, guild_ids=None, default_permission=None, guild_permissions=None, http=None) -> None:
+    def __init__(self, command_type, callback, name=None, description=None, options=None, guild_ids=None, default_permission=None, guild_permissions=None, state=None) -> None:
         self.__aliases__ = getattr(callback, "__aliases__", None)
         self.__sync__ = getattr(callback, "__sync__", True)
         self.__auto_defer__ = getattr(callback, "__auto_defer__", None)
-        self.__guild_changes__ = getattr(callback, "__guild_changes__", {})
         self.__choice_generators__ = {}
-        self._http: SlashHTTP = http
+        self.__subcommands__ = {}
+        self._state: ModifiedSlashState = state
         self._id: int = None # set later
 
         self._options: SlashOptionCollection = SlashOptionCollection([]) # set later
         self._json = {"type": getattr(command_type, "value", command_type)}
 
-        self.options = _default([], options)
+        self.options = options or []
         if callback is not None:
             if not inspect.iscoroutinefunction(callback):
-                raise NoAsyncCallback()
+                raise NoAsyncCallback(name)
 
             _params = inspect.signature(callback).parameters
             keys = list(_params.keys())
@@ -584,13 +604,18 @@ class BaseCommand():
                     _ops.append(SlashOption(op_type, _name, op_desc, required=_val.default == inspect._empty))
                 self.options = _ops
 
-        self.callback: typing.Callable[..., typing.Coroutine[typing.Any, typing.Any, typing.Any]] = callback
+        self.callback = callback
+        """The callback for the command"""
         self.run = self.callback
         """Alias for ``.callback``"""
-        self.name = _or(name, self.callback.__name__ if not _none(self.callback) else None)
+        self.name = name or (self.callback.__name__ if self.callback is not None else None)
         # Set the original name to the name once so if the name should be changed, this value still stays to what it is
         self.__original_name__ = self.name
-        self.description = _or(description, inspect.getdoc(callback).split("\n")[0] if not _none(callback) and inspect.getdoc(callback) is not None else None, "\u200b")
+        self.description = description or (
+            inspect.getdoc(callback).split("\n")[0]
+                if callback is not None and inspect.getdoc(callback) is not None 
+            else None
+        ) or "\u200b"
         self.default_permission = default_permission if default_permission is not None else True
         if guild_permissions is not None:
             for _id, perm in list(guild_permissions.items()):
@@ -599,9 +624,9 @@ class BaseCommand():
                 if not isinstance(perm, SlashPermission):
                     raise WrongType("guild_permission[" + ("'" if isinstance(_id, str) else "") + str(_id) + ("'" if isinstance(_id, str) else "") + "]", perm, "SlashPermission")
         
-        self.guild_permissions: typing.Dict[(typing.Union[str, int], SlashPermission)] = guild_permissions
+        self.guild_permissions: t.Dict[(t.Union[str, int], SlashPermission)] = guild_permissions
         self.permissions: SlashPermission = SlashPermission()
-        self.guild_ids: typing.List[int] = _default(None, [int(x) for x in _or(guild_ids, [])])
+        self.guild_ids: t.List[int] = [int(x) for x in guild_ids or []]
         """The ids of the guilds where the command is available"""
     def __repr__(self) -> str:
         return f"<{self.__class__.__name__.split('.')[-1]}({self.to_dict()})>"
@@ -630,16 +655,9 @@ class BaseCommand():
         return await self.callback(ctx, *args, **kwargs)
 
     @property
-    def subcommands(self) -> typing.List[SlashSubcommand]:
-        subs = []
-        for x in self.options:
-            if x.argument_type == OptionType.SUB_COMMAND:
-                subs.append(SlashSubcommand(None, self.name, x.name, x.description, x.options, self.guild_ids, self.default_permission, self.guild_permissions, self._http))
-            if x.argument_type == OptionType.SUB_COMMAND_GROUP:
-                for y in x.options:
-                    if x.argument_type == OptionType.SUB_COMMAND:
-                        subs.append(SlashSubcommand(None, [self.name, x.name], y.name, x.description, x.options, self.guild_ids, self.default_permission, self.guild_permissions, self._http))
-        return subs
+    def is_global(self) -> bool:
+        """Whether this command is a global command"""
+        return not self.guild_only
     @property
     def guild_only(self) -> bool:
         """Whether this command is limited to some guilds ``True`` or global ``False``"""
@@ -665,9 +683,7 @@ class BaseCommand():
         return self.is_chat_input
     @property
     def is_subcommand(self) -> bool:
-        """
-        Whether this command is a subcommand
-        """
+        """Whether this command is a subcommand"""
         return self.is_chat_input and hasattr(self, "base_names")
 
     @property
@@ -675,7 +691,7 @@ class BaseCommand():
         """The original name for this command"""
         return self.__original_name__
     @property
-    def aliases(self) -> typing.List[str]:
+    def aliases(self) -> t.List[str]:
         """The list of available aliases for this command"""
         return self.__aliases__
     @property
@@ -694,14 +710,11 @@ class BaseCommand():
 
     @property
     def name(self) -> str:
-        """The name of the slash command
-        
-        :type: :class:`str`
-        """
+        """The name of the slash command"""
         return self._json["name"]
     @name.setter
     def name(self, value):
-        if _none(value):
+        if value is None:
             raise discord.errors.InvalidArgument("You have to specify a name")
         if not isinstance(value, str):
             raise WrongType("name", value, "str")
@@ -713,10 +726,7 @@ class BaseCommand():
             self._json["name"] = value
     @property
     def description(self) -> str:
-        """The description of the command
-        
-        :type: :class:`str`
-        """
+        """The description of the command"""
         return self._json['description']
     @description.setter
     def description(self, value):
@@ -728,10 +738,7 @@ class BaseCommand():
     @property
     def options(self) -> SlashOptionCollection:
         """The parameters for the command.
-    
-        You can use the option's name (``.options["option name"]``) or the index of the option (``.options[index]``) to get an element.
-
-        :type: :class:`SlashOptionCollection`
+            You can use the option's name (``.options["option name"]``) or the index of the option (``.options[index]``) to get an element.
         """
         return self._options
     @options.setter
@@ -740,7 +747,7 @@ class BaseCommand():
             raise WrongType("options", options, ["list", "SlashOptionCollection"])
         if all(isinstance(x, (SlashOption, dict)) for x in options):
             self._options = (
-                SlashOptionCollection([(x.to_dict() if type(x) is SlashOption else x) for x in options]) 
+                SlashOptionCollection([(x if type(x) is SlashOption else SlashOption._from_data(x)) for x in options]) 
                     if not isinstance(options, SlashOptionCollection) else 
                 options
             )
@@ -756,11 +763,9 @@ class BaseCommand():
     # endregion
     # region permissions
     @property
-    def default_permission(self) -> typing.Union[str, bool]:
+    def default_permission(self) -> t.Union[str, bool]:
         """Default permissions that a user needs to have in order to execute this command
             If a bool was used, it will indicate whether this command can be used by everyone
-        
-        :type: :class:`str` | :class:`bool`
         """
         raw = self._json.get("default_permission", False)
         if isinstance(raw, str):
@@ -774,12 +779,13 @@ class BaseCommand():
     @property
     def command_id(self) -> int:
         """The ID of the command.
-
-        The ID is None until the command was synced with `.sync_commands`
-
-        :type: :class:`int`
+            The ID is None until the command was synced with `.sync_commands`
         """
         return self._id
+    @property
+    def subcommands(self) -> t.Dict[str, t.Union[SlashSubcommand, t.Dict[str, SlashSubcommand]]]:
+        return self.__subcommands__
+    
     async def update(self, guild_id=None):
         """Updates the api-command with the local changes
         
@@ -787,9 +793,9 @@ class BaseCommand():
             The guild id to which the command update should be limited
         """
         if self.guild_only:
-            [await self._http.edit_guild_command(self._id, guild, self.to_dict(), self.permissions.to_dict()) for guild in ([guild_id] if guild_id else self.guild_ids)]
+            [await self._state.slash_http.edit_guild_command(self._id, guild, self.to_dict(), self.permissions.to_dict()) for guild in ([guild_id] if guild_id else self.guild_ids)]
         else:
-            await self._http.edit_global_command(self._id, self.to_dict())
+            await self._state.slash_http.edit_global_command(self._id, self.to_dict())
     async def edit(self, **fields):
         """Edits this slashcommand and updates the changes in the api
 
@@ -813,25 +819,22 @@ class BaseCommand():
         """
         if self.guild_only:
             if guild_id:
-                await self._http.delete_guild_command(self.command_id, guild_id)
+                await self._state.slash_http.delete_guild_command(self.command_id, guild_id)
             else:
-                [await self._http.delete_guild_command(self.command_id, guild) for guild in self.guild_ids]
+                [await self._state.slash_http.delete_guild_command(self.command_id, guild) for guild in self.guild_ids]
         else:
-            await self._http.slash_http.delete_global_command(self.id)
+            await self._state.slash_http.slash_http.delete_global_command(self.id)
     
     async def _fetch_id(self):
         try:
-            return int(await self._http.get_id(getattr(self, 'base_names', [self.name,])[0], self.guild_ids[0] if self.guild_only else None, self.command_type))
+            return int(await self._state.slash_http.get_id(getattr(self, 'base_names', [self.name,])[0], self.guild_ids[0] if self.guild_only else None, self.command_type))
         except NoCommandFound:
             return None
-    async def _update_id(self, _http=None):
-        if _http is not None:
-            self._http = _http
+    async def update_id(self):
         self._id = await self._fetch_id()
-        return self._id
     def _patch(self, command):
-        self.__aliases__ = command.__aliases__
-        self.guild_permissions = command.guild_permissions
+        for x in command.__slots__:
+            setattr(self, x, getattr(command, x, None))
 
     def copy(self):
         """Copies itself into a new object"""
@@ -872,7 +875,7 @@ class SlashCommand(BaseCommand):
         The permissions for the command in guilds
             Format: ``{"guild_id": SlashPermission}``
     """
-    def __init__(self, callback, name=None, description=None, options=None, guild_ids=None, default_permission=None, guild_permissions=None, http=None) -> None:
+    def __init__(self, callback, name=None, description=None, options=None, guild_ids=None, default_permission=None, guild_permissions=None, state=None) -> None:
         """
         Creates a new base slash command
         
@@ -891,17 +894,44 @@ class SlashCommand(BaseCommand):
             })
         ```
         """
-        BaseCommand.__init__(self, CommandType.Slash, callback, name, description, options, guild_ids, default_permission, guild_permissions, http)
+        BaseCommand.__init__(self, CommandType.Slash, callback, name, description, options, guild_ids, default_permission, guild_permissions, state)
+    def __getitem__(self, index):
+        """enable `[key]` for subcommands"""
+        return self.subcommands[index]
+    
     def copy(self) -> SlashCommand:
-        c = SlashCommand(self.callback, self.name, self.description, self.options, self.guild_ids, self.default_permission, self.guild_permissions, self._http)
+        c = SlashCommand(self.callback, self.name, self.description, self.options, self.guild_ids, self.default_permission, self.guild_permissions, self._state.slash_http)
         for x in self.__slots__:
             setattr(c, x, getattr(self, x))
         return c
+    def add_subcommand(self, sub: SlashSubcommand):
+        """Adds a subcommand to this SlashCommand. Note that if you change 
+        one of this subcommands the options won't be updated.
+        
+        Parameters
+        ----------
+        sub: :class:`SlashSubcommand`
+            The subcommand you want to add
+        
+        """
+        sub._base = self
+        if len(sub.base_names) > 1:
+            if self.__subcommands__.get(sub.base_names[1]) is None:
+                self.__subcommands__[sub.base_names[1]] = {}
+            self.__subcommands__[sub.base_names[1]][sub.name] = sub
+            
+            if self.options.get(sub.base_names[1]) is None:
+                self.options[sub.base_names[1]] = SlashOption(OptionType.SUB_COMMAND_GROUP, sub.base_names[1])
+            self.options[sub.base_names[1]].options[sub.name] = sub.to_option()
+        else:
+            self.__subcommands__[sub.name] = sub
+            self.options[sub.name] = sub.to_option()
+
 
     @staticmethod
-    def _from_data(data, permissions=None, slash_http=None, target_guild=None, guild_ids=None):
+    def _from_data(data, permissions=None, state=None, target_guild=None, guild_ids=None):
         return SlashCommand(None, data["name"], data["description"], data.get("options"), guild_ids, 
-            data.get("default_permission", True), {target_guild: SlashPermission._from_data(permissions)} if permissions else None, slash_http
+            data.get("default_permission", True), {target_guild: SlashPermission._from_data(permissions)} if permissions else None, state
         )
     @staticmethod
     async def _from_api(id, slash_http, guild_id=None, guild_ids=None) -> SlashCommand:
@@ -914,7 +944,7 @@ class SlashCommand(BaseCommand):
 class SlashSubcommand(BaseCommand):
     __slots__ = BaseCommand.__slots__ + ('base_names', '_base')
 
-    def __init__(self, callback, base_names, name, description=None, options=None, guild_ids=None, default_permission=None, guild_permissions=None, http=None) -> None:
+    def __init__(self, callback, base_names, name, description=None, options=None, guild_ids=None, default_permission=None, guild_permissions=None, state=None) -> None:
         if isinstance(base_names, str):
             base_names = [base_names]
         if len(base_names) > 2:
@@ -924,7 +954,7 @@ class SlashSubcommand(BaseCommand):
         BaseCommand.__init__(
             self, CommandType.Slash, callback, name, description, options=options, 
             guild_ids=guild_ids, default_permission=default_permission, guild_permissions=guild_permissions,
-            http=http
+            state=state
         )
         self.base_names = [format_name(x) for x in base_names]
         self._base = None # a base instance shared with all subcommands
@@ -937,13 +967,16 @@ class SlashSubcommand(BaseCommand):
             Whether `self.base` should be updated to the newly fetched base
         """
         command: SlashCommand = await SlashCommand._from_api(
-            self._id, self._http, guild_id or self.guild_ids[0] if self.guild_only else None, 
+            self._id, self._state.slash_http, guild_id or self.guild_ids[0] if self.guild_only else None, 
             guild_ids=self.guild_ids
         )
         command.guild_permissions = self.guild_permissions
         if overwrite_base:
             self._base = command
         return command
+    @property
+    def command_id(self) -> int:
+        return self.base.id
     @property
     def base(self) -> SlashCommand:
         """A shared :class:`~SlashCommand` instance for all subcommands which holds information about the base command"""
@@ -957,25 +990,24 @@ class SlashSubcommand(BaseCommand):
                 base.options[self.base_names[1]].options[self.name] = self.to_option()
             else:
                 base.options[self.name] = self.to_option()
-            await base._update_id(self._http)
             return await base.update_apicommand(guild)
     def to_option(self) -> SlashOption:
         return SlashOption(OptionType.SUB_COMMAND, self.name, self.description, options=self.options or None, required=False)
     def to_dict(self):
         return self.to_option().to_dict()
     def copy(self):
-        c = SlashSubcommand(self.callback, self.base_names, self.name, self.description, self.options, self.guild_ids, self.default_permission, self.guild_permissions, self._http)
+        c = SlashSubcommand(self.callback, self.base_names, self.name, self.description, self.options, self.guild_ids, self.default_permission, self.guild_permissions, self._state.slash_http)
         for x in self.__slots__:
             setattr(c, x, getattr(self, x))
         return c
 
 class ContextCommand(BaseCommand):
-    def __init__(self, context_type, callback, name=None, guild_ids=None, default_permission=True, guild_permissions=None, http=None) -> None:
+    def __init__(self, context_type, callback, name=None, guild_ids=None, default_permission=True, guild_permissions=None, state=None) -> None:
         if callback is not None:
             callback_params = inspect.signature(callback).parameters
             if len(callback_params) < 2:
                 raise CallbackMissingContextCommandParameters()
-        BaseCommand.__init__(self, context_type, callback, name=name, guild_ids=guild_ids, default_permission=default_permission, guild_permissions=guild_permissions, http=http)
+        BaseCommand.__init__(self, context_type, callback, name=name, guild_ids=guild_ids, default_permission=default_permission, guild_permissions=guild_permissions, state=state)
 
     @property
     def description(self) -> str:
@@ -991,19 +1023,452 @@ class ContextCommand(BaseCommand):
         pass
 
 class UserCommand(ContextCommand):
-    def __init__(self, callback, name=None, guild_ids=None, default_permission=True, guild_permissions=None, http=None) -> None:
-        ContextCommand.__init__(self, CommandType.User, callback, name, guild_ids, default_permission, guild_permissions, http)
+    def __init__(self, callback, name=None, guild_ids=None, default_permission=True, guild_permissions=None, state=None) -> None:
+        ContextCommand.__init__(self, CommandType.User, callback, name, guild_ids, default_permission, guild_permissions, state)
     def copy(self) -> UserCommand:
-        c = UserCommand(self.callback, self.name, self.guild_ids, self.default_permission, self.guild_permissions, self._http)
+        c = UserCommand(self.callback, self.name, self.guild_ids, self.default_permission, self.guild_permissions, self._state.slash_http)
         for x in self.__slots__:
             setattr(c, x, getattr(self, x))
         return c
 
 class MessageCommand(ContextCommand):
-    def __init__(self, callback, name=None, guild_ids=None, default_permission=True, guild_permissions=None, http=None) -> None:
-        ContextCommand.__init__(self, CommandType.Message, callback, name, guild_ids, default_permission, guild_permissions, http)
+    def __init__(self, callback, name=None, guild_ids=None, default_permission=True, guild_permissions=None, state=None) -> None:
+        ContextCommand.__init__(self, CommandType.Message, callback, name, guild_ids, default_permission, guild_permissions, state)
     def copy(self) -> MessageCommand:
-        c = MessageCommand(self.callback, self.name, self.guild_ids, self.default_permission, self.guild_permissions, self._http)
+        c = MessageCommand(self.callback, self.name, self.guild_ids, self.default_permission, self.guild_permissions, self._state.slash_http)
         for x in self.__slots__:
             setattr(c, x, getattr(self, x))
         return c
+
+
+
+class APITools():
+    def __init__(self, client) -> None:
+        self._discord = client
+
+    async def get_commands(self) -> t.List[dict]:
+        return await self.get_global_commands() + await self.get_all_guild_commands()
+    async def get_global_commands(self) -> t.List[dict]:
+        return await self._discord._connection.slash_http.get_global_commands()
+    async def get_global_command(self, name, typ) -> t.Union[dict, None]:
+        for x in await self.get_global_commands():
+            if x["name"] == name and x["type"] == typ:
+                return x
+    async def get_all_guild_commands(self):
+        commands = []
+        async for x in self._discord.fetch_guilds():
+            try:
+                commands += await self._discord._connection.slash_http.get_guild_commands(x.id)
+            except discord.Forbidden:
+                continue
+        return commands
+    async def get_guild_commands(self, guild_id: str) -> t.List[dict]:
+        return await self._discord._connection.slash_http.get_guild_commands(guild_id)
+    async def get_guild_command(self, name, typ, guild_id) -> t.Union[dict, None]:
+        # returns all commands in a guild
+        for x in await self.get_guild_commands(guild_id):
+            if hasattr(typ, "value"):
+                typ = typ.value
+            if x["name"] == name and x["type"] == typ:
+                return x
+
+    
+
+command = t.Union[SlashCommand, SlashSubcommand, MessageCommand, UserCommand]
+class _CommandList(t.TypedDict):
+    Slash: t.Dict[str, command]
+    User: t.Dict[str, command]
+    Message: t.Dict[str, command]
+CommandCacheList = t.Dict[str, _CommandList]
+
+
+Me = t.TypeVar("Me")
+
+class CommandCache():
+    def __init__(self, client, commands: t.List[command] = []) -> None:
+        self.api = APITools(client)
+        self._client: Bot = client
+        self._cache: CommandCacheList = {}
+        self._state: ModifiedSlashState = self._client._connection
+        # setup cache
+        self.clear()
+        # loads the commands into the cache
+        self.load(commands)
+    def __repr__(self):
+        return f"<{self.__class__.__name__}{self._cache}>"
+    def __getitem__(self, index) -> t.Dict[str, t.Union[ command, t.Dict[str, t.Union[ command, t.Dict[str, t.Union[ command, dict ]] ]] ]]:
+        """
+        Special keys
+        -------------
+
+        Shortcut for subkeying
+        ```py
+        x:y:z -> [x][y][z]
+        ```
+
+        - - -
+
+        Shortcut for filtering
+        ```py
+        !x!y -> {key: ... for key in dict if key not in ['x', 'y']}
+        ```
+        
+        Note that this will return a copy of the original dict, if we want to acces objects from the original dict, we can use a simple workaround:
+        ```py
+        for key in self["!illegal_key"]:
+            self[key] # this will grant you acces to the object from the original dict
+        ```
+        """
+        # subkeying or whatever this is called
+        if ":" in index:
+            keys = index.split(":")
+            cur = self._cache[keys.pop(0)]
+            while True:
+                if len(keys) == 0:
+                    return cur
+                if cur is None or not isinstance(cur, dict):
+                    raise KeyError(f"No key with name '{keys[-1]}'")
+                cur = cur.get(keys.pop(0))
+        # filtering
+        elif "!" in index:
+            black_keys = index.split("!")
+            return {key: self._cache[key] for key in self._cache if key not in black_keys}
+        else:
+            return self._cache[index]
+    def __setitem__(self, index, value):
+        """
+        Special keys
+        -------------
+
+        Shortcut for setting subkeys
+        ```py
+        x:y:z = ... -> [x][y][z] = ...
+        ```
+
+        - - -
+
+
+        Shortcut for filtered setting
+        ```py
+        !x!y = ... -> for key in self:
+                          if key not in ["x", "y"]:
+                              self[key] = ...
+        ```
+        
+        Sets everything to the value except the "illegal keys"
+        """
+        # subkeying?
+        if ":" in index:
+            keys = index.split(":")
+            cur = self._cache[keys.pop(0)]
+            while True:
+                if len(keys) == 0:
+                    cur = value
+                    break
+                if cur is None or not isinstance(cur, dict):
+                    raise KeyError(f"No key with name '{keys[-1]}'")
+                cur = cur.get(keys.pop(0))
+        # set everything to value except
+        if "!" in index:
+            black_keys = index.split("!")
+            for x in self:
+                if x not in black_keys:
+                    self[x] = value
+        else:
+            self._cache[index] = value
+    def __delitem__(self, index):
+        if ":" in index:
+            keys = index.split(":")
+            cur = self._cache[keys.pop(0)]
+            while True:
+                if len(keys) == 0:
+                    del cur
+                    break
+                if cur is None or not isinstance(cur, dict):
+                    raise KeyError(f"No key with name '{keys[-1]}'")
+                cur = cur.get(keys.pop(0))
+        else:
+            del self._cache[index]
+    def __iter__(self):
+        return iter(self._cache)
+    def __contains__(self, command: command):
+        type_key = str(command.command_type)
+        if command.is_global:
+            if command.is_subcommand:
+                if self["globals"].get(type_key) is None:
+                    return False
+                if self["globals"][type_key].get(command.base_names[0]) is None:
+                    return False
+                if len(command.base_names) > 1:
+                    if self["globals"][type_key][command.base_names[0]].subcommands.get(command.base_names[1]) is None:
+                        return False
+                    if self["globals"][type_key][command.base_names[0]][command.base_names[1]].get(command.name) is None:
+                        return False
+                    return True
+                return self["globals"][type_key][command.base_names[0]].subcommands.get(command.name) is not None
+            if self["globals"].get(type_key) is None:
+                return False
+            return self["globals"][type_key].get(command.name) is not None
+        
+        # check for every guild_id
+        for g in command.guild_ids:
+            guild = str(g)
+            if self.get(guild) is None:
+                return False
+            if self[guild].get(type_key) is None:
+                return False
+            if command.is_subcommand:
+                if self[guild][type_key].get(command.base_names[0]) is None:
+                    return False
+                # if more than one base
+                if len(command.base_names) > 1:
+                    if self[guild][type_key][command.base_names[0]].subcommands.get(command.base_names[1]) is None:
+                        return False
+                    if self[guild][type_key][command.base_names[0]][command.base_names[1]].get(command.name) is None:
+                        return False
+                # one base only
+                else:
+                    if self[guild][type_key][command.base_names[0]].subcommands.get(command.name) is not None:
+                        return False
+            else:
+                if self[guild][type_key].get(command.name) is None:
+                    return False 
+        return True
+    def __eq__(self, object):
+        if isinstance(object, self.__class__):
+            return len(object._cache) == len(self._cache) and object._cache == self._cache
+        return False
+
+
+    # region overloading def load(self, cache)
+    @t.overload
+    def load(self, cache: t.List[command]) -> CommandCache:
+        """Loads some commands into the cache
+        
+        Parameters
+        -----------
+
+        cache: List[:class:`command`]:
+            The commands that should be loaded into this cache instance
+
+        Returns
+        --------
+        :class:`CommandCache`:
+            The own instance with the commands loaded into it
+        """
+    ...
+    @t.overload
+    def load(self, cache: t.Union[CommandCacheList, dict]) -> CommandCache:
+        """Replaces the own raw cache with the passed cache
+        
+        Parameters
+        -----------
+
+        cache: :class:`CommandCacheList` | :class:`dict`:
+            The raw cache which should be loaded into this cache instance
+
+        Returns
+        --------
+        :class:`CommandCache`:
+            The own instance with the cache loaded into it
+        """
+        ...
+    # endregion
+    def load(self, cache):
+        # application commands
+        if isinstance(cache, list):
+            for x in cache:
+                self.add(x)
+            return self
+        # raw cache
+        self._cache = cache
+        return self
+    def clear(self):
+        self._cache = {
+            "globals": {
+                str(CommandType.Slash): {},
+                str(CommandType.User): {},
+                str(CommandType.Message): {}
+            }
+        }
+        return self
+    def copy(self):
+        return self.__class__(self._client).load(self._cache)
+    def add(self, command: command):
+        type_key = str(command.command_type)
+        if command.is_global:
+            if command.is_subcommand:
+                base = self["globals"][type_key].get(command.base_names[0])
+                if base is None:
+                    base = SlashCommand(None, command.base_names[0], 
+                        guild_permissions=command.guild_permissions, default_permission=command.default_permission
+                    )
+                # todo: add method to add subcommand to this (autoomatically add it to its options)
+                base.add_subcommand(command)
+                self["globals"][type_key][base.name] = base  
+            else:
+                self["globals"][type_key][command.name] = command
+        else:
+            for guild_id in command.guild_ids:
+                guild = str(guild_id)
+                if self.get(guild) is None:
+                    self[guild] = {}
+                if self[guild].get(type_key) is None:
+                    self[guild][type_key] = {}
+                if command.is_subcommand:
+                    # is subcommand
+                    base = self[guild][type_key].get(command.base_names[0])
+                    if base is None:
+                        base = SlashCommand(None, command.base_names[0], 
+                            guild_permissions=command.guild_permissions, default_permission=command.default_permission
+                        )
+                    # todo: add method to add subcommand to this (autoomatically add it to its options)
+                    base.add_subcommand(command)
+                    self[guild][type_key][base.name] = base  
+                else:
+                    self[guild][type_key][command.name] = command
+        return self
+    def get(self, key, default=None):
+        try:
+            return self.__getitem__(key)
+        except KeyError:
+            return default
+    async def sync(self, delete_unused=False):
+        http = self._state.slash_http
+        
+        
+        for ct in self["globals"]:
+            for base_name in self["globals"][ct]:
+                base = self["globals"][ct][base_name]
+                new_command = None # variable to store the new command data
+                api_command = await self.api.get_global_command(base.name, base._json["type"])
+                if api_command is None:
+                    new_command = await http.create_global_command(base.to_dict())
+                else:
+                    if api_command != base:
+                        new_command = await http.edit_global_command(api_command["id"], base.to_dict())
+                # directly set the id of the command so no extra request is needed
+                base._id = new_command["id"] if new_command else api_command["id"]
+
+        # self["!globals"] returns a copy of a filtered dict but since we will be only using the 
+        # copy's key and acces the original self dict, there won't be any problems
+        # 
+        # for each guild
+        for guild in self["!globals"]:
+            # acces original dict with filtered keys
+            for ct in self[guild]:
+                for base_name in self[guild][ct]:
+                    base = self[guild][ct][base_name]
+                    new_command = None # variable to store the new command data
+                    api_command = await self.api.get_guild_command(base.name, base.command_type, guild)
+                    # get permissions for the command
+                    api_permissions = await http.get_command_permissions(api_command["id"], guild)
+                    global_command = await self.api.get_global_command(base.name, base.command_type)
+                    # If no command in that guild or a global one was found
+                    if api_command is None or global_command is not None:
+                        # Check global commands
+                        # allow both global and guild commands to exist
+                        # region ignore
+                        # If global command exists, it will be deleted
+                        # if global_command is not None:
+                        #     await http.delete_global_command(global_command["id"])
+                        # endregion
+                        new_command = await http.create_guild_command(base.to_dict(), guild, base.permissions.to_dict())
+                    elif api_command != base:
+                        new_command = await http.edit_guild_command(api_command["id"], guild, base.to_dict(), base.permissions.to_dict())
+                    elif api_permissions != base.permissions:
+                        await http.update_command_permissions(guild, api_command["id"], base.permissions.to_dict())
+                    base._id = new_command["id"] if new_command else api_command["id"]
+
+        if delete_unused is True:
+            for global_command in await self.api.get_global_commands():
+                key_type = str(CommandType(global_command["type"]))
+                # command of a type we didn't register
+                if self["globals"].get(key_type) is None:
+                    await http.delete_global_command(global_command["id"])
+                    continue
+                # command with a name we didn't register
+                if self["globals"][key_type].get(global_command["name"]) is None:
+                    await http.delete_global_command(global_command["id"])
+                    continue
+            for guild in [str(x.id) async for x in self._client.fetch_guilds()]:
+                for guild_command in await self.api.get_guild_commands(guild):
+                    # command in a guild we didn't register
+                    if self.get(guild) is None:
+                        await http.delete_guild_command(guild_command["id"], guild)
+                        continue
+                    key_type = str(CommandType(guild_command["type"]))
+                    # command of a type we didn't register
+                    if self[guild][key_type] is None:
+                        await http.delete_guild_command(guild_command["id"], guild)
+                        continue
+                    # command with a name we didn't register
+                    if self[guild][key_type].get(guild_command["name"]) is None:
+                        await http.delete_guild_command(guild_command["id"], guild)
+                        continue
+    
+        self._client.dispatch("commands_synced")
+
+    def get_command_for(self, interaction: InteractionPayload):
+        if interaction.get("guild_id"):
+            c = self.get(interaction["guild_id"])
+            if c is None:
+                return
+        else:
+            c = self["globals"]
+        t = c.get(str(CommandType(interaction["data"]["type"])))
+        if t is None:
+            return 
+        command = t.get(interaction["data"]["name"])
+        if command is None:
+            return
+        # is subcommand
+        if interaction["data"].get("options") is not None and interaction["data"]["options"][0]["type"] in [OptionType.SUB_COMMAND, OptionType.SUB_COMMAND_GROUP]:
+            base_one = command[interaction["data"]["options"][0]["name"]]
+            # if command has only one base
+            if interaction["data"]["options"][0]["type"] == OptionType.SUB_COMMAND:
+                # return the subcommand
+                return base_one
+            return base_one["data"]["options"][0]["options"][""]
+            
+        return command
+    def get_commands(self, *, all=True, guilds=[], **keys):
+        guilds = [str(x) for x in guilds]
+        commands = {}
+        for x in self._cache:
+            if x in keys or str(x) in guilds or all:
+                commands[x] = self._cache.get(x)
+        return commands
+    def filter_commands(self, command_type) -> t.Dict[str, command]:
+        commands = {}
+        for x in self._cache:
+            # multiple types
+            if isinstance(command_type, (list, tuple)):
+                for ct in command_type:
+                    if commands.get(x) is None:
+                        commands[x] = {}
+                    if commands[x].get(str(ct)) is None:
+                        commands[x][str(ct)] = {}
+                    if len(self._cache[x].get(str(ct), {})) > 0:
+                        commands[x][str(ct)] = self._cache[x].get(str(ct), {})
+            # single type
+            elif self._cache[x].get(str(command_type)):
+                commands[x] = self._cache[x].get(str(command_type))
+        return commands
+
+    @property
+    def all(self):
+        return self._cache
+    @property
+    def globals(self) -> t.Dict[str, command]:
+        return self["globals"]
+    @property
+    def chat_commands(self) -> t.Dict[str, SlashCommand]:
+        return self.filter_commands(CommandType.Slash)
+    @property
+    def context_commands(self) -> t.Dict[str, t.Union[MessageCommand, UserCommand]]:
+        return self.filter_commands((CommandType.Message, CommandType.User))
+    @property
+    def subcommands(self) -> t.Dict[str, t.Union[SlashSubcommand, t.Dict[str, SlashSubcommand]]]:
+        filter = [list(x.values()) for x in list(self.filter_commands(CommandType.Slash).values())]
+        return [z for a in [y.subcommands for x in filter for y in x] for z in a]

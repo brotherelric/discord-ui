@@ -50,21 +50,21 @@ def get_message_payload(content=MISSING, tts=False, embed: discord.Embed=MISSING
         else:
             payload["content"] = str(content)
 
-    if suppress is not MISSING:
+    if suppress is not MISSING and suppress is not None:
         flags = discord.MessageFlags._from_value(_or(flags, discord.MessageFlags.DEFAULT_VALUE))
         flags.suppress_embeds = suppress
         payload['flags'] = flags.value
     
-    if nonce is not MISSING:
+    if nonce is not MISSING and suppress is not None:
         payload["nonce"] = nonce
     
     if embed is not MISSING or embeds is not MISSING:
-        if embed is not MISSING and embeds is MISSING:
+        if embeds is None or embed is None:
+            embeds = []
+        elif embed is not MISSING and embeds is MISSING:
             embeds = [embed]
         elif embed is not MISSING and embeds is not MISSING:
             embeds.append(embed)
-        if embeds is None or embed is None:
-            embeds = []
         elif not all(isinstance(x, discord.Embed) for x in embeds):
             raise WrongType("embeds", embeds, 'list[discord.Embed]')
         payload["embeds"] = [em.to_dict() for em in embeds]
@@ -77,7 +77,7 @@ def get_message_payload(content=MISSING, tts=False, embed: discord.Embed=MISSING
                 raise WrongType("attachments", attachments, "List[discord.attachment]")
             payload["attachments"] = [x.to_dict() for x in attachments]
 
-    if reference is not MISSING:
+    if reference is not MISSING and reference is not None:
         if not isinstance(reference, (discord.MessageReference, discord.Message)):
             raise WrongType("reference", reference, ['discord.MessageReference', 'discord.Message'])
         if isinstance(reference, discord.MessageReference):
@@ -87,12 +87,12 @@ def get_message_payload(content=MISSING, tts=False, embed: discord.Embed=MISSING
 
     if allowed_mentions is not MISSING:
         if allowed_mentions is None:
-            payload["allowed_mentions"] = discord.AllowedMentions()
+            allowed_mentions = discord.AllowedMentions()
         else: 
             if not isinstance(allowed_mentions, discord.AllowedMentions):
                 raise WrongType("allowed_mentions", allowed_mentions, "discord.AllowedMentions")
         payload["allowed_mentions"] = allowed_mentions.to_dict()
-    if mention_author is not MISSING:
+    if mention_author is not MISSING and mention_author is not None:
         allowed_mentions = payload["allowed_mentions"] if "allowed_mentions" in payload else discord.AllowedMentions().to_dict()
         allowed_mentions['replied_user'] = mention_author
         payload["allowed_mentions"] = allowed_mentions

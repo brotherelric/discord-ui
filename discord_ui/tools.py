@@ -20,6 +20,8 @@ class _MISSING:
         return self.__repr__()
     def __sizeof__(self) -> int:
         return 0
+    def __len__(self) -> int:
+        return 0
     def __contains__(self, value):
         return False
     def get(self, *args):

@@ -20,9 +20,10 @@ ui = UI(client)
 
 # A component list for the calculator
 calculator = [
-    [Button("7", "num_7", "blurple"), Button("8", "num_8", "blurple"), Button("9", "num_9", "blurple"), Button("+", "plu", "green"), Button(")", "close", "green")],
-    [Button("4", "num_4", "blurple"), Button("5", "num_5", "blurple"), Button("6", "num_6", "blurple"), Button("-", "sub", "green"), Button("(", "open", "green")],
-    [Button("1", "num_1", "blurple"), Button("2", "num_2", "blurple"), Button("3", "num_3", "blurple"), Button("*", "mult", "green"), Button("⌫", "backs", "red")],
+    [Button("7", color="blurple"), Button("8", color="blurple"), Button("9", color="blurple"), Button("+", color="green"), Button(")", color="green")],
+    [Button("4", color="blurple"), Button("5", color="blurple"), Button("6", color="blurple"), Button("-", color="green"), Button("(", color="green")],
+    [Button("1", color="blurple"), Button("2", color="blurple"), Button("3", color="blurple"), Button("*", color="green"), Button("⌫", "backs", "red")],
+    [Button(".", color="green"), Button("0", color="blurple"), Button("=", color="gray"), Button("/", color="green"), Button("C", "cls", "red")],   
     LinkButton("https://github.com/discord-py-ui/discord-ui/tree/main/examples/calculator.py", "ヾ(≧▽≦*) click here for source code ヾ(≧▽≦*)")
 ]
 
@@ -41,8 +42,8 @@ async def test(ctx: SlashedCommand):
         try:
             # Wait for a button press with a timeout of 20 seconds
             btn = await msg.wait_for("button", client, timeout=20)
-            # Respond to the button, that it was received
-            await btn.respond(ninja_mode=True)
+            # Respond to the button
+            await btn.respond()
             # If the button was the equal button
             if btn.custom_id == "equ":
                 try:
@@ -75,6 +76,7 @@ async def test(ctx: SlashedCommand):
         # When 20 seconds passed without input (we set the timeout to 20 seconds)
         except asyncio.TimeoutError:
             # Delete the calculator
+            # if you don't want to delete the calculator, just comment the next line out
             await msg.delete()
             # Break out of the inifite loop
             break

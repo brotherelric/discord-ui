@@ -43,8 +43,12 @@ class NoAsyncCallback(ClientException):
     
     Callbacks have to be async
     """
-    def __init__(self, *args: object) -> None:
-        super().__init__("callback has to be async")
+    def __init__(self, name) -> None:
+        if name:
+            msg = f"callback for command '{name}'' has to be async"
+        else:
+            msg = "callback has to be async"
+        super().__init__(msg)
 class CallbackMissingContextCommandParameters(ClientException):
     """Exception that is raised when a callback for a context command is missing parmeters.
     
