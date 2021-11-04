@@ -1324,22 +1324,14 @@ class UI():
             client._enable_debug_events = True
 
         self.components: Components = Components(client, override_dpy=override_dpy, auto_defer=auto_defer)
-        """
-        For using message components
-        
-        :type: :class:`~Components`
-        """
+        """For using message components"""
         self.logger = logging
         if slash_options is None:
             slash_options = {"resolve_data": True, "delete_unused": False, "wait_sync": 1, "auto_defer": auto_defer}
         if slash_options.get("auto_defer") is None:
             slash_options["auto_defer"] = auto_defer
         self.slash: Slash = Slash(client, **slash_options)
-        """
-        For using slash commands
-        
-        :type: :class:`~Slash`
-        """
+        """For using slash commands"""
         
         # region shortcuts
         self.listening_component = self.components.listening_component

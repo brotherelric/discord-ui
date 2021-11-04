@@ -31,8 +31,10 @@ class SelectOption():
         The user-facing name of the option, max 25 characters; default \u200b ("empty" char)
     description: :class:`str`, optional
         An additional description of the option, max 50 characters
-    emoji : :class:`discord.Emoji` | :class:`str`, optional
+    emoji: :class:`discord.Emoji` | :class:`str`, optional
         Emoji appearing before the label; default MISSING
+    default: :class:`bool`
+        Whether this option should be selected by default in the select menu; default False
 
     Raises
     -------
@@ -43,7 +45,7 @@ class SelectOption():
     :class:`OutOfValidRange`
         A value is out of its valid range
     """
-    def __init__(self, value, label="\u200b", description=None, emoji=None) -> None:
+    def __init__(self, value, label="\u200b", description=None, emoji=None, default=False) -> None:
         """
         Creates a new SelectOption
 
@@ -56,9 +58,9 @@ class SelectOption():
         self._value = None
         self._description = None
         self._emoji = None
-        self.default: bool = False
-        """Whether this option is selected by default in the menu or not"""
 
+        self.default: bool = default
+        """Whether this option is selected by default in the menu or not"""
         self.label = label
         self.value = value
         self.description = description
@@ -100,11 +102,7 @@ class SelectOption():
 
     @property
     def description(self) -> str:
-        """
-        A description appearing on the option
-
-        :type: :class:`str`
-        """
+        """A short description for the option"""
         return self._description
     @description.setter
     def description(self, value):
@@ -120,9 +118,7 @@ class SelectOption():
         The mention of the emoji before the text
 
             .. note::
-                For setting the emoji, you can use a str or discord.Emoji
-        
-        :type: :class:`str`
+                For setting the emoji, you can use a :class:`str` or a :class:`discord.Emoji`
         """
         if self._emoji is None:
             return None
@@ -188,12 +184,8 @@ class Component():
     def __init__(self, component_type) -> None:
         self._component_type = getattr(component_type, "value", component_type)
     @property
-    def component_type(self) -> int:
-        """
-        The message component type
-
-        :type: :class:`int`
-        """
+    def component_type(self) -> ComponentType:
+        """The component type"""
         return ComponentType(self._component_type)
 
 class UseableComponent(Component):
@@ -201,11 +193,7 @@ class UseableComponent(Component):
         Component.__init__(self, component_type)
     @property
     def custom_id(self) -> str:
-        """
-        The custom_id of the menu to identify it
-
-        :type: :class:`str`
-        """
+        """The custom_id of the component for identifying"""
         return self._custom_id
     @custom_id.setter
     def custom_id(self, value: str):
@@ -249,29 +237,17 @@ class SelectMenu(UseableComponent):
         self._options = None
 
         self.max_values: int = 0
-        """
-        The maximum number of items that can be chosen; default 1, max 25
-
-        :type: :class:`int`
-        """
+        """The maximum number of items that can be chosen; default 1, max 25"""
         self.min_values: int = 0
         """
         The minimum number of items that must be chosen; default 1, min 0, max 25
-
-        :type: :class:`int`
         """
         self.disabled = disabled
         """
-        Whether the selectmenu is disabled or not
-
-        :type: :class:`bool`
-        """
+        Whether the selectmenu is disabled or not"""
         self.placeholder: str = placeholder
         """
-        Custom placeholder text if nothing is selected
-
-        :type: :class:`str` | :class:`None`
-        """
+        Custom placeholder text if nothing is selected"""
         self.custom_id = custom_id or ''.join([choice(string.ascii_letters) for _ in range(100)])
         self.disabled = disabled
         self.options = options
@@ -307,11 +283,7 @@ class SelectMenu(UseableComponent):
     # region props
     @property
     def options(self) -> List[SelectOption]:
-        """
-        The options in the select menu to select from
-
-        :type: List[:class:`~SelectOption`]
-        """
+        """The options in the select menu to select from"""
         return [SelectOption._from_data(x) for x in self._options]
     @options.setter
     def options(self, value: List[SelectOption]):
@@ -328,30 +300,28 @@ class SelectMenu(UseableComponent):
             raise WrongType("options", value, "list")
 
     @property
-    def default_option(self) -> Union[SelectOption, None]:
-        """
-        The option selected by default
-
-        :type: :class:`~SelectOption` | :class:`None`
-        """
-        x = [x for x in self.options if x.default]
-        if len(x) == 1:
-            return x[0]
-    def set_default_option(self, position: int) -> SelectMenu:
+    def default_options(self) -> List[SelectOption]:
+        """The option selected by default"""
+        return [x for x in self.options if x.default]
+    def set_default_option(self, position) -> SelectMenu:
         """
         Selects the default selected option
 
         Parameters
         ----------
-        position: :class:`int`
-            The position of the option that should be default
+        position: :class:`int` | :class:`range`
+            The position of the option that should be default. 
+            If ``position`` is of type :class:`range`, it will iterate through it and disable all components with the index of the indexes.
         """
-        if not isinstance(position, int):
+        if not isinstance(position, (int, range)):
             raise WrongType("position", position, "int")
-        if position < 0 or position >= len(self.options):
-            raise OutOfValidRange("default option position", 0, str(len(self.options) - 1))
-        self._options[position]["default"] = True
-        return self
+        if isinstance(position, int):
+            if position < 0 or position >= len(self.options):
+                raise OutOfValidRange("default option position", 0, str(len(self.options) - 1))
+            self._options[position].default = True
+            return self
+        for pos in position:
+            self._options[pos].default = True
     # endregion
 
     def to_dict(self) -> dict:
