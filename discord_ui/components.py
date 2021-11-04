@@ -369,20 +369,12 @@ class BaseButton(Component):
 
     @property
     def content(self) -> str:
-        """
-        The complete content in the button ("{emoji} {label}")
-
-        :type: :class:`str`
-        """
+        """The complete content in the button ("{emoji} {label}")"""
         return (self.emoji + " " if self.emoji is not None else "") + (self.label or '')
         
     @property
     def label(self) -> str:
-        """
-        The label displayed on the button
-
-        :type: :class:`str`
-        """
+        """The label displayed on the button"""
         return self._label
     @label.setter
     def label(self, val: str):
@@ -399,11 +391,7 @@ class BaseButton(Component):
 
     @property
     def color(self) -> int:
-        """
-        The color for the button
-
-        :type: :class:`int`, one of :class:`~ButtonStyle`
-        """
+        """The color for the button"""
         return self._style
     @color.setter
     def color(self, val):
@@ -418,8 +406,6 @@ class BaseButton(Component):
         
             .. note::
                 For setting the emoji, you can use a str or discord.Emoji          
-        
-        :type: :class:`str`
         """
         if self._emoji is None:
             return None

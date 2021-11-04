@@ -269,10 +269,7 @@ class SlashOption():
 
     @property
     def channel_types(self):
-        """A list of channel types that will restrict the shown channels for this option
-        
-        :type: List[:class:`discord.ChannelType`]
-        """
+        """A list of channel types that will restrict the shown channels for this option"""
         return [discord.ChannelType(x) for x in self._json.get("channel_types", [])]
     @channel_types.setter
     def channel_types(self, value):
@@ -317,8 +314,6 @@ class SlashOption():
         .. note::
     
             Choices are formated like this: ``[{"name": "name of the choice", "value": "the real value"}, ...]``
-    
-        :type: List[:class:`dict`]
         """
         return self._json.get("choices")
     @choices.setter

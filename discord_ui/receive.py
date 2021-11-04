@@ -72,19 +72,11 @@ class Interaction():
 
     @property
     def guild(self) -> discord.Guild:
-        """
-        The guild where the interaction was created
-        
-        :type: :class:`discord.Guild`
-        """
+        """The guild where the interaction was created"""
         return self._state._get_guild(self.guild_id)
     @property
-    def channel(self) -> Union[discord.TextChannel, discord.DMChannel]:
-        """
-        The channel where the interaction was created
-        
-        :type: :class:`discord.TextChannel` | :class:`discord.DMChannel`
-        """
+    def channel(self) -> Union[discord.abc.GuildChannel, discord.abc.PrivateChannel]:
+        """The channel where the interaction was created"""
         return self._state.get_channel(self.channel_id) or self._state.get_channel(self.author.id)
 
     async def defer(self, hidden=False):
@@ -442,45 +434,30 @@ class Message(discord.Message):
         self._state: ConnectionState = None
         discord.Message.__init__(self, state=state, channel=channel, data=data)
         self.components: List[Union[Button, LinkButton, SelectMenu]] = []
-        """The components in the message
-        
-        :type: List[:class:`~Button` | :class:`~LinkButton` | :class:`~SelectMenu`]
-        """
+        """The components in the message"""
         self.suppressed = False
         self._update_components(data)
 
     # region attributes
     @property
     def buttons(self) -> List[Union[Button, LinkButton]]:
-        """The button components in the message
-        
-        :type: List[:class:`~Button` | :class:`~LinkButton`]
-        """
+        """The button components in the message"""
         if hasattr(self, "components") and self.components is not None:
             return [x for x in self.components if isinstance(x, (Button, LinkButton))]
         return []
     @property
     def select_menus(self) -> List[SelectMenu]:
-        """The select menus components in the message
-
-        :type: List[:class:`~SelectMenu`]
-        """
+        """The select menus components in the message"""
         if hasattr(self, "components") and self.components is not None:
             return [x for x in self.components if isinstance(x, SelectMenu)]
         return []
     @property
     def action_row(self) -> ActionRow:
-        """All of the components put into an action row
-        
-        :type: :class:`~ActionRow`
-        """ 
+        """All of the components put into an action row""" 
         return ActionRow(ActionRow(self.components))
     @property
     def action_rows(self) -> List[ActionRow]:
-        """The action rows in the message
-
-        :type: List[:class:`~ActionRow`]
-        """
+        """The action rows in the message"""
         rows = []
         c_row = []
         i = 0
