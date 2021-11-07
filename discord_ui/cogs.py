@@ -79,6 +79,7 @@ class BaseCallable():
             self.after_invoke(after_invoke)
 
         self.on_error = None
+        self.on_cooldown = None
         
     async def __call__(self, *args, **kwds):
         return await self.invoke(*args, **kwds)
@@ -93,9 +94,14 @@ class BaseCallable():
         try:
             # cooldown checks
             self._prepare_cooldowns(ctx)
-        except Exception:
+        except Exception as c:
             if self._max_concurrency is not None:
                 await self._max_concurrency.release(ctx)
+            if self.on_cooldown:
+                if hasattr(self, "cog"):
+                    await self.on_cooldown(self.cog, ctx, c)
+                else:
+                    self.on_cooldown(ctx, c)
             raise
         try:
             if hasattr(self, "cog"):
@@ -103,10 +109,13 @@ class BaseCallable():
             else:
                 await self.callback(ctx, *args, **kwargs)
         except Exception as ex:
-            if not self.on_error:
-                raise ex
+            if not self.has_error_handler():
+                raise
             else:
-                self.on_error(getattr(self, "cog", None), ctx, ex)
+                if hasattr(self, "cog"):
+                    self.on_error(self.cog, ctx, ex)
+                else:
+                    self.on_error(ctx, ex)
         if self._after_invoke is not None:
             await self._after_invoke(ctx)
     async def can_run(self, ctx):
@@ -220,6 +229,26 @@ class BaseCallable():
 
         self.on_error = coro
         return coro
+    def cooldown(self, coro):
+        """
+        A decorator that registers a coroutine as a local cooldown error handler.
+        The actual cooldown exception will still be thrown.
+        
+        
+        Parameters
+        -----------
+        coro: :ref:`coroutine <coroutine>`
+            The coroutine to register as the local error handler.
+
+        Raises
+        -------
+        TypeError
+            The coroutine passed is not actually a coroutine.
+        """
+        if not asyncio.iscoroutinefunction(coro):
+            raise TypeError('The error handler must be a coroutine.')
+        
+        self.on_cooldown = coro
     def has_error_handler(self) -> bool:
         """
         :class:`bool`: Checks whether the command has an error handler registered.
