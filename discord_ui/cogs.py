@@ -125,12 +125,8 @@ class BaseCallable():
         self.__commands_checks__.remove(check)
     def _prepare_cooldowns(self, ctx) -> None:
         if self._buckets.valid:
-            dt = (
-                ctx.message.edited_at or ctx.message.created_at
-            ) if ctx.message is not None else (
-                # for slashcommands
-                ctx.created_at
-            )
+            # changed for slashcommands
+            dt = ctx.created_at
             current = dt.replace(tzinfo=datetime.timezone.utc).timestamp()
             bucket = self._buckets.get_bucket(ctx.message if ctx.message is not None else ctx, current)
             if bucket is not None:

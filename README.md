@@ -239,6 +239,7 @@ You can find more (and better) examples [here](https://github.com/discord-py-ui/
     - when no matching component listener in `Listener` could be found, the events for components events wouldn't be dispatched
     - `delete_after` keyword in message send override not working
     - mentionable type in slashoptions not being parsed to objects
+    - `@discord.ext.commands.Cooldown` not working on cog slashcommands
 
     ## **Added**
     - `**fields` to all functions that edit the message components (like `.disable_components`, `.disable_component`, ...). The `**fields` parameter can be used to edit other properties of the message without using `.edit` again and send a "useless" request
