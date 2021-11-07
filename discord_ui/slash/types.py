@@ -827,9 +827,6 @@ class BaseCommand():
             return None
     async def update_id(self):
         self._id = await self._fetch_id()
-    def _patch(self, command):
-        for x in command.__slots__:
-            setattr(self, x, getattr(command, x, None))
 
     def copy(self):
         """Copies itself into a new object"""
@@ -1356,8 +1353,9 @@ class CommandCache():
                     base = self[guild][ct][base_name]
                     new_command = None # variable to store the new command data
                     api_command = await self.api.get_guild_command(base.name, base.command_type, guild)
-                    # get permissions for the command
-                    api_permissions = await http.get_command_permissions(api_command["id"], guild)
+                    if api_command:
+                        # get permissions for the command
+                        api_permissions = await http.get_command_permissions(api_command["id"], guild)
                     global_command = await self.api.get_global_command(base.name, base.command_type)
                     # If no command in that guild or a global one was found
                     if api_command is None or global_command is not None:

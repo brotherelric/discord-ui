@@ -1,16 +1,16 @@
 from __future__ import annotations
 
-
 from .enums import InteractionResponseType
 from .slash.http import ModifiedSlashState
 from .errors import InvalidEvent, OutOfValidRange, WrongType
 from .http import BetterRoute, get_message_payload, send_files
 from .slash.errors import AlreadyDeferred, EphemeralDeletion
-from .tools import EMPTY_CHECK, MISSING, get_index, setup_logger, _none, get
+from .tools import EMPTY_CHECK, MISSING, get_index, setup_logger, get
 from .slash.types import ContextCommand, SlashCommand, SlashPermission, SlashSubcommand
 from .components import ActionRow, Button, LinkButton, SelectMenu, SelectOption, UseableComponent, make_component
 
 import discord
+from discord import utils
 from discord.ext import commands
 from discord.state import ConnectionState
 
@@ -56,7 +56,7 @@ class Interaction():
         """The ID of the bot application"""
         self.token: str = data["token"]
         """The token for responding to the interaction"""
-        self.id: int = data["id"]
+        self.id: int = int(data["id"])
         """The id of the interaction"""
         self.type: int = data["type"]
         """The type of the interaction. See :class:`~InteractionType` for more information"""
@@ -70,6 +70,11 @@ class Interaction():
         self.message: Message = message
         """The message of the interaction"""
 
+    @property
+    def created_at(self):
+        """The interaction's creation time in UTC"""
+        return utils.snowflake_time(self.id)
+    
     @property
     def guild(self) -> discord.Guild:
         """The guild where the interaction was created"""
@@ -349,8 +354,6 @@ class SlashedCommand(Interaction, SlashCommand):
             command.callback, command.name, command.description, command.options, guild_ids=command.guild_ids, guild_permissions=command.guild_permissions, 
             state=client._connection
         )
-        # update self slots
-        self._patch(command)
         # overwrite some json values that maybe weren't updated
         self._json = command.to_dict()
 
@@ -380,8 +383,6 @@ class SlashedContext(Interaction, ContextCommand):
         ContextCommand.__init__(self, command.command_type, command.callback, command.name, guild_ids=command.guild_ids, 
             guild_permissions=command.guild_permissions, state=client._connection
         )
-        # update self slots
-        self._patch(command)
         self._json = command.to_dict()
 
         self.invoked_command: ContextCommand = command
@@ -429,13 +430,14 @@ async def getMessage(state: discord.state.ConnectionState, data, response=True):
 
 class Message(discord.Message):
     """A fixed :class:`discord.Message` optimized for components"""
+
+    _state: ConnectionState
     def __init__(self, *, state, channel, data):
-        self.__slots__ = discord.Message.__slots__ + ("components", "supressed")
-        self._state: ConnectionState = None
+        self.__slots__ = discord.Message.__slots__ + ("components",)
         discord.Message.__init__(self, state=state, channel=channel, data=data)
         self.components: List[Union[Button, LinkButton, SelectMenu]] = []
         """The components in the message"""
-        self.suppressed = False
+
         self._update_components(data)
 
     # region attributes
@@ -665,11 +667,11 @@ class Message(discord.Message):
         def _check(com):
             if com.message.id == self.id:
                 statements = []
-                if not _none(custom_id):
+                if custom_id is not None:
                     statements.append(com.custom_id == custom_id)
-                if not _none(by):
+                if by is not None:
                     statements.append(com.author.id == (by.id if hasattr(by, "id") else int(by)))
-                if not _none(check):
+                if check is not None:
                     statements.append(check(com))
                 return all(statements)
             return False

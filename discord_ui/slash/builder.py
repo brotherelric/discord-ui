@@ -107,7 +107,7 @@ class SlashBuilder():
         return await SlashCommand.update_id(self)
 
     @property
-    def id(self):
+    def id(self) -> int:
         """The ID of thte slashcommand"""
         return self._id
     @property

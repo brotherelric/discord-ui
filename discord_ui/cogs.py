@@ -125,13 +125,23 @@ class BaseCallable():
         self.__commands_checks__.remove(check)
     def _prepare_cooldowns(self, ctx) -> None:
         if self._buckets.valid:
-            dt = ctx.message.edited_at or ctx.message.created_at
+            dt = (
+                ctx.message.edited_at or ctx.message.created_at
+            ) if ctx.message is not None else (
+                # for slashcommands
+                ctx.created_at
+            )
             current = dt.replace(tzinfo=datetime.timezone.utc).timestamp()
-            bucket = self._buckets.get_bucket(ctx.message, current)
+            bucket = self._buckets.get_bucket(ctx.message if ctx.message is not None else ctx, current)
             if bucket is not None:
-                retry_after = bucket.update_rate_limit(current)
+                if discord.__version__.startswith("2"):
+                    retry_after = bucket.update_rate_limit(ctx, current)
+                else:
+                    retry_after = bucket.update_rate_limit(current)
                 if retry_after:
-                    raise CommandOnCooldown(bucket, retry_after, self._buckets.type)  # type: ignore
+                    if discord.__version__.startswith("2"):
+                        raise CommandOnCooldown(bucket, retry_after, self._buckets.type)
+                    raise CommandOnCooldown(bucket, retry_after)
 
     def is_on_cooldown(self, ctx) -> bool:
         """
