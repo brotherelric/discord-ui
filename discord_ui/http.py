@@ -50,21 +50,24 @@ def get_message_payload(content=MISSING, tts=False, embed: discord.Embed=MISSING
         else:
             payload["content"] = str(content)
 
-    if suppress is not MISSING and suppress is not None:
+    if suppress not in [MISSING, None]:
         flags = discord.MessageFlags._from_value(_or(flags, discord.MessageFlags.DEFAULT_VALUE))
         flags.suppress_embeds = suppress
         payload['flags'] = flags.value
     
-    if nonce is not MISSING and suppress is not None:
+    if nonce not in [MISSING, None]:
         payload["nonce"] = nonce
     
     if embed is not MISSING or embeds is not MISSING:
-        if embeds is None or embed is None:
+        if embeds is None and embed is None:
             embeds = []
-        elif embed is not MISSING and embeds is MISSING:
+        # if embed exsists and embeds doesn't exsist
+        elif embed not in [MISSING, None] and embeds in [MISSING, None]:
             embeds = [embed]
-        elif embed is not MISSING and embeds is not MISSING:
-            embeds.append(embed)
+        # if embed doesn't exsist and embeds does
+        elif embed in [MISSING, None] and embeds not in [MISSING, None]:
+            embeds = embed
+        # check type things
         elif not all(isinstance(x, discord.Embed) for x in embeds):
             raise WrongType("embeds", embeds, 'list[discord.Embed]')
         payload["embeds"] = [em.to_dict() for em in embeds]

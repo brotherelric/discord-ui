@@ -1458,7 +1458,8 @@ class CommandCache():
             if interaction["data"]["options"][0]["type"] == OptionType.SUB_COMMAND:
                 # return the subcommand
                 return base_one
-            return base_one["data"]["options"][0]["options"][""]
+            elif interaction["data"]["options"][0]["type"] == OptionType.SUB_COMMAND_GROUP:
+                return base_one[interaction["data"]["options"][0]["options"][0]["name"]]
             
         return command
     def get_commands(self, *, all=True, guilds=[], **keys):
