@@ -103,16 +103,20 @@ class ComponentType(BaseIntEnum):
     Button          =           2
     Select          =           3
 class OptionType(BaseIntEnum):
-    SUB_COMMAND             =          Subcommand           =           1
-    SUB_COMMAND_GROUP       =          Subcommand_group     =           2
-    STRING                  =          String               =           3
-    INTEGER                 =          Integer              =           4
-    BOOLEAN                 =          Boolean              =           5
-    MEMBER     =   USER     =          Member               =  User =   6
-    CHANNEL                 =          Channel              =           7
-    ROLE                    =          Role                 =           8
-    MENTIONABLE             =          Mentionable          =           9
-    FLOAT                   =          Float                =          10
+    Subcommand              =          SUB_COMMAND          =           1
+    Subcommand_group        =          SUB_COMMAND_GROUP    =           2
+    String                  =          STRING               =           3
+    Integer                 =          INTEGER              =           4
+    """Any integer between -2^53 and 2^53"""
+    Boolean    =   bool     =          BOOLEAN              =  BOOL  =  5
+    Member     =   user     =          MEMBER               =  USER  =  6
+    Channel                 =          CHANNEL              =           7
+    """Includes all channel types + categories"""
+    Role                    =          ROLE                 =           8
+    Mentionable             =          MENTIONABLE          =           9
+    """Includes users and roles"""
+    Float      =   Number   =          FLOAT                =  NUMBER = 10
+    """Any double between -2^53 and 2^53"""
 
     @classmethod
     def any_to_type(cls, whatever) -> OptionType:
@@ -156,8 +160,20 @@ class OptionType(BaseIntEnum):
                 return cls.Float
         if isinstance(whatever, list):
             ret = cls.Channel
-            ret.__types__ = whatever
+            ret.__channel_types__ = whatever
             return ret
+        if isinstance(whatever, range):
+            if float in [cls.any_to_type(whatever.start), cls.any_to_type(whatever.stop)]:
+                _type = cls.Float
+            else:
+                _type = cls.Integer
+            _type.__min__, _type.__max__ = whatever.start, whatever.stop
+            return _type
+class Limits:
+    """Limits for OptionType Parameters"""
+    class Numeric:
+        min, max = -2**53, 2**53
+
 class InteractionResponseType(BaseIntEnum):
     Pong                        =       1
     """respond to ping"""

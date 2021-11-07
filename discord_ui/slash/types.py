@@ -9,7 +9,7 @@ from .errors import (
     NoCommandFound
 )
 from ..errors import InvalidLength, WrongType
-from ..enums import CommandType, OptionType
+from ..enums import CommandType, Limits, OptionType
 
 import discord
 from discord.ext.commands import Bot
@@ -172,9 +172,14 @@ class SlashOption():
         This parameter is only for subcommands to work, you shouldn't need to use that, unless you know what you're doing.
     channel_types: List[:class:`discord.ChannelType`]
         If the option is a channel type, the channels shown will be restricted to these types.
+    min_value: :class:`int`
+        If the option type is numeric (``float`` or ``int``) the minimum value permitted
+    max_value: :class:`int`
+        If the option type is numeric (``float`` or ``int``) the maximum value permitted
     """
     def __init__(self, argument_type, name, description=None, required=False, choices=None, 
-        autocomplete=None, choice_generator=None, options=None, channel_types=None
+        autocomplete=None, choice_generator=None, options=None, channel_types=None,
+        min_value=None, max_value=None
     ) -> None:
         """
         Creates a new option for a slash command
@@ -184,22 +189,23 @@ class SlashOption():
         SlashOption(argument_type=int, name="Your number", required=True, choices=[{"name": "a cool number", "value": 2}])
         ```
         """
-        autocomplete = autocomplete or choice_generator is not None
 
         self.__choice_generators__ = {}
-
         self._options: SlashOptionCollection = None # set later
         self._json = {}
+
         self.argument_type = argument_type
         self.name = name
         self.description = description or "\u200b"
         self.required = required
         self.options = options or []
-        self.autocomplete = autocomplete
+        self.autocomplete = autocomplete or choice_generator is not None
         self.choices = choices if self.autocomplete is False else None
         self.choice_generator: t.Callable[[t.Any], t.List[t.Union[dict, tuple]]] = choice_generator
         """A function which will generate choices for this option"""
         self.channel_types = channel_types
+        self.min_value = min_value
+        self.max_value = max_value
     def __repr__(self) -> str:
         return f"<discord_ui.SlashOption({str(self.to_dict())})>"
     def __eq__(self, o: object) -> bool:
@@ -217,7 +223,11 @@ class SlashOption():
                     and 
                 self.options == o.options
                     and
-                self.channel_types == o.channel_types
+                sorted(self.channel_types) == sorted(o.channel_types)
+                    and
+                self.min_value == o.min_value
+                    and
+                self.max_value == o.max_value
             )
         elif isinstance(o, dict):
             return (
@@ -236,11 +246,13 @@ class SlashOption():
                 self.autocomplete == o.get("autocomplete", False)
                     and
                 sorted([x.value for x in self.channel_types]) == sorted(o.get("channel_types", []))
+                    and
+                self.min_value == o.get("min_value")
+                    and
+                self.max_value == o.get("max_value")
             )
         return False
-    def __ne__(self, o: object) -> bool:
-        return not self.__eq__(o)
-
+    
     def autocomplete_function(self, callback):
         """Decorator for the autocomplete choice generator
         
@@ -265,7 +277,14 @@ class SlashOption():
         return OptionType(self._json["type"])
     @argument_type.setter
     def argument_type(self, value: OptionType):
-        self._json["type"] = getattr(value, "value", OptionType.any_to_type(value))
+        type = OptionType.any_to_type(value) if not isinstance(value, OptionType) else value
+        self._json["type"] = type
+        if hasattr(type, "__channel_types__"):
+            self.channel_types = type.__channel_types__
+        if hasattr(type, "__min__"):
+            self.min_value = type.__min__
+        if hasattr(type, "__max__"):
+            self.max_value = type.__max__
 
     @property
     def channel_types(self):
@@ -273,7 +292,24 @@ class SlashOption():
         return [discord.ChannelType(x) for x in self._json.get("channel_types", [])]
     @channel_types.setter
     def channel_types(self, value):
-        self._json["channel_types"] = [getattr(x, "value", x) for x in (value or [])]
+        self._json["channel_types"] = [x.value for x in (value or [])]
+    @property
+    def min_value(self):
+        """If the option is an ``INTEGER`` or ``NUMBER`` type, the minimum value permitted"""
+        return self._json.get("min_value")
+    @min_value.setter
+    def min_value(self, value):
+        if value is not None:
+            self._json["min_value"] = value
+    @property
+    def max_value(self):
+        """If the option is an ``INTEGER`` or ``NUMBER`` type, the maximum value permitted"""
+        return self._json.get("max_value")
+    @max_value.setter
+    def max_value(self, value):
+        if value is not None:
+            self._json["max_value"] = value
+
 
     @property
     def name(self) -> str:
@@ -363,7 +399,7 @@ class SlashOption():
     @staticmethod
     def _from_data(data: dict, generator=None):
         return SlashOption(data["type"], data["name"], data["description"], data.get("required", False), data.get("choices"), data.get("autocomplete", False), 
-            generator, data.get("options"), data.get("channel_types", [])
+            generator, data.get("options"), data.get("channel_types", []), data.get("min_value"), data.get("max_value")
         )
 
     def to_dict(self):
