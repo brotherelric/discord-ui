@@ -827,18 +827,20 @@ class BaseCommand():
             [await self._state.slash_http.edit_guild_command(self._id, guild, self.to_dict(), self.permissions.to_dict()) for guild in ([guild_id] if guild_id else self.guild_ids)]
         else:
             await self._state.slash_http.edit_global_command(self._id, self.to_dict())
-    async def edit(self, **fields):
+    async def edit(self, guild_id=None, **fields):
         """Edits this slashcommand and updates the changes in the api
 
         Parameters
         ----------
+        `guild_id`: :class:`int`
+            The guild where the command should be edited
         ``fields``: :class:`**dict`:
             The fields you want to edit (ex: ``name="new name"``)
         """
 
         for x in fields:
             setattr(self, x, fields[x])
-        return await self.update_apicommand()
+        return await self.update(guild_id)
     async def delete(self, guild_id=None):
         """Deletes this command from the api
         
@@ -1009,8 +1011,8 @@ class SlashSubcommand(BaseCommand):
     def base(self) -> SlashCommand:
         """A shared :class:`~SlashCommand` instance for all subcommands which holds information about the base command"""
         return self._base
-    async def update(self):
-        for guild in self.guild_ids:
+    async def update(self, guild_id=None):
+        for guild in [guild_id] if guild_id is not None else self.guild_ids:
             base = self.base or await self.fetch_base(guild)
             if len(self.base_names) > 1:
                 if base.options.get(self.base_names[1]) is None:
@@ -1018,7 +1020,7 @@ class SlashSubcommand(BaseCommand):
                 base.options[self.base_names[1]].options[self.name] = self.to_option()
             else:
                 base.options[self.name] = self.to_option()
-            return await base.update_apicommand(guild)
+            return await base.update(guild)
     def to_option(self) -> SlashOption:
         return SlashOption(OptionType.SUB_COMMAND, self.name, self.description, options=self.options or None, required=False)
     def to_dict(self):
