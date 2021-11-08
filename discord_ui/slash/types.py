@@ -8,8 +8,9 @@ from .errors import (
     OptionalOptionParameter,
     NoCommandFound
 )
-from ..errors import InvalidLength, WrongType
+from ..tools import All
 from ..enums import CommandType, OptionType
+from ..errors import InvalidLength, WrongType
 
 import discord
 from discord.ext.commands import Bot
@@ -23,6 +24,7 @@ __all__ = (
     'SlashPermission',
 )
 
+C = t.TypeVar("C")
 
 class OptionDataPayload(t.TypedDict):
     type: int 
@@ -844,7 +846,7 @@ class BaseCommand():
     @property
     def id(self) -> int:
         """The ID of the command.
-            The ID is None until the command was synced with `.sync_commands`
+            The ID is None until the command was synced with `.sync_commands)=`
         """
         return self._id
     @property
@@ -858,6 +860,7 @@ class BaseCommand():
         guild_id: :class:`int`, optional:
             The guild id to which the command update should be limited
         """
+        print("at least delete works")
         if self.guild_only:
             [await self._state.slash_http.edit_guild_command(self._id, guild, self.to_dict(), self.permissions.to_dict()) for guild in ([guild_id] if guild_id else self.guild_ids)]
         else:
@@ -964,7 +967,7 @@ class SlashCommand(BaseCommand):
             self, CommandType.Slash, callback, 
             name, description, 
             options=options, guild_ids=guild_ids, 
-            default_permission=default_permission, guild_permission=guild_permissions, 
+            default_permission=default_permission, guild_permissions=guild_permissions, 
             state=state
         )
     def __getitem__(self, index):
@@ -1407,6 +1410,14 @@ class CommandCache():
             return self.__getitem__(key)
         except KeyError:
             return default
+    def append(self, base: C, is_base=False) -> C:
+        if base.has_aliases and is_base is False:
+            for a in base.__aliases__:
+                cur = base.copy()
+                cur.name = a
+                self.append(cur, is_base=True)
+        self.add(base)
+        return base
     async def sync(self, delete_unused=False):
         http = self._state.slash_http
         
@@ -1483,6 +1494,43 @@ class CommandCache():
                         continue
     
         self._client.dispatch("commands_synced")
+    async def nuke(self, globals=True, guilds=All):
+        """
+        Deletes all commands registered in the api of this bot
+        
+        Parameters
+        ----------
+        globals: :class:`bool`, optional
+            Whether all global commands should be deleted; default True
+        guild: List[:class:`int`], optional
+            The guild ids where commands should be deleted; default All
+        
+        Usage
+        -----
+
+        .. code-block::
+        
+            # delete all commands
+            await commands.nuke()
+
+            # delete only global commands
+            await commands.nuke(guilds=None)
+        
+            # delete only guild commandsd
+            await commands.nuke(globals=False)
+        
+            # delete commands in specific guilds
+            await commands.nuke(globals=False, [814473329325899787])
+        """
+        if guilds is All:
+            guilds = self._cache["!globals"]
+        if guilds is None:
+            guilds = []
+        if globals is True:
+            await self._state.slash_http.delete_global_commands()
+        for id in guilds:
+            self._state.slash_http.delete_guild_commands(id)
+        
 
     def get_command_for(self, interaction: InteractionPayload):
         if interaction.get("guild_id"):

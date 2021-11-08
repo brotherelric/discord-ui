@@ -9,6 +9,18 @@ __all__ = (
     'components_to_dict',
 )
 
+
+class _All():
+    def __init__(self) -> None:
+        pass
+    def __contains__(self, _):
+        return True
+    def __iter__(self):
+        return iter([True])
+
+All = _All()
+
+
 class _MISSING:
     def __repr__(self) -> str:
         return "..."

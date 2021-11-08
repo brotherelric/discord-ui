@@ -142,6 +142,7 @@ def any_failure_response(content, hidden=False, **fields):
         cog.invoke = invoke
         return cog
     return wrapper
+
 def alias(aliases):
     """Decorator for slashcommand aliases that will add the same command but with different names.
     
