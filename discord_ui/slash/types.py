@@ -689,8 +689,9 @@ class BaseCommand():
         
         self.guild_permissions: t.Dict[(t.Union[str, int], SlashPermission)] = guild_permissions
         self.permissions: SlashPermission = SlashPermission()
+        """The current permissions for this command."""
         self.guild_ids: t.List[int] = [int(x) for x in guild_ids or []]
-        """The ids of the guilds where the command is available"""
+        """A list of guild ids where the command is available"""
     def __repr__(self) -> str:
         return f"<{self.__class__.__name__.split('.')[-1]}({self.to_dict()})>"
     def __eq__(self, o: object) -> bool:
@@ -751,7 +752,7 @@ class BaseCommand():
 
     @property
     def original_name(self) -> str:
-        """The original name for this command"""
+        """The original name for this command. Can be useful if aliases are used."""
         return self.__original_name__
     @property
     def aliases(self) -> t.List[str]:
@@ -848,6 +849,7 @@ class BaseCommand():
         return self._id
     @property
     def subcommands(self) -> t.Dict[str, t.Union[SlashSubcommand, t.Dict[str, SlashSubcommand]]]:
+        """List of references to :class:`Subcommand` instances of this base"""
         return self.__subcommands__
     
     async def update(self, guild_id=None):
@@ -865,7 +867,7 @@ class BaseCommand():
 
         Parameters
         ----------
-        `guild_id`: :class:`int`
+        guild_id: :class:`int`
             The guild where the command should be edited
         ``fields``: :class:`**dict`:
             The fields you want to edit (ex: ``name="new name"``)
@@ -1044,6 +1046,7 @@ class SlashSubcommand(BaseCommand):
     def base(self) -> SlashCommand:
         """A shared :class:`~SlashCommand` instance for all subcommands which holds information about the base command"""
         return self._base
+    
     async def update(self, guild_id=None):
         for guild in [guild_id] if guild_id is not None else self.guild_ids:
             base = self.base or await self.fetch_base(guild)

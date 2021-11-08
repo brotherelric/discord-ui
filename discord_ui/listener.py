@@ -68,7 +68,7 @@ You can filter the select callback with the ``values`` parameter
 
 The callback will now be only called if the selected values of a select menu equal to ``values``
 
-There are some more usefull things you can use
+There are some more useful things you can use
 
 
 Class

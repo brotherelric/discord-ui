@@ -460,7 +460,7 @@ You can contact us on discord
     
     ## **Added**
     - `discord_ui.ext`
-    > A module with usefull tools and decorators to use [more information](https://discord-ui.readthedocs.io/en/latest/ext.html)
+    > A module with useful tools and decorators to use [more information](https://discord-ui.readthedocs.io/en/latest/ext.html)
     
     - BaseCommand
     > BaseCommand (the superclass for all applicationcommands) has now some extra properties:

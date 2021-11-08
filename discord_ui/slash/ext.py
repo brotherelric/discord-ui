@@ -2,7 +2,7 @@
 discord_ui.ext
 ~~~~~~~~~~~~~~~
 
-An extension module to the libary that has some usefull decorators and functions 
+An extension module to the libary that has some useful decorators and functions 
 for application-commands.
 
 .. code-block::
