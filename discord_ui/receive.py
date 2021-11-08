@@ -29,9 +29,9 @@ __all__ = (
     'PressedButton',
     'SelectedMenu',
     'ChoiceGeneratorContext',
-    'SlashedCommand',
-    'SlashedSubCommand',
-    'SlashedContext',
+    'SlashInteraction',
+    'SubSlashInteraction',
+    'ContextInteraction',
     'Interaction',
 )
 
@@ -289,7 +289,7 @@ class ChoiceGeneratorContext(Interaction):
         """The current 'query' for the value"""
         self.selected_options: Dict[str, Any] = {options[x]["name"]: options[x]["value"] for x in options}
         """All the options that were already selected"""
-        self.command: Union[SlashedCommand, SlashedCommand, SlashedContext] = command
+        self.command: Union[SlashInteraction, SlashInteraction, ContextInteraction] = command
         """The slash command for which the choices should be generated"""
 
     async def defer(self, *args, **kwargs):
@@ -346,19 +346,15 @@ class PressedButton(Interaction, Button):
         self.author: discord.Member = user
         """The user who pressed the button"""
 
-class SlashedCommand(Interaction, SlashCommand):
+class SlashInteraction(Interaction):
     """A :class:`~SlashCommand` object that was used"""
     def __init__(self, client, command: SlashCommand, data, user, args = None) -> None:
         Interaction.__init__(self, client._connection, data, user)
-        SlashCommand.__init__(self, 
-            command.callback, command.name, command.description, command.options, guild_ids=command.guild_ids, guild_permissions=command.guild_permissions, 
-            state=client._connection
-        )
-        # overwrite some json values that maybe weren't updated
-        self._json = command.to_dict()
-
-        self.invoked_command: SlashCommand = command
-        """The original command instance that was used"""
+        self.command: SlashCommand = command
+        """
+        The original command instance that was used.
+        If you change things here, the changes will be applied globally
+        """
         self.bot: commands.Bot = client
         self.author: discord.Member = user
         """The user who used the command"""
@@ -366,32 +362,34 @@ class SlashedCommand(Interaction, SlashCommand):
         """The options that were received"""
         self.permissions: SlashPermission = command.guild_permissions.get(self.guild_id) if command.guild_permissions is not None else None
         """The permissions for this guild"""
-class SlashedSubCommand(SlashedCommand, SlashSubcommand):
+class SlashedCommand(SlashInteraction):
+    """deprecated, please use ``SlashInteraction`` instead"""
+    ...
+
+class SubSlashInteraction(SlashInteraction):
     """A Sub-:class:`~SlashCommand` command that was used"""
     
-    invoked_command: SlashSubcommand
+    command: SlashSubcommand
     def __init__(self, client, command, data, user, args = None) -> None:
-        SlashedCommand.__init__(self, client, command, data, user, args)
-        SlashSubcommand.__init__(self, 
-            command.callback, command.base_names, command.name, command.description, command.options, 
-            command.guild_ids, command.default_permission, command.guild_permissions, client._connection
-        )
+        SlashInteraction.__init__(self, client, command, data, user, args)
+class SlashedSubCommand(SubSlashInteraction):
+    """deprecated, please use ``SubSlashInteraction`` instead"""
+    ...
 
-class SlashedContext(Interaction, ContextCommand):
+
+class ContextInteraction(Interaction):
     def __init__(self, client, command: ContextCommand, data, user, param) -> None:
         Interaction.__init__(self, client._connection, data, user)
-        ContextCommand.__init__(self, command.command_type, command.callback, command.name, guild_ids=command.guild_ids, 
-            guild_permissions=command.guild_permissions, state=client._connection
-        )
-        self._json = command.to_dict()
-
-        self.invoked_command: ContextCommand = command
+        self.command: ContextCommand = command
         """The original command instance that was used"""
         self.bot: commands.Bot = client
-        self.param: Union[Message, discord.Member, discord.User] = param
+        self.param: Union[Message, Union[discord.Member, discord.User]] = param
         """The parameter that was received"""
         self.permissions: SlashPermission = command.guild_permissions.get(self.guild_id) if command.guild_permissions is not None else None 
         """The permissions for this guild"""
+class ContextCommand(ContextInteraction):
+    """deprecated, please use ``ContextInteraction`` instead"""
+    ...
         
 
 async def getMessage(state: discord.state.ConnectionState, data, response=True):

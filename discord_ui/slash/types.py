@@ -808,7 +808,7 @@ class BaseCommand():
     # endregion
 
     @property
-    def command_id(self) -> int:
+    def id(self) -> int:
         """The ID of the command.
             The ID is None until the command was synced with `.sync_commands`
         """
@@ -850,9 +850,9 @@ class BaseCommand():
         """
         if self.guild_only:
             if guild_id:
-                await self._state.slash_http.delete_guild_command(self.command_id, guild_id)
+                await self._state.slash_http.delete_guild_command(self.id, guild_id)
             else:
-                [await self._state.slash_http.delete_guild_command(self.command_id, guild) for guild in self.guild_ids]
+                [await self._state.slash_http.delete_guild_command(self.id, guild) for guild in self.guild_ids]
         else:
             await self._state.slash_http.slash_http.delete_global_command(self.id)
     
@@ -1003,7 +1003,7 @@ class SlashSubcommand(BaseCommand):
             self._base = command
         return command
     @property
-    def command_id(self) -> int:
+    def id(self) -> int:
         return self.base.id
     @property
     def base(self) -> SlashCommand:
@@ -1428,7 +1428,7 @@ class CommandCache():
                         continue
                     key_type = str(CommandType(guild_command["type"]))
                     # command of a type we didn't register
-                    if self[guild][key_type] is None:
+                    if self[guild].get(key_type) is None:
                         await http.delete_guild_command(guild_command["id"], guild)
                         continue
                     # command with a name we didn't register

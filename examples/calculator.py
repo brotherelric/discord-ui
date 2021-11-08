@@ -9,7 +9,7 @@
 
 import asyncio
 from discord.ext import commands
-from discord_ui import SlashedCommand, UI, Button
+from discord_ui import SlashInteraction, UI, Button
 from discord_ui.components import LinkButton
 
 # The main discord bot client
@@ -31,7 +31,7 @@ calculator = [
 
 # Create a slash command
 @ui.slash.command(name="calculator", description="opens a calculator, that will automatically close when no input was provided after 20 seconds", guild_ids=[785567635802816595])
-async def test(ctx: SlashedCommand):
+async def test(ctx: SlashInteraction):
     # The current query for the calculator
     query = ""
     # Send the calculato, \u200b is an 'empty' char

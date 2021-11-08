@@ -264,8 +264,8 @@ class BaseCallable():
         called. This makes it a useful function to set up database
         connections or any type of set up required.
 
-        This post-invoke function takes a sole parameter, one of :class:`~SlashedCommand` | :class:`~SlashedSubCommand` | 
-        :class:`~SlashedContext` | :class:`~PressedButton` | :class:`SelectedMenu`, depending on what this is used for
+        This post-invoke function takes a sole parameter, one of :class:`~SlashInteraction` | :class:`~SubSlashInteraction` | 
+        :class:`~ContextInteraction` | :class:`~PressedButton` | :class:`SelectedMenu`, depending on what this is used for
 
         Parameters
         -----------
@@ -290,8 +290,8 @@ class BaseCallable():
         called. This makes it a useful function to clean-up database
         connections or any type of clean up required.
 
-        This post-invoke function takes a sole parameter, one of :class:`~SlashedCommand` | :class:`~SlashedSubCommand` | 
-        :class:`~SlashedContext` | :class:`~PressedButton` | :class:`SelectedMenu`, depending on what this is used for
+        This post-invoke function takes a sole parameter, one of :class:`~SlashInteraction` | :class:`~SubSlashInteraction` | 
+        :class:`~ContextInteraction` | :class:`~PressedButton` | :class:`SelectedMenu`, depending on what this is used for
 
 
         Parameters
@@ -410,7 +410,7 @@ def slash_command(name=None, description=None, options=None, guild_ids=None, def
     callback: :class:`method(ctx)` 
         The asynchron function that will be called if the command was used
         
-        ctx: :class:`~SlashedCommand`
+        ctx: :class:`~SlashInteraction`
             The used slash command
 
         .. note::
@@ -479,7 +479,7 @@ def subslash_command(base_names, name=None, description=None, options=None, guil
     ---------
     callback: :class:`method(ctx)`
         The asynchron function that will be called if the command was used
-            ctx: :class:`~SlashedSubCommand`
+            ctx: :class:`~SubSlashInteraction`
                 The used slash command
 
             .. note::
@@ -542,7 +542,7 @@ def context_command(type: Literal["user", 2, "message", 3], name=None, guild_ids
     ---------
     callback: :class:`method(ctx, message)`
         The asynchron function that will be called if the command was used
-            ctx: :class:`~SlashedSubCommand`
+            ctx: :class:`~SubSlashInteraction`
                 The used slash command
             message: :class:`~Message`
                 The message on which the command was used

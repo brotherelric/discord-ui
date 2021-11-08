@@ -14,7 +14,7 @@
 
 import asyncio
 from discord.ext import commands
-from discord_ui import UI, SlashedCommand, SelectMenu, SelectOption
+from discord_ui import UI, SlashInteraction, SelectMenu, SelectOption
 
 # The main bot client
 client = commands.Bot(" ")
@@ -23,7 +23,7 @@ ui = UI(client, slash_options={"wait_sync": 2, "delete_unused": True})
 
 # Create a slash command
 @ui.slash.command(name="role-picker", description="let's you pick roles", guild_ids=[785567635802816595])
-async def command(ctx: SlashedCommand):
+async def command(ctx: SlashInteraction):
 
     # The role picker component
     role_picker = SelectMenu(options=[

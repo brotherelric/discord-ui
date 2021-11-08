@@ -6,7 +6,7 @@ from .components import Button, Component, SelectMenu
 
 from .slash.http import SlashHTTP
 from .slash.errors import NoAsyncCallback
-from .slash.tools import ParseMethod, cache_data, format_name, handle_options, handle_thing
+from .slash.tools import ParseMethod, handle_options, handle_thing
 from .slash.types import (
     CommandCache, OptionType, SlashOption,
     MessageCommand , SlashCommand, SlashSubcommand, UserCommand
@@ -15,7 +15,8 @@ from .slash.types import (
 from .receive import (
     ChoiceGeneratorContext, ComponentContext, 
     Interaction, InteractionType,
-    PressedButton, SelectedMenu, SlashedContext, SlashedCommand, SlashedSubCommand, 
+    PressedButton, SelectedMenu,
+    SlashInteraction, SubSlashInteraction, ContextInteraction,
     getMessage, Message
 )
 from .listener import Listener
@@ -96,7 +97,7 @@ class Slash():
 
         ...
         @slash.command(name="my_command", description="this is my slash command", options=[SlashOption(str, "option", "this is an option")])
-        async def command(ctx: SlashedCommand):
+        async def command(ctx: SlashInteraction):
             ...
     
     And for subcommand groups use
@@ -105,7 +106,7 @@ class Slash():
 
         ...
         @slash.subcommand_group(base_names=["base", "group"], name="sub", description="this is a sub command group")
-        async def subgroup(ctx: SlashedSubCommand):
+        async def subgroup(ctx: SubSlashInteraction):
             ...
         
 
@@ -257,7 +258,7 @@ class Slash():
                 options = {}
                 if data["data"].get("options") is not None:
                     options = await handle_options(data, data["data"]["options"], self.parse_method, self._discord)
-                context = SlashedCommand(self._discord, command=command, data=data, user=user, args=options)
+                context = SlashInteraction(self._discord, command=command, data=data, user=user, args=options)
                 # Handle autodefer
                 context._handle_auto_defer(self.auto_defer)
                 self._discord.dispatch("slash_command", context)
@@ -270,7 +271,7 @@ class Slash():
         elif CommandType(data["data"]["type"]) is CommandType.User:
             if command is not None:
                 member = await handle_thing(data["data"]["target_id"], OptionType.MEMBER, data, self.parse_method, self._discord)
-                context = SlashedContext(self._discord, command=command, data=data, user=user, param=member)
+                context = ContextInteraction(self._discord, command=command, data=data, user=user, param=member)
                 # Handle autodefer
                 context._handle_auto_defer(self.auto_defer)
 
@@ -285,7 +286,7 @@ class Slash():
         elif CommandType(data["data"]["type"]) is CommandType.Message:
             if command is not None:
                 message = await handle_thing(data["data"]["target_id"], 44, data, self.parse_method, self._discord)
-                context = SlashedContext(self._discord, command=command, data=data, user=user, param=message)
+                context = ContextInteraction(self._discord, command=command, data=data, user=user, param=message)
                 # Handle autodefer
                 context._handle_auto_defer(self.auto_defer)
                 
@@ -307,7 +308,7 @@ class Slash():
             fixed_options = op.get("options", [])
             options = await handle_options(data, fixed_options, self.parse_method, self._discord)
 
-            context = SlashedSubCommand(self._discord, command, data, user, options)
+            context = SubSlashInteraction(self._discord, command, data, user, options)
             # Handle auto_defer
             context._handle_auto_defer(self.auto_defer)
 
@@ -650,7 +651,7 @@ class Slash():
         ---------
         callback: :class:`method(ctx)`
             The asynchron function that will be called if the command was used
-                ctx: :class:`~SlashedCommand`
+                ctx: :class:`~SlashInteraction`
                     The used slash command
 
                 .. note::
@@ -718,7 +719,7 @@ class Slash():
         ---------
         callback: :class:`method(ctx)`
             The asynchron function that will be called if the command was used
-                ctx: :class:`~SlashedSubCommand`
+                ctx: :class:`~SubSlashInteraction`
                     The used slash command
 
                 .. note::
@@ -778,7 +779,7 @@ class Slash():
         ---------
         callback: :class:`method(ctx, user)`
             The asynchron function that will be called if the command was used
-                ctx: :class:`~SlashedSubCommand`
+                ctx: :class:`~SubSlashInteraction`
                     The used slash command
                 user: :class:`discord.Member`
                     The user on which the command was used
@@ -825,7 +826,7 @@ class Slash():
         ---------
         callback: :class:`method(ctx, message)`
             The asynchron function that will be called if the command was used
-                ctx: :class:`~SlashedSubCommand`
+                ctx: :class:`~SubSlashInteraction`
                     The used slash command
                 message: :class:`~Message`
                     The message on which the command was used

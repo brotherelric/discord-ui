@@ -228,7 +228,9 @@ You can contact us on discord
     ```
     - ButtonStyles is now ButtonStyle
     - renamed cog decorators, the old ones still work but they will show a deprecation warning: `slash_command` -> `slash_command`, `subslash_command` -> `subslash_command`, `context_cog` -> `context_command`, `listening_component` -> `listening_component`
-    - Removed `Slash.edit_command` and `Slash.edit_subcommand`, "moved" to `BaseCommand.edit`
+    - Removed `Slash.edit_command` and `Slash.edit_subcommand`, "moved" to `Command.edit`
+    - `SlashedCommand` is now `SlashInteraction`, `SlashedSubCommand` is now `SubSlashInteraction` and `SlashedContext` is now `ContextInteraction`
+    - The command attributes of CommandInteractions (SlashedCommand, ...) are now moved to `Interaction.command.` (the `.command` attribute is a reference to the real command, if you change properties of the command they will be updated)
 
     ## **Changed**
     - `ButtonStyle` value names changed: color names are now capitalized and `Danger` is now `Destructive`
@@ -326,7 +328,7 @@ You can contact us on discord
     # delete
     await my_command.delete()
     ```
-    - `command_id` to SlashCommand
+    - `id` to SlashCommand
     - `commands_synced` event which will be dispatched when all commands where synced with the api (`UI.Slash.sync_commands`)
     - `BaseCommmand.update` method which updates the api command with the lcoal changes
     - `SlashSubCommand.base`, which will be shared among all subslashcommands with the same base
