@@ -63,7 +63,6 @@ class SlashBuilder():
     """
     def __init__(self, name=None, description=None, guild_ids=None, guild_permissions=None, default_permission=True) -> None:
         self.__sync__ = True
-        self.__guild_changes__ = {}
         self.__aliases__ = []
         self.__auto_defer__ = None
         self.__choice_generators__ = {}

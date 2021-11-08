@@ -25,7 +25,7 @@ from discord.ext import commands
 
 
 
-def check_failure_response(content=None, hidden=False, **fields):
+def check_failed(content=None, hidden=False, **fields):
     """A decorator for autoresponding to a cog check that failed.
     
     The decorator has to be placed after the check deceorator
@@ -64,10 +64,10 @@ def check_failure_response(content=None, hidden=False, **fields):
     .. code-block::
 
         # first check
-        @ext.check_failure_response("command is guild only", hidden=True)
+        @ext.check_failed("command is guild only", hidden=True)
         @commands.guild_only()
         # second check
-        @ext.check_failure_response("command can only used in nsfw channels", hidden=True)
+        @ext.check_failed("command can only used in nsfw channels", hidden=True)
         @commands.is_nsfw()
         @cogs.slash_command(guild_ids=[867699578034716683])
         async def callback(self, ctx):

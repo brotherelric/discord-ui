@@ -956,10 +956,17 @@ class SlashCommand(BaseCommand):
             ], guild_ids=[785567635802816595], default_permission=False,
             guild_permissions={
                 785567635802816595: SlashPermission(allowed={"539459006847254542": SlashPermission.USER})
-            })
+            }
+        )
         ```
         """
-        BaseCommand.__init__(self, CommandType.Slash, callback, name, description, options, guild_ids, default_permission, guild_permissions, state)
+        BaseCommand.__init__(
+            self, CommandType.Slash, callback, 
+            name, description, 
+            options=options, guild_ids=guild_ids, 
+            default_permission=default_permission, guild_permission=guild_permissions, 
+            state=state
+        )
     def __getitem__(self, index):
         """enable `[key]` for subcommands"""
         return self.subcommands[index]
@@ -1017,8 +1024,9 @@ class SlashSubcommand(BaseCommand):
         if any([len(x) > 32 or len(x) < 1 for x in base_names]):
             raise InvalidLength("base_names", 1, 32)
         BaseCommand.__init__(
-            self, CommandType.Slash, callback, name, description, options=options, 
-            guild_ids=guild_ids, default_permission=default_permission, guild_permissions=guild_permissions,
+            self, CommandType.Slash, callback, 
+            name, description, options=options, guild_ids=guild_ids, 
+            default_permission=default_permission, guild_permissions=guild_permissions,
             state=state
         )
         self.base_names = [format_name(x) for x in base_names]
