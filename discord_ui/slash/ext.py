@@ -142,33 +142,6 @@ def any_failure_response(content, hidden=False, **fields):
         cog.invoke = invoke
         return cog
     return wrapper
-
-def guild_change(guild_id, *, name=None, description=None, default_permission=True, options=None, callback=None):
-    """A decorator for slashcommands that will apply changes to a specific guild
-
-    Note that this decorator should mainly be used for guild commands, because if used with
-    a global command, both commands will show up, the changed one and the global one.
-    
-    Parameters
-    ----------
-    guild_id: :class:`int` | :class:`str`
-        The guild_id where the changes should be applied to
-    name: :class:`str`, optional
-        The new name; default None
-    description: :class:`str`, optional
-        The new description; default None
-    default_permission: :class:`bool` | :class:`discord.Permissions`, optional
-        Permissions that a user needs to have in order to execute the command, default ``True``.
-            If a bool was passed, it will indicate whether all users can use the command (``True``) or not (``False``)
-    
-    """
-    def wrapper(callback):
-        if not hasattr(callback, "__guild_changes__"):
-            callback.__guild_changes__ = {}
-        callback.__guild_changes__[str(guild_id)] = (name, description, default_permission, options, callback)
-        return callback
-    return wrapper
-
 def alias(aliases):
     """Decorator for slashcommand aliases that will add the same command but with different names.
     
