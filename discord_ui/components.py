@@ -485,7 +485,7 @@ class Button(BaseButton, UseableComponent):
     def __repr__(self) -> str:
         return f"<discord_ui.Button({self.custom_id}:{self.content})>"
     def copy(self) -> Button:
-        return Button(
+        return self.__class__(
             label=self.label, 
             custom_id=self.custom_id, 
             color=self.color, 
@@ -555,7 +555,7 @@ class LinkButton(BaseButton):
     def __repr__(self) -> str:
         return f"<discord_ui.LinkButton({self.custom_id}:{self.content})>"
     def copy(self) -> LinkButton:
-        return LinkButton(
+        return self.__class__(
             url=self.url, 
             label=self.label, 
             emoji=self.emoji, 

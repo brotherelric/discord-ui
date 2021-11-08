@@ -9,7 +9,7 @@ from .errors import (
     NoCommandFound
 )
 from ..errors import InvalidLength, WrongType
-from ..enums import CommandType, Limits, OptionType
+from ..enums import CommandType, OptionType
 
 import discord
 from discord.ext.commands import Bot
@@ -116,7 +116,7 @@ class SlashOptionCollection():
     def append(self, value):
         self.__options[value.name] = value
     def copy(self):
-        return SlashOptionCollection(list(self.__options.values()))
+        return self.__class__(list(self.__options.values()))
     def get(self, index: t.Union[str, int], default=None):
         try:
             return self.__getitem__(index)
@@ -427,35 +427,62 @@ class SlashPermission():
 
             If you want to use a role id, the permission type has to be 1, and if you want to specify a user id, it has to be 2
 
-            You can use ``SlashPermission.ROLE`` and ``SlashPermission.USER`` instead
+            You can use ``SlashPermission.Role`` and ``SlashPermission.User`` instead
 
         """
     def __init__(self, allowed: dict=None, forbidden=None) -> None:
         """Creates a new permission object for a slash command
         
-        Example
+        Examples
+        ---------
+
         ```py
-        SlashPermission(allowed=[
-                await bot.fetch_user(bot.owner_id)
+        SlashPermission(
+            allowed={
+                SlashPermission.User: [874357255829606402],
+                SlashPermission.Role: [874357255829606402, 87435725582922303]
+            }, forbidden={
+                539459006847255232: SlashPermission.User,
+                874357255829606402: SlashPermission.Role
+            }
+        )
+        ```
+
+        ```py
+        SlashPermission(
+            allowed=[
+                await bot.fetch_user(539459006847254542),
+                await bot.fetch_user(874357113864998922)
             ], forbidden={
                 539459006847255232: SlashPermission.User,
                 874357255829606402: SlashPermission.Role
             }
         )
         ```
+
         """
         
         self._json = []
         if allowed is not None:
             if isinstance(allowed, dict):
                 for _id, _type in allowed.items():
-                    self._json.append(
-                        {
-                            "id": int(_id),
-                            "type": _type,
-                            "permission": True
-                        }
-                    )
+                    if isinstance(_id, int) and isinstance(_type, (list, tuple)):
+                        for x in _type:
+                            self._json.append(
+                                {
+                                    "id": int(x),
+                                    "type": _id,
+                                    "permission": True
+                                }
+                            )
+                    else:
+                        self._json.append(
+                            {
+                                "id": int(_id),
+                                "type": _type,
+                                "permission": True
+                            }
+                        )
             elif isinstance(allowed, list):
                 for t in allowed:
                     self._json.append({
@@ -466,13 +493,23 @@ class SlashPermission():
         if forbidden is not None:
             if isinstance(forbidden, dict):
                 for _id, _type in forbidden.items():
-                    self._json.append(
-                        {
-                            "id": int(_id),
-                            "type": _type,
-                            "permission": False
-                        }
-                    )
+                    if isinstance(_id, int) and isinstance(_type, (list, tuple)):
+                        for x in _type:
+                            self._json.append(
+                                {
+                                    "id": int(x),
+                                    "type": _id,
+                                    "permission": False
+                                }
+                            )
+                    else:
+                        self._json.append(
+                            {
+                                "id": int(_id),
+                                "type": _type,
+                                "permission": False
+                            }
+                        )
             elif isinstance(forbidden, list):
                 for t in forbidden:
                     self._json.append({
@@ -483,10 +520,6 @@ class SlashPermission():
             else:
                 raise WrongType("forbidden", forbidden, ["Dict[int | str, int]", "List[discord.Member | discord.User | discord.Role]"])
 
-    @classmethod
-    def Empty(cls) -> SlashPermission:
-        """Returns an empty permission for the command"""
-        return cls()
     def to_dict(self):
         return self._json
     def __eq__(self, o: object) -> bool:
@@ -504,8 +537,6 @@ class SlashPermission():
                 len(self.forbidden) == len(o_forbidden) and all(self.forbidden[i] == o_forbidden[i] for i, _ in enumerate(self.forbidden))
             )
         return False
-    def __ne__(self, o: object) -> bool:
-        return not self.__eq__(o)
     def __repr__(self) -> str:
         return f"<discord_ui.SlashPermission({self.to_dict()})>"
     
@@ -515,9 +546,10 @@ class SlashPermission():
         perm._json = data
         return perm
 
-
-    ROLE        =       Role      =   1
-    USER        =       User      =   2
+    Role        =       ROLE        =   1
+    """Permission type for a role"""
+    User        =       USER        =   2
+    """Permission type for a user"""
 
     @property
     def allowed(self) -> dict:
@@ -727,11 +759,11 @@ class BaseCommand():
         return self.__aliases__
     @property
     def has_aliases(self) -> bool:
-        """Returns True if this command has aliases"""
+        """Whether this command has aliases"""
         return hasattr(self, "__aliases__") and self.__aliases__ is not None
     @property
     def is_alias(self) -> bool:
-        """Returns True if this command is an alias to another command"""
+        """Whether this command is an alias to another command"""
         return self.__aliases__ is not None and self.name in self.__aliases__
 
     # region command
@@ -795,8 +827,9 @@ class BaseCommand():
     # region permissions
     @property
     def default_permission(self) -> t.Union[str, bool]:
-        """Default permissions that a user needs to have in order to execute this command
-            If a bool was used, it will indicate whether this command can be used by everyone
+        """
+        Default permissions that a user needs to have in order to execute this command.
+        If a bool was used, it will indicate whether this command can be used by everyone.
         """
         raw = self._json.get("default_permission", False)
         if isinstance(raw, str):
@@ -867,7 +900,7 @@ class BaseCommand():
         self._id = await self._fetch_id()
 
     def copy(self):
-        """Copies itself into a new object"""
+        """Returns a class copy of itself"""
         raise NotImplementedError()
 
     def to_dict(self):
@@ -930,7 +963,7 @@ class SlashCommand(BaseCommand):
         return self.subcommands[index]
     
     def copy(self) -> SlashCommand:
-        c = SlashCommand(self.callback, self.name, self.description, self.options, self.guild_ids, self.default_permission, self.guild_permissions, self._state.slash_http)
+        c = self.__class__(self.callback, self.name, self.description, self.options, self.guild_ids, self.default_permission, self.guild_permissions, self._state.slash_http)
         for x in self.__slots__:
             setattr(c, x, getattr(self, x))
         return c
@@ -1025,8 +1058,8 @@ class SlashSubcommand(BaseCommand):
         return SlashOption(OptionType.SUB_COMMAND, self.name, self.description, options=self.options or None, required=False)
     def to_dict(self):
         return self.to_option().to_dict()
-    def copy(self):
-        c = SlashSubcommand(self.callback, self.base_names, self.name, self.description, self.options, self.guild_ids, self.default_permission, self.guild_permissions, self._state.slash_http)
+    def copy(self) -> SlashSubcommand:
+        c = self.__class__(self.callback, self.base_names, self.name, self.description, self.options, self.guild_ids, self.default_permission, self.guild_permissions, self._state.slash_http)
         for x in self.__slots__:
             setattr(c, x, getattr(self, x))
         return c
@@ -1056,7 +1089,7 @@ class UserCommand(ContextCommand):
     def __init__(self, callback, name=None, guild_ids=None, default_permission=True, guild_permissions=None, state=None) -> None:
         ContextCommand.__init__(self, CommandType.User, callback, name, guild_ids, default_permission, guild_permissions, state)
     def copy(self) -> UserCommand:
-        c = UserCommand(self.callback, self.name, self.guild_ids, self.default_permission, self.guild_permissions, self._state.slash_http)
+        c = self.__class__(self.callback, self.name, self.guild_ids, self.default_permission, self.guild_permissions, self._state.slash_http)
         for x in self.__slots__:
             setattr(c, x, getattr(self, x))
         return c
@@ -1065,7 +1098,7 @@ class MessageCommand(ContextCommand):
     def __init__(self, callback, name=None, guild_ids=None, default_permission=True, guild_permissions=None, state=None) -> None:
         ContextCommand.__init__(self, CommandType.Message, callback, name, guild_ids, default_permission, guild_permissions, state)
     def copy(self) -> MessageCommand:
-        c = MessageCommand(self.callback, self.name, self.guild_ids, self.default_permission, self.guild_permissions, self._state.slash_http)
+        c = self.__class__(self.callback, self.name, self.guild_ids, self.default_permission, self.guild_permissions, self._state.slash_http)
         for x in self.__slots__:
             setattr(c, x, getattr(self, x))
         return c
@@ -1489,7 +1522,7 @@ class CommandCache():
         return commands
 
     @property
-    def all(self):
+    def all(self) -> CommandCacheList:
         return self._cache
     @property
     def globals(self) -> t.Dict[str, command]:
