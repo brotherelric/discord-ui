@@ -1418,6 +1418,27 @@ class CommandCache():
                 self.append(cur, is_base=True)
         self.add(base)
         return base
+    def remove(self, base: SlashCommand):
+        key_type = str(base.command_type)
+        name = base.name if not base.is_subcommand else base.base_names[0]
+        if base.is_global:
+            keys = ["global"]
+        else:
+            keys = [str(x) for x in base.guild_ids]
+        for k in keys:
+            if self[k].get(key_type) is None:
+                return
+            if self[k][key_type].get(name) is None:
+                return
+            if not base.is_subcommand:
+                del self[k][key_type][name]
+                return
+            if len(base.base_names) > 1:
+                del self[k][key_type][name][base.base_names[1]][base.name]
+                return
+            else:
+                del self[k][key_type][name][base.name]
+                return
     async def sync(self, delete_unused=False):
         http = self._state.slash_http
         

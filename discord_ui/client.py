@@ -1,6 +1,6 @@
-from .cogs import BaseCallable, CogCommand, CogSubCommandGroup, InteractionableCog, ListeningComponent
+from .cogs import BaseCallable, InteractionableCog, ListeningComponent
 from .http import get_message_payload, BetterRoute, send_files
-from .tools import MISSING, EMPTY_CHECK, _none, _or, get_index, setup_logger, get
+from .tools import MISSING, EMPTY_CHECK, _none, _or, deprecated, setup_logger, get
 from .errors import MissingListenedComponentParameters, WrongType
 from .components import Button, Component, SelectMenu
 
@@ -123,6 +123,7 @@ class Slash():
         self.ready = False
         self.parse_method: int = parse_method
         self.delete_unused: bool = delete_unused
+        self.sync_on_cog: bool = sync_on_cog
         self.wait_sync: float = wait_sync
         self.auto_defer: Tuple[bool, bool] = (auto_defer, False) if isinstance(auto_defer, bool) else auto_defer
         self.auto_sync = auto_sync
@@ -140,6 +141,8 @@ class Slash():
         old_add = self._discord.add_cog
         def add_cog_override(*args, **kwargs):
             cog = args[0] if len(args) > 0 else kwargs.get("cog")
+            if isinstance(cog, str):
+                cog = self._discord.get_cog(cog)
             if not isinstance(cog, InteractionableCog):
                 # adding attributees to cog form InteractionableCog
                 for s in InteractionableCog.__custom_slots__:
@@ -148,19 +151,21 @@ class Slash():
                 com.cog = cog
                 self.commands.append(com)
             old_add(*args, **kwargs)
-            if self.ready is True and sync_on_cog is True:
-                self._discord.loop.create_task(self.sync_commands(self.delete_unused))
+            if self.ready and self.sync_on_cog is True:
+                self._discord.loop.create_task(self.commands.sync(self.delete_unused))
         self._discord.add_cog = add_cog_override
 
         old_remove = self._discord.remove_cog
         def remove_cog_override(*args, **kwargs):
             cog = args[0] if len(args) > 0 else kwargs.get("cog")
+            if isinstance(cog, str):
+                cog = self._discord.get_cog(cog)
             for com in self._get_cog_commands(cog):
                 com.cog = cog
                 self.commands.remove(com)
             old_remove(*args, **kwargs)
-            if self.ready is True and sync_on_cog is True:
-                self._discord.loop.create_task(self.sync_commands(self.delete_unused))
+            if self.ready and self.sync_on_cog is True:
+                self._discord.loop.create_task(self.commands.sync(self.delete_unused))
         self._discord.remove_cog = remove_cog_override
         
         async def on_connect():
@@ -174,6 +179,10 @@ class Slash():
             # await self.sync_commands(self.delete_unused)
         self._discord.add_listener(on_connect)
 
+    @deprecated("commands.sync")
+    async def sync_commands(self, delete_unused=False):
+        """deprecated, use ``commands.sync`` instead"""
+        return await self.commands.sync(delete_unused)
     async def _on_slash_response(self, msg):
         if discord.__version__.startswith("2"):
             if isinstance(msg, bytes):

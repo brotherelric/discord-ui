@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+
 from .enums import InteractionResponseType
 from .slash.http import ModifiedSlashState
 from .errors import InvalidEvent, OutOfValidRange, WrongType
@@ -10,7 +11,7 @@ from .slash.types import ContextCommand, SlashCommand, SlashPermission, SlashSub
 from .components import ActionRow, Button, LinkButton, SelectMenu, SelectOption, UseableComponent, make_component
 
 import discord
-from discord import utils
+from discord import utils, NotFound
 from discord.ext import commands
 from discord.state import ConnectionState
 
@@ -196,7 +197,15 @@ class Interaction():
             else:
                 await self._state.http.request(route, json=payload)    
         else:
-            await self._state.slash_http.respond_to(self.id, self.token, InteractionResponseType.Channel_message, payload, files=files or [file] if file is not None else None)
+            try:
+                await self._state.slash_http.respond_to(self.id, self.token, InteractionResponseType.Channel_message, payload, files=files or [file] if file is not None else None)
+            except NotFound as ex:
+                logging.error("Got 404 while responding, trying to send follow-up message: " + str(ex))
+                await self.send(
+                    content, tts=tts, embed=embed, embeds=embeds, file=file, files=files, nonce=nonce, allowed_mentions=allowed_mentions,
+                    mention_author=mention_author, components=components, delete_after=delete_after, listener=listener, hidden=hidden,
+                    force=True
+                )
         self.responded = True
         
         r = await self._state.http.request(BetterRoute("GET", f"/webhooks/{self.application_id}/{self.token}/messages/@original"))
@@ -210,7 +219,9 @@ class Interaction():
             await msg.delete(delete_after)
         return msg
     async def send(self, content=None, *, tts=None, embed=None, embeds=None, file=None, files=None, nonce=None,
-        allowed_mentions=None, mention_author=None, components=None, delete_after=None, listener=None, hidden=False) -> Union[Message, EphemeralMessage]:
+        allowed_mentions=None, mention_author=None, components=None, delete_after=None, listener=None, hidden=False,
+        force=False
+    ) -> Union[Message, EphemeralMessage]:
         """
         Sends a message to the interaction using a webhook
         
@@ -250,7 +261,7 @@ class Interaction():
         :class:`~Message` | :class:`EphemeralMessage`
             Returns the sent message
         """
-        if self.responded is False:
+        if force is False and self.responded is False:
             return await self.respond(content=content, tts=tts, embed=embed, embeds=embeds, file=file, files=files, nonce=nonce, allowed_mentions=allowed_mentions, mention_author=mention_author, components=components, delete_after=delete_after, listener=listener, hidden=hidden)
 
         if components is None and listener is not None:

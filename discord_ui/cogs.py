@@ -109,7 +109,7 @@ class BaseCallable():
             else:
                 await self.callback(ctx, *args, **kwargs)
         except Exception as ex:
-            if not self.has_error_handler():
+            if getattr(self, "on_error", None) is None:
                 raise
             else:
                 if hasattr(self, "cog"):
