@@ -197,15 +197,7 @@ class Interaction():
             else:
                 await self._state.http.request(route, json=payload)    
         else:
-            try:
-                await self._state.slash_http.respond_to(self.id, self.token, InteractionResponseType.Channel_message, payload, files=files or [file] if file is not None else None)
-            except NotFound as ex:
-                logging.error("Got 404 while responding, trying to send follow-up message: " + str(ex))
-                await self.send(
-                    content, tts=tts, embed=embed, embeds=embeds, file=file, files=files, nonce=nonce, allowed_mentions=allowed_mentions,
-                    mention_author=mention_author, components=components, delete_after=delete_after, listener=listener, hidden=hidden,
-                    force=True
-                )
+            await self._state.slash_http.respond_to(self.id, self.token, InteractionResponseType.Channel_message, payload, files=files or [file] if file is not None else None)
         self.responded = True
         
         r = await self._state.http.request(BetterRoute("GET", f"/webhooks/{self.application_id}/{self.token}/messages/@original"))
