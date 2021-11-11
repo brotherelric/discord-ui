@@ -6,9 +6,9 @@ from .slash.http import ModifiedSlashState
 from .errors import InvalidEvent, OutOfValidRange, WrongType
 from .http import BetterRoute, get_message_payload, send_files
 from .slash.errors import AlreadyDeferred, EphemeralDeletion
-from .tools import EMPTY_CHECK, MISSING, get_index, setup_logger, get
+from .tools import EMPTY_CHECK, MISSING, All, deprecated, get_index, setup_logger, get
 from .slash.types import ContextCommand, SlashCommand, SlashPermission, SlashSubcommand
-from .components import ActionRow, Button, LinkButton, SelectMenu, SelectOption, UseableComponent, make_component
+from .components import ActionRow, Button, ComponentStore, LinkButton, SelectMenu, SelectOption, UseableComponent, make_component
 
 import discord
 from discord import utils, NotFound
@@ -69,7 +69,7 @@ class Interaction():
         self.guild_id: int = int(data["guild_id"]) if data.get("guild_id") is not None else None
         """The guild-id where the interaction was created"""
         self.message: Message = message
-        """The message of the interaction"""
+        """The message in which the interaction was created"""
 
     @property
     def created_at(self):
@@ -436,29 +436,29 @@ class Message(discord.Message):
     def __init__(self, *, state, channel, data):
         self.__slots__ = discord.Message.__slots__ + ("components",)
         discord.Message.__init__(self, state=state, channel=channel, data=data)
-        self.components: List[Union[Button, LinkButton, SelectMenu]] = []
+        self.components = ComponentStore()
         """The components in the message"""
 
         self._update_components(data)
 
     # region attributes
     @property
+    @deprecated(".components.buttons")
     def buttons(self) -> List[Union[Button, LinkButton]]:
         """The button components in the message"""
-        if hasattr(self, "components") and self.components is not None:
-            return [x for x in self.components if isinstance(x, (Button, LinkButton))]
-        return []
+        return self.components.buttons
     @property
+    @deprecated(".components.selects")
     def select_menus(self) -> List[SelectMenu]:
         """The select menus components in the message"""
-        if hasattr(self, "components") and self.components is not None:
-            return [x for x in self.components if isinstance(x, SelectMenu)]
-        return []
+        return self.components.selects
     @property
+    @deprecated(".components.as_action_row()")
     def action_row(self) -> ActionRow:
         """All of the components put into an action row""" 
         return ActionRow(ActionRow(self.components))
     @property
+    @deprecated(".components.get_rows()")
     def action_rows(self) -> List[ActionRow]:
         """The action rows in the message"""
         rows = []
@@ -473,14 +473,13 @@ class Message(discord.Message):
         if len(c_row) > 0:
             rows.append(ActionRow(c_row))
         return rows
-    # endregion
 
     def _update_components(self, data):
         """Updates the message components"""
         if data.get("components") is None:
-            self.components = []
+            self.components = ComponentStore()
             return
-        self.components = []
+        self.components = ComponentStore()
         if len(data["components"]) == 0:
             pass
         elif len(data["components"]) > 1:
@@ -535,30 +534,6 @@ class Message(discord.Message):
         if delete_after is not MISSING:
             await self.delete(delay=delete_after)
 
-    async def disable_component(self, component_index=None, custom_id=None, disabled=True, **fields):
-        """Disables a single component
-        
-        Parameters
-        ----------
-        component_index: :class:`int` | :class:`range`, optional
-            The index or a range of indexes for the target component(s); default None
-        custom_id: :class:`str`, optional
-            The custom_id of the target component; default None
-        disabled: :class:`bool`, optional
-            Whether the component should be disabled (``True``) or enabled (``False``); default True
-        ``**fields``
-            Parameters for editing the message (like `content=`, `embed=`)
-        """
-        comps = self.components
-        if component_index is not None:
-            if isinstance(component_index, range):
-                for x in component_index:
-                    comps[x].disabled = disabled
-            else:
-                comps[component_index].disabled = disabled
-        elif custom_id is not None:
-            comps[get_index(self.components, custom_id, lambda x: x.custom_id)].disabled = disabled
-        await self.edit(components=comps, **fields)
     async def disable_action_row(self, row, disable = True, **fields):
         """Disables an action row of components in the message
         
@@ -597,23 +572,20 @@ class Message(discord.Message):
                     r.disable(disable)
                 comps.append(r)
         await self.edit(components=comps, **fields)
-    async def disable_components(self, disable = True, **fields):
-        """Disables all component in the message
+    async def disable_components(self, index=All, disable=True, **fields):
+        """Disables component(s) in the message
         
         Parameters
         ----------
+        index: :class:`int` | :class:`str` | :class:`range` | List[:class:`int` | :class:`str`], optional
+            Index(es) or custom_id(s) for the components that should be disabled or enabled; default all components
         disable: :class:`bool`, optional
-            Whether to disable (``True``) or enable (``False``) als components; default True
+            Whether to disable (``True``) or enable (``False``) components; default True
         ``**fields``
-            Parameters for editing the message (like `content=`, `embed=`)
+            Other parameters for editing the message (like `content=`, `embed=`)
         """
-        if len(self.components) == 0:
-            return
-        fixed = []
-        for x in self.components:
-            x.disabled = disable
-            fixed.append(x)
-        await self.edit(components=fixed, **fields)
+        self.components.disable(index, disable)
+        await self.edit(components=self.components, **fields)
 
     async def wait_for(self, event_name: Literal["select", "button", "component"], client, custom_id=None, by=None, check=EMPTY_CHECK, timeout=None) -> Union[PressedButton, SelectedMenu, ComponentContext]:
         """Waits for a message component to be invoked in this message
@@ -689,7 +661,7 @@ class Message(discord.Message):
         raise InvalidEvent(event_name, ["button", "select", "component"])
 
     async def put_listener(self, listener):
-        """Adds a listener to this message and edits it if the components are missing
+        """Adds a listener to this message and edits the message if the components of the listener are missing in this message
         
         Parameters
         ----------

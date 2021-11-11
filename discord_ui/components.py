@@ -1,7 +1,8 @@
 from __future__ import annotations
 
-from .errors import InvalidLength, OutOfValidRange, WrongType
+from .tools import All
 from .enums import ButtonStyle, ComponentType
+from .errors import InvalidLength, OutOfValidRange, WrongType
 
 import discord
 from discord.errors import *
@@ -16,8 +17,117 @@ __all__ = (
     'SelectOption',
     'Button',
     'LinkButton',
-    'ActionRow',
+    'ActionRow'
 )
+
+class ComponentStore():
+    """A class for storing message components together with some useful methods"""
+    def __init__(self, components):
+        """Creates a new `ComponentStore`
+        
+        Parameters
+        ----------
+        components: List[:class:`Button` | :class:`LinkButton` | :class:`SelectMenu`]
+            The components that should be stored
+        
+        """
+        self._components: List[Union[Button, LinkButton, SelectMenu]] = components
+    def _get_index_for(self, key):
+        if isinstance(key, int):
+            return key
+        if isinstance(key, str):
+            s = [i for i, x in enumerate(self._components) if x.custom_id == key]
+            if len(s) == 0:
+                raise KeyError(key)
+            return s[0]
+        raise WrongType(key, "index", ["str", "int"])
+    def __getitem__(self, key):
+        return self._components[self._get_index_for(key)]
+    def __setitem__(self, key, value):
+        self._components[self._get_index_for(key)] = value
+    def __delitem__(self, key):
+        self._components.pop(self._get_index_for(key))
+    def __iter__(self):
+        return iter(self._components)
+    def __len__(self):
+        return len(self._components)
+    def __repr__(self):
+        return f"<{self.__class__.__name__}{str(self._components)}>"
+    
+    def to_list(self):
+        """Returns this class as an list"""
+        return self._components
+    def copy(self):
+        return self.__class__()
+    def append(self, item):
+
+        self._components.append(item)
+    def clear(self):
+        self._components = []
+    
+    def disable(self, index=All, disable=True):
+        """
+        Disables or enables component(s)
+
+        index: :class:`int` | :class:`str` | :class:`range` | List[:class:`int` | :class:`str`], optional
+            Index(es) or custom_id(s) for the components that should be disabled or enabled; default all components
+        disable: :class:`bool`, optional
+            Whether to disable (``True``) or enable (``False``) components; default True
+
+        """
+        if index is All:
+            index = range(len(self._components))
+        if isinstance(index, (range, list, tuple)):
+            for i in index:
+                self._components[i].disabled = disable
+        elif isinstance(index, (int, str)):
+            self._components[index].disabled = disable
+        return self
+    @property
+    def buttons(self) -> List[Union[Button, LinkButton]]:
+        """All components with the type `Button`"""
+        return [self._components[i] for i, x in enumerate(self._components) if x.component_type == ComponentType.Button]
+    @property
+    def selects(self) -> List[SelectMenu]:
+        """All components with the type `Select`"""
+        return [self._components[i] for i, x in enumerate(self._components) if x.component_type == ComponentType.Select]
+    def get_rows(self) -> List[ComponentStore]:
+        """
+        Returns the component rows as componentstores
+        
+        Example
+        --------
+        
+        If the components are
+        
+        ```
+        Button1, Button2
+        Button3
+        SelectMenu
+        ```
+
+        The `.get_rows` method would then return
+
+        ```py
+        >>> message.get_rows()
+        [ 
+            ComponentStore[Button1, Button2], 
+            ComponentStore[Button3], 
+            ComponentStore[SelectMenu]
+        ]
+        ```
+
+        """
+        rows = []
+        current_row = []
+        for i, x in enumerate(self._components):
+            if getattr(x, 'new_line', True) == True and i > 0:
+                rows.append(ComponentStore(current_row))
+                current_row = []
+            current_row.append(self._components[i])
+        if len(current_row) > 0:
+            rows.append(ComponentStore(current_row))
+        return rows
 
 class SelectOption():
     """
