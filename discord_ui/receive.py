@@ -193,7 +193,7 @@ class Interaction():
         if self.deferred:
             route = BetterRoute("PATCH", f'/webhooks/{self.application_id}/{self.token}/messages/@original')
             if file is not None or files is not None:
-                await send_files(route=route, files=files or ([file] if file is None else None), payload=payload, http=self._state.http)
+                await send_files(route=route, files=files or ([file] if file is not None else None), payload=payload, http=self._state.http)
             else:
                 await self._state.http.request(route, json=payload)    
         else:

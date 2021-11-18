@@ -1632,6 +1632,16 @@ class CommandCache():
         command = t.get(interaction["data"]["name"])
         if command is None:
             return
+
+        # if both a guild command and a global command exists but the id is different
+        if command.id != interaction["data"]["id"]:
+            c = self["globals"]
+            t = c.get(str(CommandType(interaction["data"]["type"])))
+            if t is None:
+                return 
+            command = t.get(interaction["data"]["name"])
+            if command is None:
+                return
         # is subcommand
         if interaction["data"].get("options") is not None and interaction["data"]["options"][0]["type"] in [OptionType.SUB_COMMAND, OptionType.SUB_COMMAND_GROUP]:
             try:

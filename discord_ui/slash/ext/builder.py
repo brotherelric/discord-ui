@@ -1,6 +1,5 @@
 from ..http import SlashHTTP
 from ..types import SlashCommand, SlashOption, SlashOptionCollection, SlashPermission, SlashSubcommand, format_name
-from ...client import Slash
 from ...enums import CommandType, OptionType
 from ...tools import try_get
 
@@ -148,7 +147,7 @@ class SlashBuilder():
             "options": self.options.to_dict() if not self.has_subs() else self._subs_to_dict()
         }
 
-    def register(self, slash: Slash):
+    def register(self, slash: SlashCommand):
         if self.has_subs():
             if self.has_groups():
                 for x in self.get_subcommands():
