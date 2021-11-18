@@ -994,7 +994,6 @@ class SlashCommand(BaseCommand):
                 self.options[index].options[value[x].name] = value[x].to_option()
         else:
             self.options[index] = value.to_option()
-        print(self.options)
     def __delitem__(self, index):
         del self.subcommands[index]
         del self.options[index]
