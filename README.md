@@ -246,6 +246,7 @@ You can contact us on discord
     ```
     You can also use some methods like `.get`, `.set` (which will return itself after it set something, so `SlashOption.set(key, value).set(key, value)` would work) and ``SlashOption.options + SlashOption.option`` will add both SlashOptions together
     - If an invalid guild id was passed to a slashcommand, no exception will be raised anymore, it will just be printed into the console and ignored `logging.error()`
+    - Moved the `discord_ui.ext.py` module into a folder
 
     ## **Fixed**
     - disable_action_row

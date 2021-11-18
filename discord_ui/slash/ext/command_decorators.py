@@ -1,15 +1,6 @@
 """
-discord_ui.ext
-~~~~~~~~~~~~~~~
-
-An extension module to the libary that has some useful decorators and functions 
-for application-commands.
-
-.. code-block::
-
-    from discord_ui import ext
-
-- - -
+discord_ui.ext.command_decorator
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Important: Every decorator should be placed before the actual slashcommand decorator, 
 except check auto-response decorators, they have to be placed after the target check decorator.
@@ -23,7 +14,13 @@ import inspect
 import functools
 from discord.ext import commands
 
-
+__all__ = (
+    'check_failed',
+    'any_failure_response',
+    'alias',
+    'no_sync',
+    'auto_defer',
+)
 
 def check_failed(content=None, hidden=False, **fields):
     """A decorator for autoresponding to a cog check that failed.

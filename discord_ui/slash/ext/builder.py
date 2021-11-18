@@ -1,13 +1,15 @@
-from .http import SlashHTTP
-from .types import SlashCommand, SlashOption, SlashOptionCollection, SlashPermission, SlashSubcommand, format_name
-from ..client import Slash
-from ..enums import CommandType, OptionType
-from ..tools import try_get
+from ..http import SlashHTTP
+from ..types import SlashCommand, SlashOption, SlashOptionCollection, SlashPermission, SlashSubcommand, format_name
+from ...client import Slash
+from ...enums import CommandType, OptionType
+from ...tools import try_get
 
 import inspect
 from typing import List, Dict
 
-
+__all__ = (
+    'SlashBuilder',
+)
 
 class Subcommand(SlashSubcommand):
     __slots__ = SlashSubcommand.__slots__ + ("__group__", "build",)
