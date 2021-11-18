@@ -66,11 +66,9 @@ class SlashOptionCollection():
         if isinstance(o, list):
             return len(o) == len(self.__options) and list(self.__options.values()) == o
         return False
-    def __ne__(self, o) -> bool:
-        return self.__eq__(o)
     def __len__(self):
         return len(self.__options)
-    def __iter__(self):
+    def __iter__(self) -> t.List[SlashOption]:
         return iter(self.__options.values())
     def __getitem__(self, index):
         if isinstance(index, int):
@@ -149,7 +147,7 @@ class SlashOption():
         
     Parameters
     ----------
-    argument_type: :class:`int` | :class:`str` | :class:`class` | :class:`~OptionType`
+    type: :class:`int` | :class:`str` | :class:`class` | :class:`~OptionType`
         What type of parameter the option should accept.
     name: :class:`str`
         1-32 lowercase character name for the option.
@@ -179,7 +177,7 @@ class SlashOption():
     max_value: :class:`int`
         If the option type is numeric (``float`` or ``int``) the maximum value permitted
     """
-    def __init__(self, argument_type, name, description=None, required=False, choices=None, 
+    def __init__(self, type, name, description=None, required=False, choices=None, 
         autocomplete=None, choice_generator=None, options=None, channel_types=None,
         min_value=None, max_value=None
     ) -> None:
@@ -188,15 +186,15 @@ class SlashOption():
 
         Example
         ```py
-        SlashOption(argument_type=int, name="Your number", required=True, choices=[{"name": "a cool number", "value": 2}])
+        SlashOption(type=int, name="Your number", required=True, choices=[{"name": "a cool number", "value": 2}])
         ```
         """
 
         self.__choice_generators__ = {}
-        self._options: SlashOptionCollection = None # set later
+        self._options = SlashOptionCollection()
         self._json = {}
 
-        self.argument_type = argument_type
+        self.type = type
         self.name = name
         self.description = description or "\u200b"
         self.required = required
@@ -213,7 +211,7 @@ class SlashOption():
     def __eq__(self, o: object) -> bool:
         if isinstance(o, SlashOption):
             return (
-                self.argument_type == o.argument_type 
+                self.type == o.type 
                     and 
                 self.name == o.name 
                     and 
@@ -233,7 +231,7 @@ class SlashOption():
             )
         elif isinstance(o, dict):
             return (
-                self.argument_type == o["type"] 
+                self.type == o["type"] 
                     and 
                 self.name == o["name"] 
                     and 
@@ -274,11 +272,11 @@ class SlashOption():
         return callback
 
     @property
-    def argument_type(self) -> int:
+    def type(self) -> int:
         """Parameter type that the option accepts"""
         return OptionType(self._json["type"])
-    @argument_type.setter
-    def argument_type(self, value: OptionType):
+    @type.setter
+    def type(self, value: OptionType):
         type = OptionType.any_to_type(value) if not isinstance(value, OptionType) else value
         self._json["type"] = type
         if hasattr(type, "__channel_types__"):
@@ -323,7 +321,8 @@ class SlashOption():
             raise WrongType("name", value, "str")
         if len(value) > 32 or len(value) < 1:
             raise InvalidLength("name", 1, 32)
-        self._json["name"] = value.lower().replace(" ", "_")
+        self._json["name"] = format_name(value)
+
 
     @property
     def description(self) -> str:
@@ -574,7 +573,7 @@ class BaseCommand():
         self._state: ModifiedSlashState = state
         self._id: int = None # set later
 
-        self._options: SlashOptionCollection = SlashOptionCollection([]) # set later
+        self._options = SlashOptionCollection() # set later
         self._json = {"type": getattr(command_type, "value", command_type)}
 
         self.options = options or []
@@ -715,8 +714,6 @@ class BaseCommand():
             )
         else:
             return False
-    def __ne__(self, o: object) -> bool:
-        return not self.__eq__(o)
     async def __call__(self, ctx, *args, **kwargs):
         return await self.callback(ctx, *args, **kwargs)
 
@@ -850,6 +847,9 @@ class BaseCommand():
         """
         return self._id
     @property
+    def has_subcommands(self) -> bool:
+        return any(x.type in [OptionType.SUB_COMMAND_GROUP, OptionType.SUB_COMMAND] for x in self.options)
+    @property
     def subcommands(self) -> t.Dict[str, t.Union[SlashSubcommand, t.Dict[str, SlashSubcommand]]]:
         """List of references to :class:`Subcommand` instances of this base"""
         return self.__subcommands__
@@ -860,11 +860,10 @@ class BaseCommand():
         guild_id: :class:`int`, optional:
             The guild id to which the command update should be limited
         """
-        print("at least delete works")
         if self.guild_only:
-            [await self._state.slash_http.edit_guild_command(self._id, guild, self.to_dict(), self.permissions.to_dict()) for guild in ([guild_id] if guild_id else self.guild_ids)]
+            [await self._state.slash_http.edit_guild_command(self.id, guild, self.to_dict(), self.permissions.to_dict()) for guild in ([guild_id] if guild_id is not None else self.guild_ids)]
         else:
-            await self._state.slash_http.edit_global_command(self._id, self.to_dict())
+            await self._state.slash_http.edit_global_command(self.id, self.to_dict())
     async def edit(self, guild_id=None, **fields):
         """Edits this slashcommand and updates the changes in the api
 
@@ -909,7 +908,21 @@ class BaseCommand():
         raise NotImplementedError()
 
     def to_dict(self):
-        return self._json | {"options": self._options.to_dict()}
+        return self._json | {
+            "options": (
+                # if no subcommands are present use normal options
+                self._options.to_dict() 
+                    if not self.has_subcommands 
+                else (
+                    # otherwise use subcommands
+                    [x.to_dict() for x in self.subcommands.values()]
+                        if all(not isinstance(x, dict) for x in self.subcommands.values()) else
+                    [SlashOption(OptionType.SUB_COMMAND_GROUP, x, options=[
+                        self.subcommands[x][y].to_option() for y in self.subcommands[x]
+                    ]).to_dict() for x in self.subcommands]
+                )
+            )
+        }
 
 class SlashCommand(BaseCommand):
     """A basic slash command
@@ -970,10 +983,23 @@ class SlashCommand(BaseCommand):
             default_permission=default_permission, guild_permissions=guild_permissions, 
             state=state
         )
-    def __getitem__(self, index):
-        """enable `[key]` for subcommands"""
+    def __getitem__(self, index) -> SlashSubcommand:
+        # enable `[key]` for subcommands
         return self.subcommands[index]
-    
+    def __setitem__(self, index, value):
+        self.subcommands[index] = value
+        if isinstance(value, dict):
+            for x in value:
+                if self.options.get(index) is None:
+                    self.options[index] = SlashOption(OptionType.SUB_COMMAND_GROUP, index)
+                self.options[index].options[value[x].name] = value[x].to_option()
+        else:
+            self.options[index] = value.to_option()
+        print(self.options)
+    def __delitem__(self, index):
+        del self.subcommands[index]
+        del self.options[index]
+
     def copy(self) -> SlashCommand:
         c = self.__class__(self.callback, self.name, self.description, self.options, self.guild_ids, self.default_permission, self.guild_permissions, self._state.slash_http)
         for x in self.__slots__:
@@ -1020,20 +1046,20 @@ class SlashSubcommand(BaseCommand):
     __slots__ = BaseCommand.__slots__ + ('base_names', '_base')
 
     def __init__(self, callback, base_names, name, description=None, options=None, guild_ids=None, default_permission=None, guild_permissions=None, state=None) -> None:
+        self._base = None # a base instance shared with all subcommands
         if isinstance(base_names, str):
             base_names = [base_names]
         if len(base_names) > 2:
             raise discord.errors.InvalidArgument("subcommand groups are currently limited to 2 bases")
         if any([len(x) > 32 or len(x) < 1 for x in base_names]):
             raise InvalidLength("base_names", 1, 32)
+        self.base_names = [format_name(x) for x in base_names]
         BaseCommand.__init__(
             self, CommandType.Slash, callback, 
             name, description, options=options, guild_ids=guild_ids, 
             default_permission=default_permission, guild_permissions=guild_permissions,
             state=state
         )
-        self.base_names = [format_name(x) for x in base_names]
-        self._base = None # a base instance shared with all subcommands
     async def fetch_base(self, guild_id=None, overwrite_base=True) -> SlashCommand:
         """Fetches the base command from the api
         
@@ -1058,15 +1084,47 @@ class SlashSubcommand(BaseCommand):
         """A shared :class:`~SlashCommand` instance for all subcommands which holds information about the base command"""
         return self._base
     
+    
+    @property
+    def base_name(self):
+        return self.base.name
+    @base_name.setter
+    def base_name(self, value):
+        self.base_names[0] = format_name(value)
+        self.base.name = format_name(value)
+    @property
+    def group_name(self):
+        return self.base_names[1] if len(self.base_names) > 1 else None
+    @group_name.setter
+    def group_name(self, value):
+        if self.group_name is not None:
+            c = self.base[self.group_name].copy()
+            del self.base[self.group_name]
+            self.base_names[1] = value
+            self.base[value] = c
+        else:
+            self.base_names.append(value)
+            del self.base[self.name]
+            if not self.base.subcommands.get(value):
+                self.base[value] = {}
+            self.base[value][self.name] = self
+
     async def update(self, guild_id=None):
         for guild in [guild_id] if guild_id is not None else self.guild_ids:
             base = self.base or await self.fetch_base(guild)
+            base.guild_ids = self.guild_ids
+            base._state = self._state
+
             if len(self.base_names) > 1:
+                if base.__subcommands__.get(self.base_names[1]) is None:
+                    base.__subcommands__[self.base_names[1]] = {}
                 if base.options.get(self.base_names[1]) is None:
                     base.options[self.base_names[1]] = SlashOption(OptionType.SUB_COMMAND_GROUP, self.name)
                 base.options[self.base_names[1]].options[self.name] = self.to_option()
+                base.__subcommands__[self.base_names[1]][self.name] = self
             else:
                 base.options[self.name] = self.to_option()
+                base.__subcommands__[self.name] = self
             return await base.update(guild)
     def to_option(self) -> SlashOption:
         return SlashOption(OptionType.SUB_COMMAND, self.name, self.description, options=self.options or None, required=False)
@@ -1274,15 +1332,15 @@ class CommandCache():
             if command.is_subcommand:
                 if self["globals"].get(type_key) is None:
                     return False
-                if self["globals"][type_key].get(command.base_names[0]) is None:
+                if self["globals"][type_key].get(command.base_name) is None:
                     return False
                 if len(command.base_names) > 1:
-                    if self["globals"][type_key][command.base_names[0]].subcommands.get(command.base_names[1]) is None:
+                    if self["globals"][type_key][command.base_name].subcommands.get(command.group_name) is None:
                         return False
-                    if self["globals"][type_key][command.base_names[0]][command.base_names[1]].get(command.name) is None:
+                    if self["globals"][type_key][command.base_name][command.group_name].get(command.name) is None:
                         return False
                     return True
-                return self["globals"][type_key][command.base_names[0]].subcommands.get(command.name) is not None
+                return self["globals"][type_key][command.base_name].subcommands.get(command.name) is not None
             if self["globals"].get(type_key) is None:
                 return False
             return self["globals"][type_key].get(command.name) is not None
@@ -1568,13 +1626,19 @@ class CommandCache():
             return
         # is subcommand
         if interaction["data"].get("options") is not None and interaction["data"]["options"][0]["type"] in [OptionType.SUB_COMMAND, OptionType.SUB_COMMAND_GROUP]:
-            base_one = command[interaction["data"]["options"][0]["name"]]
+            try:
+                base_one = command[interaction["data"]["options"][0]["name"]]
+            except KeyError:
+                return
             # if command has only one base
             if interaction["data"]["options"][0]["type"] == OptionType.SUB_COMMAND:
                 # return the subcommand
                 return base_one
             elif interaction["data"]["options"][0]["type"] == OptionType.SUB_COMMAND_GROUP:
-                return base_one[interaction["data"]["options"][0]["options"][0]["name"]]
+                try:
+                    return base_one[interaction["data"]["options"][0]["options"][0]["name"]]
+                except KeyError:
+                    return None
             
         return command
     def get_commands(self, *, all=True, guilds=[], **keys):

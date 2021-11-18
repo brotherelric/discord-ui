@@ -27,7 +27,7 @@ class __Mentionable:
     pass
 
 Mentionable: _Mentionable = __Mentionable
-"""Type for a SlashOption with argument_type of :class:`Mentionable`
+"""Type for a SlashOption with type of :class:`Mentionable`
 
 Usage:
 ~~~~~~

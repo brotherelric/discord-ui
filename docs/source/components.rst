@@ -52,12 +52,12 @@ This event will be dispatched whenever a button was pressed
 
 A sole parameter will be passed:
 
-*  :class:`~PressedButton`: The pressed button
+*  :class:`~ButtonInteraction`: The pressed button
 
 .. code-block::
 
     @client.listen()
-    def on_button_press(btn: PressedButton):
+    def on_button_press(btn: ButtonInteraction):
         ...
 
 .. code-block::
@@ -68,16 +68,16 @@ A sole parameter will be passed:
 ``menu_select``
 ~~~~~~~~~~~~~~~~~~~~~~
 
-This event will be dispatched whenever a value was selected in a :class:`~SelectedMenu`
+This event will be dispatched whenever a value was selected in a :class:`~SelectInteraction`
 
 A sole paremeter will be passed
 
-*  :class:`~SelectedMenu`: The menu where a value was selected
+*  :class:`~SelectInteraction`: The menu where a value was selected
 
 .. code-block::
 
     @client.listen()
-    def on_menu_select(menu: SelectedMenu):
+    def on_menu_select(menu: SelectInteraction):
         ...
 
 .. code-block::
@@ -154,19 +154,19 @@ Message
 .. autoclass:: Message()
     :members:
 
-PressedButton
+ButtonInteraction
 ~~~~~~~~~~~~~~~~~~~~~~
 
-.. autoclass:: PressedButton()
+.. autoclass:: ButtonInteraction()
     :members:
     :inherited-members:
     :exclude-members: to_dict
 
 
-SelectedMenu
+SelectInteraction
 ~~~~~~~~~~~~~~~~~~~~~~
 
-.. autoclass:: SelectedMenu
+.. autoclass:: SelectInteraction
     :members:
     :inherited-members:
     :exclude-members: to_dict

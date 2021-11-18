@@ -22,7 +22,7 @@ __all__ = (
 
 class ComponentStore():
     """A class for storing message components together with some useful methods"""
-    def __init__(self, components):
+    def __init__(self, components=[]):
         """Creates a new `ComponentStore`
         
         Parameters

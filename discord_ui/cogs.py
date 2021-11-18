@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from .tools import EMPTY_CHECK
 from .slash.types import BaseCommand, ContextCommand, MessageCommand, SlashCommand, SlashSubcommand, UserCommand
-from .receive import PressedButton, SelectedMenu
+from .receive import ButtonInteraction, SelectInteraction
 from .enums import ComponentType
 from .tools import deprecated
 
@@ -265,7 +265,7 @@ class BaseCallable():
         connections or any type of set up required.
 
         This post-invoke function takes a sole parameter, one of :class:`~SlashInteraction` | :class:`~SubSlashInteraction` | 
-        :class:`~ContextInteraction` | :class:`~PressedButton` | :class:`SelectedMenu`, depending on what this is used for
+        :class:`~ContextInteraction` | :class:`~ButtonInteraction` | :class:`SelectInteraction`, depending on what this is used for
 
         Parameters
         -----------
@@ -291,7 +291,7 @@ class BaseCallable():
         connections or any type of clean up required.
 
         This post-invoke function takes a sole parameter, one of :class:`~SlashInteraction` | :class:`~SubSlashInteraction` | 
-        :class:`~ContextInteraction` | :class:`~PressedButton` | :class:`SelectedMenu`, depending on what this is used for
+        :class:`~ContextInteraction` | :class:`~ButtonInteraction` | :class:`SelectInteraction`, depending on what this is used for
 
 
         Parameters
@@ -496,7 +496,7 @@ def subslash_command(base_names, name=None, description=None, options=None, guil
             ...
 
             @subslash_command(base_names="hello", name="world", options=[
-                SlashOption(argument_type="user", name="user", description="the user to tell the holy words")
+                SlashOption(type="user", name="user", description="the user to tell the holy words")
             ], guild_ids=[785567635802816595])
             async def command(ctx, user):
                 ...
@@ -509,7 +509,7 @@ def subslash_command(base_names, name=None, description=None, options=None, guil
             ...
 
             @subslash_command(base_names=["hello", "beautiful"], name="world", options=[
-                SlashOption(argument_type="user", name="user", description="the user to tell the holy words")
+                SlashOption(type="user", name="user", description="the user to tell the holy words")
             ], guild_ids=[785567635802816595])
             async def command(ctx, user):
                 ...
@@ -579,7 +579,7 @@ def context_command(type: Literal["user", 2, "message", 3], name=None, guild_ids
     return wrapper
 def listening_component(custom_id, messages=None, users=None, 
     component_type: Literal['button', 'select']=None, 
-    check: Callable[[Union[PressedButton, SelectedMenu]], bool]=EMPTY_CHECK
+    check: Callable[[Union[ButtonInteraction, SelectInteraction]], bool]=EMPTY_CHECK
 ):
     """
     Decorator for cogs that will register a listening component
@@ -605,7 +605,7 @@ def listening_component(custom_id, messages=None, users=None,
 
         There will be one parameters passed
 
-            ctx: :class:`~PressedButton` or :class:`~SelectedMenu`
+            ctx: :class:`~ButtonInteraction` or :class:`~SelectInteraction`
                 The invoked component
             
             .. note::
@@ -621,7 +621,7 @@ def listening_component(custom_id, messages=None, users=None,
         async def callback(ctx):
             ...
     """
-    def wrapper(callback: Callable[[Cog, Union[PressedButton, SelectedMenu]], Coroutine[Any, Any, Any]]):
+    def wrapper(callback: Callable[[Cog, Union[ButtonInteraction, SelectInteraction]], Coroutine[Any, Any, Any]]):
         return ListeningComponent(callback, messages, users, component_type, check, custom_id)
     return wrapper
 

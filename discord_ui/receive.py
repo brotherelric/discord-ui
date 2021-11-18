@@ -27,8 +27,8 @@ __all__ = (
     'Message',
     'EphemeralMessage',
     'EphemeralResponseMessage',
-    'PressedButton',
-    'SelectedMenu',
+    'ButtonInteraction',
+    'SelectInteraction',
     'ChoiceGeneratorContext',
     'SlashInteraction',
     'SubSlashInteraction',
@@ -305,19 +305,21 @@ class ChoiceGeneratorContext(Interaction):
         """Cannot send followup message to this type of interaction"""
         raise NotImplementedError()
 
-class ComponentContext(Interaction, UseableComponent):
+class ComponentInteraction(Interaction):
     """A received component"""
     def __init__(self, state, data, user, message) -> None:
         Interaction.__init__(self, state, data, user=user, message=message)
-        UseableComponent.__init__(self, data["data"]["component_type"])
+        self.component: UseableComponent = UseableComponent(data["data"]["component_type"])
+        self.component._custom_id = data["data"]["custom_id"]
+class ComponentContext(ComponentInteraction):
+    ...
 
-class SelectedMenu(Interaction, SelectMenu):
-    """A :class:`~SelectMenu` object in which an item was selected"""
+class SelectInteraction(Interaction):
+    """An interaction that was created by a :class:`~SelectMenu`"""
     def __init__(self, data, user, s, msg, client) -> None:
         Interaction.__init__(self, client._connection, data, user, msg)
-        default = [i for i, o in enumerate(s.options) if o.default is True]
-        SelectMenu.__init__(self, s.options, s.custom_id, s.min_values, s.max_values, s.placeholder, default[0] if len(default) == 1 else None, s.disabled)
         
+        self.component: SelectMenu = s
         self.bot: commands.Bot = client
         self.selected_options: List[SelectOption] = []
         """The list of the selected options"""
@@ -330,27 +332,25 @@ class SelectedMenu(Interaction, SelectMenu):
                     self.selected_values.append(x.value)
         self.author: discord.Member = user
         """The user who selected the value"""
+class SelectedMenu(SelectInteraction):
+    """deprecated, please use :class:`SelectInteraction` instead"""
+    ...
 
-class PressedButton(Interaction, Button):
-    """A :class:`~Button` object that was pressed"""
+class ButtonInteraction(Interaction):
+    """An interaction that was created by a :class:`~Button`"""
     def __init__(self, data, user, b, message, client) -> None:
         Interaction.__init__(self, client._connection, data, user, message)
-        Button.__init__(self, 
-            label=b.label, 
-            custom_id=b.custom_id,
-            color=b.color, 
-            emoji=b.emoji, 
-            new_line=b.new_line, 
-            disabled=b.disabled
-        )
-
-        self._json = b.to_dict()
+        self.component: Button = b
+        """The component that created the interaction"""
         self.bot: commands.Bot = client
         self.author: discord.Member = user
         """The user who pressed the button"""
+class PressedButton(ButtonInteraction):
+    """deprecated, please use :class:`ButtonInteraction` instead"""
+    ...
 
 class SlashInteraction(Interaction):
-    """A :class:`~SlashCommand` object that was used"""
+    """An interaction created by a :class:`~SlashCommand`"""
     def __init__(self, client, command: SlashCommand, data, user, args = None) -> None:
         Interaction.__init__(self, client._connection, data, user)
         self.command: SlashCommand = command
@@ -366,12 +366,12 @@ class SlashInteraction(Interaction):
         self.permissions: SlashPermission = command.guild_permissions.get(self.guild_id) if command.guild_permissions is not None else None
         """The permissions for this guild"""
 class SlashedCommand(SlashInteraction):
-    """deprecated, please use ``SlashInteraction`` instead"""
+    """deprecated, please use :class:`SlashInteraction` instead"""
     ...
 
 class SubSlashInteraction(SlashInteraction):
-    """A Sub-:class:`~SlashCommand` command that was used"""
-    
+    """An interaction created by a :class:`~SlashSubCommand`"""
+
     command: SlashSubcommand
     def __init__(self, client, command, data, user, args = None) -> None:
         SlashInteraction.__init__(self, client, command, data, user, args)
@@ -379,20 +379,17 @@ class SlashedSubCommand(SubSlashInteraction):
     """deprecated, please use ``SubSlashInteraction`` instead"""
     ...
 
-
 class ContextInteraction(Interaction):
-    def __init__(self, client, command: ContextCommand, data, user, param) -> None:
+    """An interaction created by a :class:`~MessageCommand` or a :class:`UserCommand`"""
+    def __init__(self, client, command: ContextCommand, data, user, target) -> None:
         Interaction.__init__(self, client._connection, data, user)
         self.command: ContextCommand = command
         """The original command instance that was used"""
         self.bot: commands.Bot = client
-        self.param: Union[Message, Union[discord.Member, discord.User]] = param
-        """The parameter that was received"""
+        self.target: Union[Message, Union[discord.Member, discord.User]] = target
+        """The target object on which the interaction was used"""
         self.permissions: SlashPermission = command.guild_permissions.get(self.guild_id) if command.guild_permissions is not None else None 
         """The permissions for this guild"""
-class ContextCommand(ContextInteraction):
-    """deprecated, please use ``ContextInteraction`` instead"""
-    ...
         
 
 async def getMessage(state: discord.state.ConnectionState, data, response=True):
@@ -587,7 +584,7 @@ class Message(discord.Message):
         self.components.disable(index, disable)
         await self.edit(components=self.components, **fields)
 
-    async def wait_for(self, event_name: Literal["select", "button", "component"], client, custom_id=None, by=None, check=EMPTY_CHECK, timeout=None) -> Union[PressedButton, SelectedMenu, ComponentContext]:
+    async def wait_for(self, event_name: Literal["select", "button", "component"], client, custom_id=None, by=None, check=EMPTY_CHECK, timeout=None) -> Union[ButtonInteraction, SelectInteraction, ComponentContext]:
         """Waits for a message component to be invoked in this message
 
         Parameters
@@ -619,7 +616,7 @@ class Message(discord.Message):
 
         Returns
         --------
-        :class:`~PressedButton` | :class:`~SelectedMenu`
+        :class:`~ButtonInteraction` | :class:`~SelectInteraction`
             The component that was waited for
 
         Example

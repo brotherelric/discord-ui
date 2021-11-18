@@ -193,7 +193,7 @@ And the last method:
 """
 
 from .tools import setup_logger
-from .receive import ComponentContext, Message, PressedButton, SelectedMenu
+from .receive import ComponentContext, Message, ButtonInteraction, SelectInteraction
 from .components import Button, ComponentType, LinkButton, SelectMenu
 
 import discord
@@ -400,7 +400,7 @@ class Listener():
                 await ctx.send("base exception occured " + str(exception))
         
         """
-        def wrapper(callback: Callable[[Listener, Union[PressedButton, SelectedMenu], Exception], Coroutine[None, None, None]]):
+        def wrapper(callback: Callable[[Listener, Union[ButtonInteraction, SelectInteraction], Exception], Coroutine[None, None, None]]):
             callback.__on_error__ = True
             callback.__exception_cls__ = exception_cls
             return callback

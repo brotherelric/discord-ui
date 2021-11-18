@@ -15,7 +15,7 @@ from .slash.types import (
 from .receive import (
     ChoiceGeneratorContext, ComponentContext, 
     Interaction, InteractionType,
-    PressedButton, SelectedMenu,
+    ButtonInteraction, SelectInteraction,
     SlashInteraction, SubSlashInteraction, ContextInteraction,
     getMessage, Message
 )
@@ -280,7 +280,7 @@ class Slash():
         elif CommandType(data["data"]["type"]) is CommandType.User:
             if command is not None:
                 member = await handle_thing(data["data"]["target_id"], OptionType.MEMBER, data, self.parse_method, self._discord)
-                context = ContextInteraction(self._discord, command=command, data=data, user=user, param=member)
+                context = ContextInteraction(self._discord, command=command, data=data, user=user, target=member)
                 # Handle autodefer
                 context._handle_auto_defer(self.auto_defer)
 
@@ -295,7 +295,7 @@ class Slash():
         elif CommandType(data["data"]["type"]) is CommandType.Message:
             if command is not None:
                 message = await handle_thing(data["data"]["target_id"], 44, data, self.parse_method, self._discord)
-                context = ContextInteraction(self._discord, command=command, data=data, user=user, param=message)
+                context = ContextInteraction(self._discord, command=command, data=data, user=user, target=message)
                 # Handle autodefer
                 context._handle_auto_defer(self.auto_defer)
                 
@@ -495,7 +495,7 @@ class Slash():
         .. code-block::
 
             @slash.subcommand_group(base_names="hello", name="world", options=[
-                SlashOption(argument_type="user", name="user", description="the user to tell the holy words")
+                SlashOption(type="user", name="user", description="the user to tell the holy words")
             ], guild_ids=[785567635802816595])
             async def command(ctx, user):
                 ...
@@ -505,7 +505,7 @@ class Slash():
         .. code-block::
 
             @slash.subcommand_group(base_names=["hello", "beautiful"], name="world", options=[
-                SlashOption(argument_type="user", name="user", description="the user to tell the holy words")
+                SlashOption(type="user", name="user", description="the user to tell the holy words")
             ], guild_ids=[785567635802816595])
             async def command(ctx, user):
                 ...
@@ -651,7 +651,7 @@ class Components():
 
         ...
         @client.event("on_button_press")
-        async def on_button(pressedButton):
+        async def on_button(ButtonInteraction):
             ...
 
 
@@ -747,11 +747,11 @@ class Components():
         if int(data["data"]["component_type"]) == 2:
             for x in msg.buttons:
                 if hasattr(x, 'custom_id') and x.custom_id == data["data"]["custom_id"]:
-                    component = PressedButton(data, user, x, msg, self._discord)
+                    component = ButtonInteraction(data, user, x, msg, self._discord)
         elif int(data["data"]["component_type"]) == 3:
             for x in msg.select_menus:
                 if x.custom_id == data["data"]["custom_id"]:
-                    component = SelectedMenu(data, user, x, msg, self._discord)
+                    component = SelectInteraction(data, user, x, msg, self._discord)
         component._handle_auto_defer(self.auto_defer)
         
         
@@ -895,7 +895,7 @@ class Components():
         return webhook._adapter.execute_webhook(payload=payload, wait=wait, files=files)
     def listening_component(self, custom_id, messages=None, users=None, 
         component_type: Literal["button", "select"]=None,
-        check: Callable[[Union[PressedButton, SelectedMenu]], bool]=EMPTY_CHECK
+        check: Callable[[Union[ButtonInteraction, SelectInteraction]], bool]=EMPTY_CHECK
     ):
         """
         Decorator for ``add_listening_component``
@@ -921,7 +921,7 @@ class Components():
 
                 There will be one parameters passed
 
-                    ctx: :class:`~PressedButton` or :class:`~SelectedMenu`
+                    ctx: :class:`~ButtonInteraction` or :class:`~SelectInteraction`
                         The invoked component
                     
                     .. note::
@@ -937,7 +937,7 @@ class Components():
                 ...
             
         """
-        def wrapper(callback: Callable[[Union[PressedButton, SelectedMenu]], Coroutine[Any, Any, Any]]):
+        def wrapper(callback: Callable[[Union[ButtonInteraction, SelectInteraction]], Coroutine[Any, Any, Any]]):
             self.add_listening_component(callback, custom_id, messages, users, component_type, check)
         return wrapper
     def add_listening_component(self, callback, custom_id, messages=None, users=None, component_type: Literal["button", 2, "select", 3]=None, check: Callable[[Union[Component, Button, SelectMenu]], bool]=EMPTY_CHECK):

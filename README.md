@@ -231,6 +231,8 @@ You can contact us on discord
     - Removed `Slash.edit_command` and `Slash.edit_subcommand`, "moved" to `Command.edit`
     - `SlashedCommand` is now `SlashInteraction`, `SlashedSubCommand` is now `SubSlashInteraction` and `SlashedContext` is now `ContextInteraction`
     - The command attributes of CommandInteractions (SlashedCommand, ...) are now moved to `Interaction.command.` (the `.command` attribute is a reference to the real command, if you change properties of the command they will be updated)
+    - The component attributes of an interaction are now moved to `.component`
+    - ContextCommands `.param` attribute is now `.target`
 
     ## **Changed**
     - `ButtonStyle` value names changed: color names are now capitalized and `Danger` is now `Destructive`
@@ -489,8 +491,8 @@ You can contact us on discord
     > [more information](https://discord-ui.readthedocs.io/en/latest/listeners.html)
 
     ## **Changed**
-    - SelectedMenu
-    > `SelectedMenu.selected_values` are not the raw values that were selected, `SelectMenu.selected_options` are the options of type `SlashOption` that were selected
+    - SelectInteraction
+    > `SelectInteraction.selected_values` are not the raw values that were selected, `SelectMenu.selected_options` are the options of type `SlashOption` that were selected
     - MISSING => None
     > All instance values that were `MISSING` by default are now `None`
 
@@ -1000,7 +1002,7 @@ You can contact us on discord
 
     ## **Changed**
 
-    - SelectedMenu
+    - SelectInteraction
     > `.values` is not `.selected_values`
 
     ## **Added**
