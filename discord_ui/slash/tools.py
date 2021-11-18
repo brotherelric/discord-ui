@@ -1,4 +1,4 @@
-from .types import AdditionalType, OptionType
+from .types import OptionType
 from ..tools import get, setup_logger
 from ..errors import CouldNotParse
 from ..enums import Channel, Mentionable
@@ -101,8 +101,6 @@ async def fetch_data(value, typ, data, _discord):
         return await _discord.fetch_channel(int(value))
     elif typ == OptionType.ROLE:
         return get(await (await _discord.fetch_guild(int(data["guild_id"]))).fetch_roles(), check=lambda x: x.id == int(value))
-    elif typ == AdditionalType.MESSAGE:
-        return await (await _discord.fetch_channel(int(data["channel_id"]))).fetch_message(int(value))
     else:
         return value
 
@@ -117,8 +115,6 @@ def resolve_data(value, typ, data, state):
         return resolved["channels"].get(value)
     elif typ == OptionType.MENTIONABLE:
         return list(resolved.values())[0].get(value)
-    elif typ == AdditionalType.MESSAGE:
-        return resolved["messages"].get(value)
     else:
         return value
 
@@ -132,10 +128,6 @@ def cache_data(value, typ, data, _state):
         return _state.get_channel(int(value))
     elif typ == OptionType.ROLE:
         return _state._get_guild(int(data["guild_id"])).get_role(int(value))
-    elif typ == AdditionalType.MESSAGE:
-        return _state._get_guild(int(data["guild_id"])).get_partial_message(int(value))
-    elif typ == AdditionalType.GUILD:
-        return _state._get_guild(int(value))
     else:
         return value
 

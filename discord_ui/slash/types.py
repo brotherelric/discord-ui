@@ -406,10 +406,6 @@ class SlashOption():
     def to_dict(self):
         return self._json | {"options": self._options.to_dict()}
 
-class AdditionalType:
-    MESSAGE     =       44
-    GUILD       =       45
-
 class SlashPermission():
     """Permissions for a slash commannd
         
