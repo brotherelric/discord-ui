@@ -235,6 +235,7 @@ You can contact us on discord
     - ContextCommands `.param` attribute is now `.target`
 
     ## **Changed**
+    - `argument_type` in SlashOption is now `type`
     - `ButtonStyle` value names changed: color names are now capitalized and `Danger` is now `Destructive`
     - `Listener.target_user` is now `Listener.target_users` and can take users, members and ids as the value
     - `BaseCommand.options` and `SlashOption.options` is now of type `SlashOptionCollection`, which allows you to acces options by index and name
