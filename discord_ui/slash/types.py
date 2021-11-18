@@ -1404,7 +1404,7 @@ class CommandCache():
         # application commands
         if isinstance(cache, list):
             for x in cache:
-                self.add(x)
+                self._add(x)
             return self
         # raw cache
         self._cache = cache
@@ -1421,7 +1421,8 @@ class CommandCache():
         return self
     def copy(self):
         return self.__class__(self._client).load(self._cache)
-    def add(self, command: command):
+    def _add(self, command: command):
+        """Adds a command to the internal cache"""
         type_key = str(command.command_type)
         if command.is_global:
             if command.is_subcommand:
@@ -1454,21 +1455,27 @@ class CommandCache():
                 else:
                     self[guild][type_key][command.name] = command
         return self
+    def add(self, base: C) -> C:
+        """Adds a new command to the cache and returns it. Same as :meth:`.append()`
+        
+        Parameters
+        ----------
+        base: :class:`BaseCommand`
+            The command that should be added to the cache
+        """
+        return self.append(base)
     def get(self, key, default=None):
         try:
             return self.__getitem__(key)
         except KeyError:
             return default
     def append(self, base: C, is_base=False) -> C:
-        """Appends a command to the cache. This will handle command aliases for you.
-        If you want to add a new command to the cache, you should use this method instead of :meth:`.add`
-        """
         if base.has_aliases and is_base is False:
             for a in base.__aliases__:
                 cur = base.copy()
                 cur.name = a
                 self.append(cur, is_base=True)
-        self.add(base)
+        self._add(base)
         return base
     def remove(self, base: SlashCommand):
         """Removes a SlashCommand from the cache

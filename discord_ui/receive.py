@@ -150,7 +150,7 @@ class Interaction():
         
         Returns
         -------
-        :class:`~Message` | :class:`EphemeralMessage`
+        :class:`~Message` | :class:`~EphemeralMessage`
             Returns the sent message
         """
         if ninja_mode is True or all(y in [None, False] for x, y in locals().items() if x not in ["self"]):
@@ -282,8 +282,8 @@ class Interaction():
         self.deferred = auto_defer[0]
         self._deferred_hidden = auto_defer[1]
 
-class ChoiceGeneratorContext(Interaction):
-    """A class for information that could be needed for generating choices for autocomopletion"""
+class AutocompleteInteracion(Interaction):
+    """Autocomplete interaction"""
     def __init__(self, command, state, data, options, user=None) -> None:
         Interaction.__init__(self, state, data, user=user)
         self.focused_option: dict = options[get(options, check=lambda x: options[x].get("focused", False))]
@@ -299,11 +299,14 @@ class ChoiceGeneratorContext(Interaction):
         """Cannot defer this type of interaction"""
         raise NotImplementedError()
     async def respond(self, *args, **kwargs):
-        """Cannot rerspond to this type of interaction"""
+        """Response will be made automatically with the choices that are returned"""
         raise NotImplementedError()
     async def send(self, *args, **kwargs):
         """Cannot send followup message to this type of interaction"""
         raise NotImplementedError()
+class ChoiceGeneratorContext(AutocompleteInteracion):
+    """Deprecated, please use :class:`AutocompleteInteractiton` instead"""
+    ...
 
 class ComponentInteraction(Interaction):
     """A received component"""
@@ -312,6 +315,7 @@ class ComponentInteraction(Interaction):
         self.component: UseableComponent = UseableComponent(data["data"]["component_type"])
         self.component._custom_id = data["data"]["custom_id"]
 class ComponentContext(ComponentInteraction):
+    """Deprecated, please use :class:`ComponentInteraction` instead"""
     ...
 
 class SelectInteraction(Interaction):
@@ -370,7 +374,7 @@ class SlashedCommand(SlashInteraction):
     ...
 
 class SubSlashInteraction(SlashInteraction):
-    """An interaction created by a :class:`~SlashSubCommand`"""
+    """An interaction created by a :class:`~SlashSubcommand`"""
 
     command: SlashSubcommand
     def __init__(self, client, command, data, user, args = None) -> None:
@@ -380,7 +384,7 @@ class SlashedSubCommand(SubSlashInteraction):
     ...
 
 class ContextInteraction(Interaction):
-    """An interaction created by a :class:`~MessageCommand` or a :class:`UserCommand`"""
+    """An interaction created by a :class:`~MessageCommand` or a :class:`~UserCommand`"""
     def __init__(self, client, command: ContextCommand, data, user, target) -> None:
         Interaction.__init__(self, client._connection, data, user)
         self.command: ContextCommand = command
@@ -427,7 +431,7 @@ async def getMessage(state: discord.state.ConnectionState, data, response=True):
     return Message(state=state, channel=channel, data=msg_base)
 
 class Message(discord.Message):
-    """A fixed :class:`discord.Message` optimized for components"""
+    """A :class:`discord.Message` optimized for components"""
 
     _state: ConnectionState
     def __init__(self, *, state, channel, data):
@@ -450,26 +454,9 @@ class Message(discord.Message):
         """The select menus components in the message"""
         return self.components.selects
     @property
-    @deprecated(".components.as_action_row()")
-    def action_row(self) -> ActionRow:
-        """All of the components put into an action row""" 
-        return ActionRow(ActionRow(self.components))
-    @property
     @deprecated(".components.get_rows()")
     def action_rows(self) -> List[ActionRow]:
-        """The action rows in the message"""
-        rows = []
-        c_row = []
-        i = 0
-        for x in self.components:
-            if getattr(x, 'new_line', True) == True and i > 0:
-                rows.append(ActionRow(c_row))
-                c_row = []
-            c_row.append(x)
-            i += 1
-        if len(c_row) > 0:
-            rows.append(ActionRow(c_row))
-        return rows
+        return self.components.get_rows()
 
     def _update_components(self, data):
         """Updates the message components"""
@@ -531,44 +518,6 @@ class Message(discord.Message):
         if delete_after is not MISSING:
             await self.delete(delay=delete_after)
 
-    async def disable_action_row(self, row, disable = True, **fields):
-        """Disables an action row of components in the message
-        
-        Parameters
-        ----------
-        row: :class:`int` |  :class:`range`
-            Which rows to disable, first row is ``0``; 
-            If row parameter is of type :class:`int`, the n-th row will be disabled.
-            If type is :class:`range`, the range all rows in the range will be disabled
-        disable: :class:`bool`, optional
-            Whether to disable (``True``) or enable (``False``) the components; default True
-        ``**fields``
-            Parameters for editing the message (like `content=`, `embed=`)
-
-        Raises
-        ------
-        :class:`discord_ui.errors.OutOfValidRange`
-            The specified range was out of the possible range of the component rows 
-        :class:`discord_ui.errors.OutOfValidRange`
-            The specified row was out of the possible range of the component rows
-        
-        """
-        comps = []
-        if isinstance(row, range):
-            for i, r in enumerate(self.action_rows):
-                if i >= len(self.action_rows) or i < 0:
-                    raise OutOfValidRange("row[" + str(i) + "]", 0, len(self.action_rows) - 1)
-                if i in row:
-                    r.disable(disable)
-                comps.append(r)
-        else:
-            for i, r in enumerate(self.action_rows):
-                if i >= len(self.action_rows) or i < 0:
-                    raise OutOfValidRange("row", 0, len(self.action_rows) - 1)
-                if i == row:
-                    r.disable(disable)
-                comps.append(r)
-        await self.edit(components=comps, **fields)
     async def disable_components(self, index=All, disable=True, **fields):
         """Disables component(s) in the message
         
@@ -705,7 +654,7 @@ class EphemeralMessage(Message):
         raise EphemeralDeletion()
 
 class EphemeralResponseMessage(Message):
-    """A ephemeral message wich was created from an interaction
+    """A ephemeral message which was created from an interaction
     
     .. important::
 
@@ -745,11 +694,8 @@ class EphemeralResponseMessage(Message):
         Parameters
         ----------
         disable: :class:`bool`, optional
-            Whether to disable (``True``) or enable (``False``) als components; default True
+            Whether to disable (``True``) or enable (``False``) all components; default True
         
         """
-        fixed = []
-        for x in self.components:
-            x.disabled = disable
-            fixed.append(x)
-        await self.edit(token, components=fixed, **fields)
+        self.components.disable(disable=disable)
+        await self.edit(token, components=self.components, **fields)

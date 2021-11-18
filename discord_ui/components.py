@@ -303,7 +303,7 @@ class UseableComponent(Component):
         Component.__init__(self, component_type)
     @property
     def custom_id(self) -> str:
-        """The custom_id of the component for identifying"""
+        """A custom identifier for this component"""
         return self._custom_id
     @custom_id.setter
     def custom_id(self, value: str):
@@ -315,7 +315,7 @@ class UseableComponent(Component):
 
 class SelectMenu(UseableComponent):
     """
-    Represents a ui-dropdown selectmenu
+    A ui-dropdown selectmenu
 
     Parameters
     ----------
@@ -329,7 +329,7 @@ class SelectMenu(UseableComponent):
         The maximum number of items that can be chosen; default ``1``, max 25
     placeholder: :class:`str`, optional
         A custom placeholder text if nothing is selected, max 100 characters; default MISSING
-    default: :class:`int`, optional
+    default: :class:`int` | :class:`range`, optional
         The position of the option that should be selected by default; default MISSING
     disabled: :class:`bool`, optional
         Whether the select menu should be disabled or not; default ``False``
@@ -625,7 +625,7 @@ class Button(BaseButton, UseableComponent):
 
 class LinkButton(BaseButton):
     """
-    A button that will open a link when it's pressed
+    A ui-button that will open a link when it's pressed
 
     Parameters
     ----------

@@ -376,7 +376,7 @@ class Slash():
         """
         command = SlashCommand(callback, name, description, options, guild_ids=guild_ids, default_permission=default_permission, 
             guild_permissions=guild_permissions, state=self._discord._connection)
-        return self.commands.append(command)
+        return self.commands.add(command)
     def command(self, name=None, description=None, options=None, guild_ids=None, default_permission=True, guild_permissions=None) -> Callable[..., SlashCommand]:
         """
         A decorator for a slash command
@@ -438,7 +438,7 @@ class Slash():
             return self.add_command(name, callback, description, options, guild_ids, default_permission, guild_permissions)
         return wrapper
     def add_subcommand(self, base_names, name=None, callback=None, description=None, options=None, guild_ids=None, default_permission=True, guild_permissions=None):
-        return self.commands.append(SlashSubcommand(callback, base_names, name, description, options, guild_ids=guild_ids, default_permission=default_permission, guild_permissions=guild_permissions, state=self._discord._connection))
+        return self.commands.add(SlashSubcommand(callback, base_names, name, description, options, guild_ids=guild_ids, default_permission=default_permission, guild_permissions=guild_permissions, state=self._discord._connection))
     def subcommand(self, base_names, name=None, description=None, options=None, guild_ids=None, default_permission=True, guild_permissions=None):
         """
         A decorator for a subcommand group
