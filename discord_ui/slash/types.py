@@ -395,6 +395,7 @@ class SlashOption():
 
     @property
     def focused(self) -> bool:
+        """"Whether this option was focused while autocomplete"""
         return self._json.get("focused", False)
     
     @staticmethod
@@ -765,11 +766,12 @@ class BaseCommand():
     # region command
     @property
     def command_type(self) -> CommandType:
+        """The type of the command"""
         return CommandType(self._json["type"])
 
     @property
     def name(self) -> str:
-        """The name of the slash command"""
+        """The name of the command"""
         return self._json["name"]
     @name.setter
     def name(self, value):
@@ -839,11 +841,12 @@ class BaseCommand():
     @property
     def id(self) -> int:
         """The ID of the command.
-            The ID is None until the command was synced with `.sync_commands)=`
+            The ID is None until the command was synced with `Slash.commands.sync()`
         """
         return self._id
     @property
     def has_subcommands(self) -> bool:
+        """Whether this command has subcommands"""
         return any(x.type in [OptionType.SUB_COMMAND_GROUP, OptionType.SUB_COMMAND] for x in self.options)
     @property
     def subcommands(self) -> t.Dict[str, t.Union[SlashSubcommand, t.Dict[str, SlashSubcommand]]]:
@@ -854,7 +857,7 @@ class BaseCommand():
         """Updates the api-command with the local changes
         
         guild_id: :class:`int`, optional:
-            The guild id to which the command update should be limited
+            The guild id to which the command update should be made to
         """
         if self.guild_only:
             [await self._state.slash_http.edit_guild_command(self.id, guild, self.to_dict(), self.permissions.to_dict()) for guild in ([guild_id] if guild_id is not None else self.guild_ids)]
@@ -1002,9 +1005,8 @@ class SlashCommand(BaseCommand):
             setattr(c, x, getattr(self, x))
         return c
     def add_subcommand(self, sub: SlashSubcommand):
-        """Adds a subcommand to this SlashCommand. Note that if you change 
-        one of this subcommands the options won't be updated.
-        
+        """Adds a subcommand to this SlashCommand.
+
         Parameters
         ----------
         sub: :class:`SlashSubcommand`
@@ -1016,14 +1018,8 @@ class SlashCommand(BaseCommand):
             if self.__subcommands__.get(sub.base_names[1]) is None:
                 self.__subcommands__[sub.base_names[1]] = {}
             self.__subcommands__[sub.base_names[1]][sub.name] = sub
-            
-            if self.options.get(sub.base_names[1]) is None:
-                self.options[sub.base_names[1]] = SlashOption(OptionType.SUB_COMMAND_GROUP, sub.base_names[1])
-            self.options[sub.base_names[1]].options[sub.name] = sub.to_option()
         else:
             self.__subcommands__[sub.name] = sub
-            self.options[sub.name] = sub.to_option()
-
 
     @staticmethod
     def _from_data(data, permissions=None, state=None, target_guild=None, guild_ids=None):
@@ -1080,16 +1076,19 @@ class SlashSubcommand(BaseCommand):
         """A shared :class:`~SlashCommand` instance for all subcommands which holds information about the base command"""
         return self._base
     
-    
     @property
     def base_name(self):
+        """The name of the base. Same as ``.base.name``"""
         return self.base.name
     @base_name.setter
     def base_name(self, value):
         self.base_names[0] = format_name(value)
         self.base.name = format_name(value)
     @property
-    def group_name(self):
+    def group_name(self) -> t.Optional[str]:
+        """The name of the parent command group.
+            If your command is ``/my nice command``, ``nice`` would be returned
+        """
         return self.base_names[1] if len(self.base_names) > 1 else None
     @group_name.setter
     def group_name(self, value):
@@ -1142,12 +1141,14 @@ class ContextCommand(BaseCommand):
 
     @property
     def description(self) -> str:
+        """This field is not supported for context-commands"""
         return ""
     @description.setter
     def description(self, _):
         pass
     @property
     def options(self) -> list:
+        """This field is not supported for context-commands"""
         return self._options
     @options.setter
     def options(self, _):
@@ -1203,17 +1204,12 @@ class APITools():
             if x["name"] == name and x["type"] == typ:
                 return x
 
-    
-
 command = t.Union[SlashCommand, SlashSubcommand, MessageCommand, UserCommand]
 class _CommandList(t.TypedDict):
     Slash: t.Dict[str, command]
     User: t.Dict[str, command]
     Message: t.Dict[str, command]
 CommandCacheList = t.Dict[str, _CommandList]
-
-
-Me = t.TypeVar("Me")
 
 class CommandCache():
     def __init__(self, client, commands: t.List[command] = []) -> None:
@@ -1415,6 +1411,7 @@ class CommandCache():
         self._cache = cache
         return self
     def clear(self):
+        """Clears the cache and makes it empty"""
         self._cache = {
             "globals": {
                 str(CommandType.Slash): {},
@@ -1434,7 +1431,6 @@ class CommandCache():
                     base = SlashCommand(None, command.base_names[0], 
                         guild_permissions=command.guild_permissions, default_permission=command.default_permission
                     )
-                # todo: add method to add subcommand to this (autoomatically add it to its options)
                 base.add_subcommand(command)
                 self["globals"][type_key][base.name] = base  
             else:
@@ -1465,6 +1461,9 @@ class CommandCache():
         except KeyError:
             return default
     def append(self, base: C, is_base=False) -> C:
+        """Appends a command to the cache. This will handle command aliases for you.
+        If you want to add a new command to the cache, you should use this method instead of :meth:`.add`
+        """
         if base.has_aliases and is_base is False:
             for a in base.__aliases__:
                 cur = base.copy()
@@ -1473,6 +1472,11 @@ class CommandCache():
         self.add(base)
         return base
     def remove(self, base: SlashCommand):
+        """Removes a SlashCommand from the cache
+        
+        base: :class:`SlashCommand`
+            The command that should be removeed
+        """
         key_type = str(base.command_type)
         name = base.name if not base.is_subcommand else base.base_names[0]
         if base.is_global:
@@ -1494,8 +1498,12 @@ class CommandCache():
                 del self[k][key_type][name][base.name]
                 return
     async def sync(self, delete_unused=False):
-        http = self._state.slash_http
+        """Updates the api with the commands in the cache
         
+        delete_unused: :class:`bool`, optional
+            Whether commands that are not included in this cache should be deleted; default False
+        """
+        http = self._state.slash_http
         
         for ct in self["globals"]:
             for base_name in self["globals"][ct]:
@@ -1583,19 +1591,17 @@ class CommandCache():
         Usage
         -----
 
-        .. code-block::
-        
-            # delete all commands
-            await commands.nuke()
+        delete all commands
+        >>> await commands.nuke()
 
-            # delete only global commands
-            await commands.nuke(guilds=None)
-        
-            # delete only guild commandsd
-            await commands.nuke(globals=False)
-        
-            # delete commands in specific guilds
-            await commands.nuke(globals=False, [814473329325899787])
+        delete only global commands
+        >>> await commands.nuke(guilds=None)
+    
+        delete only guild commands
+        >>> await commands.nuke(globals=False)
+    
+        delete commands in specific guilds
+        >>> await commands.nuke(globals=False, guilds=[814473329325899787])
         """
         if guilds is All:
             guilds = self._cache["!globals"]
@@ -1663,17 +1669,22 @@ class CommandCache():
 
     @property
     def all(self) -> CommandCacheList:
+        """All commands"""
         return self._cache
     @property
     def globals(self) -> t.Dict[str, command]:
+        """All global commands"""
         return self["globals"]
     @property
     def chat_commands(self) -> t.Dict[str, SlashCommand]:
+        """All chat commands (slash commands)"""
         return self.filter_commands(CommandType.Slash)
     @property
     def context_commands(self) -> t.Dict[str, t.Union[MessageCommand, UserCommand]]:
+        """All context commands (message commands, user commands)"""
         return self.filter_commands((CommandType.Message, CommandType.User))
     @property
     def subcommands(self) -> t.Dict[str, t.Union[SlashSubcommand, t.Dict[str, SlashSubcommand]]]:
+        """All subcommands"""
         filter = [list(x.values()) for x in list(self.filter_commands(CommandType.Slash).values())]
         return [z for a in [y.subcommands for x in filter for y in x] for z in a]
