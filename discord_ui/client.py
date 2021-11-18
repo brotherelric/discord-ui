@@ -563,7 +563,7 @@ class Slash():
                 ...
         """
         def wrapper(callback) -> UserCommand:
-            return self.commands.apppend(UserCommand(callback, name, guild_ids, default_permission, guild_permissions, state=self._discord._connection))
+            return self.commands.add(UserCommand(callback, name, guild_ids, default_permission, guild_permissions, state=self._discord._connection))
         return wrapper
     def message_command(self, name=None, guild_ids=None, default_permission=True, guild_permissions=None):
         """
