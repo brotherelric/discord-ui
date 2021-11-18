@@ -6,7 +6,7 @@ from .components import Button, Component, SelectMenu
 
 from .slash.http import SlashHTTP
 from .slash.errors import NoAsyncCallback
-from .slash.tools import ParseMethod, handle_options, handle_thing
+from .slash.tools import AdditionalType, ParseMethod, handle_options, handle_thing
 from .slash.types import (
     CommandCache, OptionType, SlashOption,
     MessageCommand , SlashCommand, SlashSubcommand, UserCommand
@@ -294,7 +294,7 @@ class Slash():
         # MessageContext command
         elif CommandType(data["data"]["type"]) is CommandType.Message:
             if command is not None:
-                message = await handle_thing(data["data"]["target_id"], 44, data, self.parse_method, self._discord)
+                message = await handle_thing(data["data"]["target_id"], AdditionalType.MESSAGE, data, self.parse_method, self._discord)
                 context = ContextInteraction(self._discord, command=command, data=data, user=user, target=message)
                 # Handle autodefer
                 context._handle_auto_defer(self.auto_defer)
