@@ -149,7 +149,7 @@ class Slash():
                     setattr(cog, "s", getattr(InteractionableCog, s))
             for com in self._get_cog_commands(cog):
                 com.cog = cog
-                self.commands.append(com)
+                self.commands.add(com)
             old_add(*args, **kwargs)
             if self.ready and self.sync_on_cog is True:
                 self._discord.loop.create_task(self.commands.sync(self.delete_unused))
@@ -512,7 +512,7 @@ class Slash():
 
         """
         def wrapper(callback):
-            return self.commands.append(SlashSubcommand(
+            return self.commands.add(SlashSubcommand(
                 callback, base_names, name, description, options=options, 
                 guild_ids=guild_ids, default_permission=default_permission, guild_permissions=guild_permissions,
                 state=self._discord._connection
@@ -610,7 +610,7 @@ class Slash():
                 ...
         """
         def wrapper(callback):
-            return self.commands.append(MessageCommand(callback, name, guild_ids, default_permission, guild_permissions, state=self._discord._connection))
+            return self.commands.add(MessageCommand(callback, name, guild_ids, default_permission, guild_permissions, state=self._discord._connection))
         return wrapper
 
 class Components():

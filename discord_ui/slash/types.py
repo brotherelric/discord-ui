@@ -847,7 +847,7 @@ class BaseCommand():
     @property
     def has_subcommands(self) -> bool:
         """Whether this command has subcommands"""
-        return any(x.type in [OptionType.SUB_COMMAND_GROUP, OptionType.SUB_COMMAND] for x in self.options)
+        return len(self.subcommands) > 0
     @property
     def subcommands(self) -> t.Dict[str, t.Union[SlashSubcommand, t.Dict[str, SlashSubcommand]]]:
         """List of references to :class:`Subcommand` instances of this base"""
@@ -1422,7 +1422,6 @@ class CommandCache():
     def copy(self):
         return self.__class__(self._client).load(self._cache)
     def _add(self, command: command):
-        """Adds a command to the internal cache"""
         type_key = str(command.command_type)
         if command.is_global:
             if command.is_subcommand:
@@ -1446,10 +1445,9 @@ class CommandCache():
                     # is subcommand
                     base = self[guild][type_key].get(command.base_names[0])
                     if base is None:
-                        base = SlashCommand(None, command.base_names[0], 
+                        base = SlashCommand(None, command.base_names[0],
                             guild_permissions=command.guild_permissions, default_permission=command.default_permission
                         )
-                    # todo: add method to add subcommand to this (autoomatically add it to its options)
                     base.add_subcommand(command)
                     self[guild][type_key][base.name] = base  
                 else:
