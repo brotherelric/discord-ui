@@ -134,14 +134,14 @@ Now that we sent some components, how do we receive them?
 Receiving
 ~~~~~~~~~~~~~~~
 
-To receive a button press or a selection, we can listen to the ``button_press`` and the ``menu_select`` events
+To receive a button press or a selection, we can listen to the ``button`` and the ``select`` events
 
 
 **Button**
 
 .. code-block::
 
-    @client.listen('on_button_press')
+    @client.listen('on_button')
     async def on_button(btn):
         # respond
         await btn.respond("you clicked on " + btn.content)
@@ -157,7 +157,7 @@ If you want to acces the message on which the button is, you use ``btn.messsage`
 
 .. code-block::
 
-    @client.listen('on_menu_select')
+    @client.listen('on_select')
     async def on_menu(menu):
         # respond
         await menu.respond("you selected " + ', '.join([value.content for value in menu.selected_options]))

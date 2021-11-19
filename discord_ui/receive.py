@@ -599,9 +599,9 @@ class Message(discord.Message):
             raise WrongType("client", client, "discord.ext.commands.Bot")
         
         if event_name.lower() == "button":
-            return await client.wait_for('button_press', check=_check, timeout=timeout)
+            return await client.wait_for('button', check=_check, timeout=timeout)
         if event_name.lower() == "select":
-            return await client.wait_for("menu_select", check=_check, timeout=timeout)
+            return await client.wait_for("select", check=_check, timeout=timeout)
         if event_name.lower() == "component":
             return await client.wait_for("component", check=_check, timeout=timeout)
         

@@ -649,7 +649,7 @@ class Components():
     .. code-block::
 
         ...
-        @client.event("on_button_press")
+        @client.event('on_button')
         async def on_button(ButtonInteraction):
             ...
 
@@ -659,7 +659,7 @@ class Components():
     .. code-block::
 
         ...
-        @client.event("on_menu_select")
+        @client.event('on_select')
         async def on_select(seletedMenu):
             ...
 
@@ -756,9 +756,11 @@ class Components():
         
         # dispatch client events before listeners so the exception wont stop executing the function
         if ComponentType(data["data"]["component_type"]) is ComponentType.Button:
-            self._discord.dispatch("button_press", component)
+            self._discord.dispatch("button", component)
+            self._discord.dispatch("button_press", component)   # deprecated
         elif ComponentType(data["data"]["component_type"]) is ComponentType.Select:
-            self._discord.dispatch("menu_select", component)
+            self._discord.dispatch("select", component)
+            self._discord.dispatch("menu_select", component)    # deprecated
         
         # Get listening components with the same custom id
         listening_components = self.listening_components.get(data["data"]["custom_id"])

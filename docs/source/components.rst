@@ -45,7 +45,7 @@ A sole parameter will be passed
     await client.wait_for('component', check=lambda com: ...)
 
 
-``button_press``
+``button``
 ~~~~~~~~~~~~~~~~~~~~~~
     
 This event will be dispatched whenever a button was pressed
@@ -57,15 +57,15 @@ A sole parameter will be passed:
 .. code-block::
 
     @client.listen()
-    def on_button_press(btn: ButtonInteraction):
+    def on_button(btn: ButtonInteraction):
         ...
 
 .. code-block::
 
-    await client.wait_for('button_press', check=lambda btn: ...)
+    await client.wait_for('button', check=lambda btn: ...)
 
 
-``menu_select``
+``select``
 ~~~~~~~~~~~~~~~~~~~~~~
 
 This event will be dispatched whenever a value was selected in a :class:`~SelectInteraction`
@@ -77,12 +77,12 @@ A sole paremeter will be passed
 .. code-block::
 
     @client.listen()
-    def on_menu_select(menu: SelectInteraction):
+    def on_select(menu: SelectInteraction):
         ...
 
 .. code-block::
 
-    await client.wait_for('menu_select', check=lambda menu: ...)
+    await client.wait_for('select', check=lambda menu: ...)
 
 
 Components
