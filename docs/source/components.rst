@@ -37,7 +37,7 @@ A sole parameter will be passed
 .. code-block::
 
     @client.listen()
-    async on_compoent(component: ComponentContext):
+    async on_componet(component: ComponentContext):
         ...
 
 .. code-block::
@@ -108,16 +108,6 @@ ButtonStyle
 ~~~~~~~~~~~~~~~~~~~~~~
 
 .. autoclass:: ButtonStyle
-
-    .. note::
-
-        *  (Primary, blurple) = 1
-
-        *  (Secondary, grey) = 2
-        
-        *  (Succes, green) = 3
-        
-        *  (Danger, red) = 4
     
 
 SelectMenu
@@ -135,13 +125,6 @@ SelectOption
 .. autoclass:: SelectOption
     :members:
     :exclude-members: to_dict
-
-
-ActionRow
-~~~~~~~~~~
-
-.. autoclass:: ActionRow
-    :members:
 
 
 Interactions
@@ -166,7 +149,7 @@ ButtonInteraction
 SelectInteraction
 ~~~~~~~~~~~~~~~~~~~~~~
 
-.. autoclass:: SelectInteraction
+.. autoclass:: SelectInteraction()
     :members:
     :inherited-members:
     :exclude-members: to_dict

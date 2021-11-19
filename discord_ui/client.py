@@ -13,7 +13,7 @@ from .slash.types import (
 )
 
 from .receive import (
-    ChoiceGeneratorContext, ComponentContext, 
+    AutocompleteInteraction, ComponentContext, 
     Interaction, InteractionType,
     ButtonInteraction, SelectInteraction,
     SlashInteraction, SubSlashInteraction, ContextInteraction,
@@ -243,7 +243,7 @@ class Slash():
                 ) 
                 for x in raw_options
             }
-            choice_ctx = ChoiceGeneratorContext(command, self._discord._connection, data, parsed_options, user) 
+            choice_ctx = AutocompleteInteraction(command, self._discord._connection, data, parsed_options, user) 
             return await self.http.respond_to(choice_ctx.id, choice_ctx.token, InteractionResponseType.Autocomplete_result, {
                 "choices": [(
                         {"name": x[0], "value": x[1]} if isinstance(x, tuple) else x

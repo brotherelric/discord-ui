@@ -100,9 +100,9 @@ Example for autocompletion of choices
 
 ```py
 import discord
-from discord_ui import UI, SlashOption, ChoiceGeneratorContext
+from discord_ui import UI, SlashOption, AutocompleteInteraction
 
-async def generator(ctx: ChoiceGeneratorContext):
+async def generator(ctx: AutocompleteInteraction):
     available_choices = ["hmm", "this", "is", "a", "an", "test", "testing"]
     return [(x, x) for x in available_choices if x.startswith(ctx.value_query)]
 
