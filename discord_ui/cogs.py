@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+
 from .tools import EMPTY_CHECK
 from .slash.types import BaseCommand, ContextCommand, MessageCommand, SlashCommand, SlashSubcommand, UserCommand
 from .receive import ButtonInteraction, SelectInteraction
@@ -514,6 +515,7 @@ def subslash_command(base_names, name=None, description=None, options=None, guil
     def wrapper(callback):
         return CogSubCommandGroup(callback, base_names, name, description=description, options=options, guild_ids=guild_ids, default_permission=default_permission, guild_permissions=guild_permissions)
     return wrapper
+
 def context_command(type: Literal["user", 2, "message", 3], name=None, guild_ids=None, default_permission=None, guild_permissions=None):
     """
     Decorator for cogs that will register a context command in discord
@@ -538,15 +540,10 @@ def context_command(type: Literal["user", 2, "message", 3], name=None, guild_ids
     ---------
     callback: :class:`method(ctx, message)`
         The asynchron function that will be called if the command was used
-            ctx: :class:`~SubSlashInteraction`
+            ctx: :class:`~SlashCommand`
                 The used slash command
-            message: :class:`~Message`
+            message: :class:`~Message | :class:`discord.Member`
                 The message on which the command was used
-            
-            .. note::
-
-                ``ctx`` and ``message`` are just example names, you can use whatever you want for that
-    
     Example
     -------
     
@@ -573,6 +570,13 @@ def context_command(type: Literal["user", 2, "message", 3], name=None, guild_ids
         else:
             raise InvalidArgument("Invalid context type! type has to be one of 'user', 1, 'message', 2!")
     return wrapper
+def user_command(name=None, guild_ids=None, default_permission=None, guild_permissions=None):
+    """Shortcut to :meth:`context_command(2, ...)`"""
+    return context_command(2, name, guild_ids, default_permission, guild_permissions)
+def message_command(name=None, guild_ids=None, default_permission=None, guild_permissions=None):
+    """Shortcut to :meth:`context_command(3, ...)`"""
+    return context_command(3, name, guild_ids, default_permission, guild_permissions)
+
 def listening_component(custom_id, messages=None, users=None, 
     component_type: Literal['button', 'select']=None, 
     check: Callable[[Union[ButtonInteraction, SelectInteraction]], bool]=EMPTY_CHECK
