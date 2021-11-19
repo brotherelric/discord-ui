@@ -1,4 +1,5 @@
 from __future__ import annotations
+import asyncio
 
 from .http import ModifiedSlashState
 from .errors import (
@@ -13,7 +14,7 @@ from ..enums import CommandType, OptionType
 from ..errors import InvalidLength, WrongType
 
 import discord
-from discord.ext.commands import Bot
+from discord.ext.commands import Bot, BadArgument
 
 import re
 import typing as t
@@ -428,7 +429,7 @@ class SlashPermission():
             You can use ``SlashPermission.Role`` and ``SlashPermission.User`` instead
 
         """
-    def __init__(self, allowed: dict=None, forbidden=None) -> None:
+    def __init__(self, allowed: t.Union[dict, list]=None, forbidden: t.Union[dict, list]=None) -> None:
         """Creates a new permission object for a slash command
         
         Examples
@@ -1364,7 +1365,25 @@ class CommandCache():
         if isinstance(object, self.__class__):
             return len(object._cache) == len(self._cache) and object._cache == self._cache
         return False
+    
+    def _on_sync(self):
+        ...
+    def on_sync(self, method):
+        """Decorator for a method that should be called when the commands were synced
+        
+        Usage
+        ------
 
+        .. code-block::
+
+            @Slash.commands.on_sync
+            async def on_commands_sync():
+                ...
+        """
+        if not asyncio.iscoroutinefunction(method):
+            raise BadArgument("on_sync has to be async")
+        self._on_sync = method
+        
 
     # region overloading def load(self, cache)
     @t.overload
@@ -1579,8 +1598,9 @@ class CommandCache():
                     if self[guild][key_type].get(guild_command["name"]) is None:
                         await http.delete_guild_command(guild_command["id"], guild)
                         continue
-    
+        
         self._client.dispatch("commands_synced")
+        await self._on_sync()
     async def nuke(self, globals=True, guilds=All):
         """
         Deletes all commands registered in the api of this bot

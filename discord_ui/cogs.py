@@ -426,7 +426,7 @@ def slash_command(name=None, description=None, options=None, guild_ids=None, def
             ... 
 
             @slash_command(name="hello_world", options=[
-                SlashOption(str, name="parameter", description="this is a parameter", choices=[{ "name": "choice 1", "value": "test" }])
+            SlashOption(str, name="parameter", description="this is a parameter", choices=[{ "name": "choice 1", "value": "test" }])
             ], guild_ids=[785567635802816595], default_permission=False, 
             guild_permissions={
                     785567635802816595: SlashPermission(allowed={"539459006847254542": SlashPermission.USER})
