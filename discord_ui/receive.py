@@ -283,14 +283,14 @@ class Interaction():
         self.deferred = auto_defer[0]
         self._deferred_hidden = auto_defer[1]
 
-class AutocompleteInteracion(Interaction):
+class AutocompleteInteraction(Interaction):
     """Autocomplete interaction"""
     def __init__(self, command, state, data, options, user=None) -> None:
         Interaction.__init__(self, state, data, user=user)
         self.focused_option: dict = options[get(options, check=lambda x: options[x].get("focused", False))]
         """The option for which the choices should be generated"""
         self.value_query: Union[str, int] = self.focused_option["value"]
-        """The current 'query' for the value"""
+        """The current input of the focused option"""
         self.selected_options: Dict[str, Any] = {options[x]["name"]: options[x]["value"] for x in options}
         """All the options that were already selected"""
         self.command: Union[SlashInteraction, SlashInteraction, ContextInteraction] = command
@@ -305,7 +305,7 @@ class AutocompleteInteracion(Interaction):
     async def send(self, *args, **kwargs):
         """Cannot send followup message to this type of interaction"""
         raise NotImplementedError()
-class ChoiceGeneratorContext(AutocompleteInteracion):
+class ChoiceGeneratorContext(AutocompleteInteraction):
     """Deprecated, please use :class:`AutocompleteInteractiton` instead"""
     ...
 

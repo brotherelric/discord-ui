@@ -245,9 +245,19 @@ class Slash():
             }
             choice_ctx = AutocompleteInteraction(command, self._discord._connection, data, parsed_options, user) 
             return await self.http.respond_to(choice_ctx.id, choice_ctx.token, InteractionResponseType.Autocomplete_result, {
-                "choices": [(
+                "choices": [
+                    (
                         {"name": x[0], "value": x[1]} if isinstance(x, tuple) else x
-                    ) for x in (await get(command.options, choice_ctx.focused_option["name"], lambda x: getattr(x, "name", None)).choice_generator(choice_ctx))
+                    ) for x in (
+                        await (
+                            get(command.options, choice_ctx.focused_option["name"], lambda x: getattr(x, "name", None)
+                            )
+                        ).choice_generator( *(
+                            [command.cog, choice_ctx] 
+                                if hasattr(command, "cog") and command.cog is not None else 
+                            [choice_ctx]
+                        ) )
+                    )
                 ]
             })
 
