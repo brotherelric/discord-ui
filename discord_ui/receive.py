@@ -156,6 +156,7 @@ class Interaction():
         if ninja_mode is True or all(y in [None, False] for x, y in locals().items() if x not in ["self"]):
             try:
                 await self._state.slash_http.respond_to(self.id, self.token, InteractionResponseType.Deferred_message_update)
+                self.responded = True
                 return
             except discord.errors.HTTPException as x:
                 if "value must be one of (4, 5)" in str(x).lower():

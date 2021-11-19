@@ -463,6 +463,8 @@ class BaseButton(Component):
         self.disabled = disabled
         self.emoji = emoji
 
+    def __repr__(self):
+        return f"<{self.__class__.__name}(content={self.content}, custom_id={self.custom_id})>"
     def __str__(self) -> str:
         return self.content
     def to_dict(self):
@@ -663,7 +665,7 @@ class LinkButton(BaseButton):
         self.url = url
 
     def __repr__(self) -> str:
-        return f"<discord_ui.LinkButton({self.custom_id}:{self.content})>"
+        return f"<{self.__class__.__name__}(url={self.url}, content={self.content}, custom_id={self.custom_id})>"
     def copy(self) -> LinkButton:
         return self.__class__(
             url=self.url, 

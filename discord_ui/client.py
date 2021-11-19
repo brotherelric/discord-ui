@@ -744,11 +744,11 @@ class Components():
 
         # Handle auto_defer
         if int(data["data"]["component_type"]) == 2:
-            for x in msg.buttons:
+            for x in msg.components.buttons:
                 if hasattr(x, 'custom_id') and x.custom_id == data["data"]["custom_id"]:
                     component = ButtonInteraction(data, user, x, msg, self._discord)
         elif int(data["data"]["component_type"]) == 3:
-            for x in msg.select_menus:
+            for x in msg.components.select_menus:
                 if x.custom_id == data["data"]["custom_id"]:
                     component = SelectInteraction(data, user, x, msg, self._discord)
         component._handle_auto_defer(self.auto_defer)
