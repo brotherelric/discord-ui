@@ -55,8 +55,6 @@ if TYPE_CHECKING:
     P = ParamSpec('P')
 
 
-
-
 def deprecated(instead=None) -> Callable[[Callable[P, R]], Callable[P, R]]:
     def wrapper(callback: Callable[P, R]) -> Callable[P, R]:
         @functools.wraps(callback)
@@ -79,6 +77,9 @@ def deprecated(instead=None) -> Callable[[Callable[P, R]], Callable[P, R]]:
     return wrapper
 
 
+def _raise(ex):
+    """Method to raise an exception in a context where the normal `raise` context cant be used"""
+    raise ex
 def _none(*args, empty_array=False):
     return all(x in [None, MISSING] + [[], [[]]][empty_array is True] for x in args)
 def _or(*args, default=None):

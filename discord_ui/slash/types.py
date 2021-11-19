@@ -2,7 +2,7 @@ from __future__ import annotations
 import asyncio
 
 from .http import ModifiedSlashState
-from ..tools import All
+from ..tools import All, _raise
 from ..enums import CommandType, OptionType
 from ..errors import InvalidLength, WrongType
 from .errors import (
@@ -912,14 +912,17 @@ class BaseCommand():
             "options": (
                 # if no subcommands are present use normal options
                 self._options.to_dict() 
-                    if not self.has_subcommands 
+                    if not self.has_subcommands
                 else (
-                    # otherwise use subcommands
-                    [x.to_dict() for x in self.subcommands.values()]
-                        if all(not isinstance(x, dict) for x in self.subcommands.values()) else
-                    [SlashOption(OptionType.SUB_COMMAND_GROUP, x, options=[
-                        self.subcommands[x][y].to_option() for y in self.subcommands[x]
-                    ]).to_dict() for x in self.subcommands]
+                    [
+                        self.subcommands[x].to_dict() 
+                            if not isinstance(self.subcommands[x], dict) else 
+                        SlashOption(OptionType.SUB_COMMAND_GROUP, x, options=[
+                            self.subcommands[x][y].to_option() for y in self.subcommands[x]
+                        ]).to_dict()
+                        
+                        for x in self.subcommands
+                    ]
                 )
             )
         }
