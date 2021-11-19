@@ -9,7 +9,7 @@ from .tools import deprecated
 
 import discord
 from discord.errors import InvalidArgument
-from discord.ext import Cog, CheckFailure, CooldownMapping, BucketType, CommandOnCooldown
+from discord.ext.commands import Cog, CheckFailure, CooldownMapping, BucketType, CommandOnCooldown
 
 import inspect
 import asyncio
