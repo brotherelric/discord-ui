@@ -2,6 +2,9 @@ from __future__ import annotations
 import asyncio
 
 from .http import ModifiedSlashState
+from ..tools import All
+from ..enums import CommandType, OptionType
+from ..errors import InvalidLength, WrongType
 from .errors import (
     CallbackMissingContextCommandParameters, 
     MissingOptionParameter, 
@@ -9,9 +12,6 @@ from .errors import (
     OptionalOptionParameter,
     NoCommandFound
 )
-from ..tools import All
-from ..enums import CommandType, OptionType
-from ..errors import InvalidLength, WrongType
 
 import discord
 from discord.ext.commands import Bot, BadArgument

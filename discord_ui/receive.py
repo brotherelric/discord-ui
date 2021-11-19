@@ -3,15 +3,15 @@ from __future__ import annotations
 
 from .enums import InteractionResponseType
 from .slash.http import ModifiedSlashState
-from .errors import InvalidEvent, OutOfValidRange, WrongType
+from .errors import InvalidEvent, WrongType
 from .http import BetterRoute, get_message_payload, send_files
 from .slash.errors import AlreadyDeferred, EphemeralDeletion
-from .tools import EMPTY_CHECK, MISSING, All, deprecated, get_index, setup_logger, get
+from .tools import EMPTY_CHECK, MISSING, All, deprecated, setup_logger, get
 from .slash.types import ContextCommand, SlashCommand, SlashPermission, SlashSubcommand
 from .components import ActionRow, Button, ComponentStore, LinkButton, SelectMenu, SelectOption, UseableComponent, make_component
 
 import discord
-from discord import utils, NotFound
+from discord import utils
 from discord.ext import commands
 from discord.state import ConnectionState
 

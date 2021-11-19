@@ -1,5 +1,5 @@
 from .errors import WrongType
-from .tools import MISSING, _or, components_to_dict, setup_logger
+from .tools import MISSING, components_to_dict, setup_logger
 
 import discord
 from discord.http import Route
@@ -51,7 +51,7 @@ def get_message_payload(content=MISSING, tts=False, embed: discord.Embed=MISSING
             payload["content"] = str(content)
 
     if suppress not in [MISSING, None]:
-        flags = discord.MessageFlags._from_value(_or(flags, discord.MessageFlags.DEFAULT_VALUE))
+        flags = discord.MessageFlags._from_value(flags or discord.MessageFlags.DEFAULT_VALUE)
         flags.suppress_embeds = suppress
         payload['flags'] = flags.value
     

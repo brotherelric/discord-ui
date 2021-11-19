@@ -7,12 +7,8 @@ from .enums import ComponentType
 from .tools import deprecated
 
 import discord
-from discord.ext import commands
 from discord.errors import InvalidArgument
-try:
-    from discord.ext.commands.errors import * 
-except ImportError:
-    from discord.ext.commands import *
+from discord.ext import Cog, CheckFailure, CooldownMapping, BucketType, CommandOnCooldown
 
 import inspect
 import asyncio
@@ -54,9 +50,9 @@ class BaseCallable():
         if hasattr(self.callback, "__commands_cooldown__"):
             cooldown = self.callback.__commands_cooldown__
         try:
-            self._buckets = commands.CooldownMapping(cooldown)
+            self._buckets = CooldownMapping(cooldown)
         except TypeError:
-            self._buckets = commands.CooldownMapping(cooldown, commands.BucketType.default)
+            self._buckets = CooldownMapping(cooldown, BucketType.default)
 
         self._max_concurrency = None
         if hasattr(self.callback, "__commands_max_concurrency__"):
@@ -647,7 +643,7 @@ def listening_component_cog(*args, **kwargs):
 def _get_instances_for(target, cls=BaseCallable, check=EMPTY_CHECK):
     return [x[1] for x in inspect.getmembers(target, lambda x: isinstance(x, cls) and check(x) is True)]
 
-class InteractionableCog(commands.Cog):
+class InteractionableCog(Cog):
     # for addint to default cog
     __custom_slots__ = (
         'get_listening_components', 

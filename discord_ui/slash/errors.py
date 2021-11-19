@@ -1,4 +1,4 @@
-from discord.errors import *
+from discord.errors import ClientException
 
 class NoCommandFound(ClientException):
     """Exception that is raised when you try to get a command with a name that doesn't exists"""

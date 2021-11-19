@@ -197,10 +197,7 @@ from .receive import ComponentContext, Message, ButtonInteraction, SelectInterac
 from .components import Button, ComponentType, LinkButton, SelectMenu
 
 import discord
-try:
-    from discord.ext.commands.errors import CheckFailure
-except:
-    from discord.ext.commands import CheckFailure
+from discord.ext.commands import CheckFailure
 
 import asyncio
 from inspect import getmembers

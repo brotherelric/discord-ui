@@ -4,7 +4,7 @@ import discord
 
 import inspect
 from enum import IntEnum
-from typing import Generic, NewType, TypeVar, Union, Callable
+from typing import Union
 
 Channel = Union[
     discord.TextChannel, 

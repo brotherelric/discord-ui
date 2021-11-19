@@ -1,8 +1,7 @@
+from .errors import NoCommandFound
 from ..tools import get, setup_logger
 from ..http import BetterRoute, handle_rate_limit, send_files
-from .errors import NoCommandFound
 
-import discord
 from discord.http import HTTPClient
 from discord.state import ConnectionState
 from discord import NotFound, HTTPException, Forbidden

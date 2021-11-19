@@ -1,7 +1,10 @@
 from ..http import SlashHTTP
-from ..types import SlashCommand, SlashOption, SlashOptionCollection, SlashPermission, SlashSubcommand, format_name
 from ...enums import CommandType, OptionType
 from ...tools import try_get
+from ..types import (
+    SlashCommand, SlashOption, SlashOptionCollection, 
+    SlashPermission, SlashSubcommand, format_name
+)
 
 import inspect
 from typing import List, Dict

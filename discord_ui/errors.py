@@ -1,7 +1,4 @@
-try:
-    from discord.ext.commands.errors import BadArgument
-except ImportError:
-    from discord.ext.commands import BadArgument
+from discord.ext.commands import BadArgument
 
 class InvalidLength(BadArgument):
     """This exception is thrown whenever a invalid length was provided"""

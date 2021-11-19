@@ -8,7 +8,7 @@ from .slash.http import SlashHTTP
 from .slash.errors import NoAsyncCallback
 from .slash.tools import AdditionalType, ParseMethod, handle_options, handle_thing
 from .slash.types import (
-    CommandCache, OptionType, SlashOption,
+    CommandCache, OptionType,
     MessageCommand , SlashCommand, SlashSubcommand, UserCommand
 )
 
@@ -29,7 +29,6 @@ from .enums import InteractionResponseType, ComponentType
 
 
 import discord
-from discord.errors import *
 from discord.ext import commands
 
 import json

@@ -5,12 +5,12 @@ from .enums import ButtonStyle, ComponentType
 from .errors import InvalidLength, OutOfValidRange, WrongType
 
 import discord
-from discord.errors import *
+from discord.errors import InvalidArgument
 
 import inspect
 import string
 from random import choice
-from typing import Any, List, Union
+from typing import List, Union
 
 __all__ = (
     'SelectMenu',
