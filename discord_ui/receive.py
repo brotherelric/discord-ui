@@ -292,7 +292,7 @@ class AutocompleteInteraction(Interaction):
         self.value_query: Union[str, int] = self.focused_option["value"]
         """The current input of the focused option"""
         self.selected_options: Dict[str, Any] = {options[x]["name"]: options[x]["value"] for x in options}
-        """All the options that were already selected"""
+        """All the options that were already selected. Format: ``{"option name": value}``"""
         self.command: Union[SlashInteraction, SlashInteraction, ContextInteraction] = command
         """The slash command for which the choices should be generated"""
 
