@@ -699,7 +699,7 @@ class BaseCommand():
                 o.get('type') == self.command_type.value 
                 and o.get('name') == self.name
                 and o.get('description') == self.description
-                and o.get('options', []) == self.options
+                and o.get('options', []) == (self.options if not self.has_subcommands else self._subcommands_to_options())
                 and o.get("default_permission", True) == self.default_permission
             )
         elif isinstance(o, SlashCommand):
@@ -708,6 +708,7 @@ class BaseCommand():
                 and o.name == self.name
                 and o.description == self.description
                 and o.options == self.options
+                and o.subcommands == self.subcommands
                 and o.default_permission == self.default_permission
             )
         else:
@@ -907,23 +908,23 @@ class BaseCommand():
         """Returns a class copy of itself"""
         raise NotImplementedError()
 
+    def _subcommands_to_options(self) -> t.List[SlashOption]:
+        return [
+                self.subcommands[x] 
+                    if not isinstance(self.subcommands[x], dict) else 
+                SlashOption(OptionType.SUB_COMMAND_GROUP, x, options=[
+                    self.subcommands[x][y].to_option() for y in self.subcommands[x]
+                ])
+                
+                for x in self.subcommands
+            ]
     def to_dict(self):
         return self._json | {
             "options": (
                 # if no subcommands are present use normal options
                 self._options.to_dict() 
                     if not self.has_subcommands
-                else (
-                    [
-                        self.subcommands[x].to_dict() 
-                            if not isinstance(self.subcommands[x], dict) else 
-                        SlashOption(OptionType.SUB_COMMAND_GROUP, x, options=[
-                            self.subcommands[x][y].to_option() for y in self.subcommands[x]
-                        ]).to_dict()
-                        
-                        for x in self.subcommands
-                    ]
-                )
+                else [x.to_dict() for x in self._subcommands_to_options()]
             )
         }
 
