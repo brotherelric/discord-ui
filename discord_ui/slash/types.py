@@ -1216,6 +1216,7 @@ class CommandCache():
         self.api = APITools(client)
         self._client: Bot = client
         self._cache: CommandCacheList = {}
+        self._raw_cache = {}    # dict with commands saved together with their id
         self._state: ModifiedSlashState = self._client._connection
         # setup cache
         self.clear()
@@ -1527,6 +1528,7 @@ class CommandCache():
             Whether commands that are not included in this cache should be deleted; default False
         """
         http = self._state.slash_http
+        self._raw_cache = {}
         
         for ct in self["globals"]:
             for base_name in self["globals"][ct]:
@@ -1540,6 +1542,7 @@ class CommandCache():
                         new_command = await http.edit_global_command(api_command["id"], base.to_dict())
                 # directly set the id of the command so no extra request is needed
                 base._id = new_command["id"] if new_command else api_command["id"]
+                self._raw_cache[base._id] = base
 
         # self["!globals"] returns a copy of a filtered dict but since we will be only using the 
         # copy's key and acces the original self dict, there won't be any problems
@@ -1571,6 +1574,7 @@ class CommandCache():
                     elif api_permissions != base.permissions:
                         await http.update_command_permissions(guild, api_command["id"], base.permissions.to_dict())
                     base._id = new_command["id"] if new_command else api_command["id"]
+                    self._raw_cache[base._id] = base
 
         if delete_unused is True:
             for global_command in await self.api.get_global_commands():
@@ -1638,28 +1642,10 @@ class CommandCache():
         
 
     def get_command_for(self, interaction: InteractionPayload):
-        if interaction.get("guild_id"):
-            c = self.get(interaction["guild_id"])
-            if c is None:
-                return
-        else:
-            c = self["globals"]
-        t = c.get(str(CommandType(interaction["data"]["type"])))
-        if t is None:
-            return 
-        command = t.get(interaction["data"]["name"])
+        command = self._raw_cache.get(interaction["data"]["id"])
         if command is None:
             return
 
-        # if both a guild command and a global command exists but the id is different
-        if command.id != interaction["data"]["id"]:
-            c = self["globals"]
-            t = c.get(str(CommandType(interaction["data"]["type"])))
-            if t is None:
-                return 
-            command = t.get(interaction["data"]["name"])
-            if command is None:
-                return
         # is subcommand
         if interaction["data"].get("options") is not None and interaction["data"]["options"][0]["type"] in [OptionType.SUB_COMMAND, OptionType.SUB_COMMAND_GROUP]:
             try:
