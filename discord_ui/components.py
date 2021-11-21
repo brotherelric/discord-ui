@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from discord.ext.commands.errors import BadArgument
+
 from .tools import All
 from .enums import ButtonStyle, ComponentType
 from .errors import InvalidLength, OutOfValidRange, WrongType
@@ -31,7 +33,9 @@ class ComponentStore():
             The components that should be stored
         
         """
-        self._components: List[Union[Button, LinkButton, SelectMenu]] = components
+        self._components: List[Union[Button, LinkButton, SelectMenu]] = []
+        # for checks
+        [self.append(x) for x in components]
     def _get_index_for(self, key):
         if isinstance(key, int):
             return key
@@ -60,7 +64,8 @@ class ComponentStore():
     def copy(self):
         return self.__class__()
     def append(self, item):
-
+        if item.custom_id in [x.custom_id for x in self._components]:
+            raise BadArgument(f"A component with the custom_id '{item.custom_id} already exists! CustomIds have to be unique'")
         self._components.append(item)
     def clear(self):
         self._components = []
@@ -464,7 +469,7 @@ class BaseButton(Component):
         self.emoji = emoji
 
     def __repr__(self):
-        return f"<{self.__class__.__name}(content={self.content}, custom_id={self.custom_id})>"
+        return f"<{self.__class__.__name__}(custom_id={self.custom_id}, color={self.color})>"
     def __str__(self) -> str:
         return self.content
     def to_dict(self):
@@ -594,8 +599,6 @@ class Button(BaseButton, UseableComponent):
         BaseButton.__init__(self, label, color, emoji, new_line, disabled)
         UseableComponent.__init__(self, self.component_type)
         self.custom_id = custom_id or ''.join([choice(string.ascii_letters) for _ in range(100)])
-    def __repr__(self) -> str:
-        return f"<discord_ui.Button({self.custom_id}:{self.content})>"
     def copy(self) -> Button:
         return self.__class__(
             label=self.label, 

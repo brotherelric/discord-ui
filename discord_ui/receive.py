@@ -331,7 +331,7 @@ class SelectInteraction(Interaction):
         self.selected_values: List[str] = []
         """The list of raw values which were selected"""
         for val in data["data"]["values"]:
-            for x in self.options:
+            for x in self.component.options:
                 if x.value == val:
                     self.selected_options.append(x)
                     self.selected_values.append(x.value)

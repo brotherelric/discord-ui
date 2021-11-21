@@ -167,21 +167,18 @@ def get(l: list, elem: Any = True, mapping = lambda x: True, default: Any = None
             return x
     return default
 
-def components_to_dict(*components) -> List[dict]:
+def components_to_dict(components) -> List[dict]:
     """Converts a list of components to a dict that can be used for other extensions
     
     Parameters
     ----------
-    components: :class:`*args` | :class:`list`
+    components: :class:`list`
         A list of components that should be converted.
         
     Example
     
     .. code-block::
 
-        # List of components with component rows (everything in [] defines that it will be in it's own component row)
-        components_to_dict(Button(...), [Button(...), Button(...)], SelectMenu(...), LinkButton)
-        # or
         components_to_dict([Button(...), [LinkButton(...), Button(...)]])
 
     Raises
@@ -198,18 +195,27 @@ def components_to_dict(*components) -> List[dict]:
     """
     wrappers: List[List[Any]] = []
     component_list = []
-    if len(components) == 1 and isinstance(components[0], list):
-        components = components[0]
 
     if len(components) > 1:
         curWrapper = []
-        i = 0
+        i = 0   # 
         for component in components:
-            if hasattr(component, "items") or isinstance(component, list):
+            # if its a subarray
+            if hasattr(component, "items") or isinstance(component, (list, tuple)):
+                # if this isnt the first line
                 if i > 0 and len(curWrapper) > 0:
                     wrappers.append(curWrapper)
                 curWrapper = []
-                wrappers.append(component.items if hasattr(component, "items") else component)
+                
+                # ActionRow was used
+                if hasattr(component, "items"):
+                    wrappers.append(component.items)
+                # ComponentStore was used
+                elif hasattr(component, "_components"):
+                    wrappers.append(component._components) 
+                else:
+                    # just comepletely append the components to all rappers
+                    wrappers.append(component)
                 continue
                 
             # i > 0 => Preventing empty component field when first button wants to newLine 
@@ -229,7 +235,8 @@ def components_to_dict(*components) -> List[dict]:
             wrappers.append(curWrapper)
     else:
         wrappers = [components]
-
+    print(wrappers)
+    
     for wrap in wrappers:
         if isinstance(wrap, list) and not all(hasattr(x, "to_dict") for x in wrap):
             raise Exception("Components with types [" + ', '.join([str(type(x)) for x in wrap]) + "] are missing to_dict() method")
