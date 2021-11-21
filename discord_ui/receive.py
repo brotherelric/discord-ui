@@ -249,7 +249,8 @@ class Interaction():
         ninja_mode: :class:`bool`, optional
             If true, the client will respond to the button interaction with almost nothing and returns nothing
         force: :class:`bool`, optional
-            If true, a follow-up message will be forced; default False
+            Whether sending the follow-up message should be forced.
+            If ``False``, then a follow-up message will only be send if ``.responded`` is True; default False
         
         Returns
         -------
