@@ -222,32 +222,34 @@ class Interaction():
         ----------
         content: :class:`str`, optional
             The raw message content
-        tts: :class:`bool` 
+        tts: :class:`bool`, optional
             Whether the message should be send with text-to-speech
-        embed: :class:`discord.Embed`
+        embed: :class:`discord.Embed`, optional
             Embed rich content
-        embeds: List[:class:`discord.Embed`]
+        embeds: List[:class:`discord.Embed`], optional
             A list of embeds for the message
-        file: :class:`discord.File`
+        file: :class:`discord.File`, optional
             The file which will be attached to the message
-        files: List[:class:`discord.File`]
+        files: List[:class:`discord.File`], optional
             A list of files which will be attached to the message
-        nonce: :class:`int`
+        nonce: :class:`int`, optional
             The nonce to use for sending this message
-        allowed_mentions: :class:`discord.AllowedMentions`
+        allowed_mentions: :class:`discord.AllowedMentions`, optional
             Controls the mentions being processed in this message
-        mention_author: :class:`bool`
+        mention_author: :class:`bool`, optional
             Whether the author should be mentioned
         components: List[:class:`~Button` | :class:`~LinkButton` | :class:`~SelectMenu`]
             A list of message components to be included
-        delete_after: :class:`float`
+        delete_after: :class:`float`, optional
             After how many seconds the message should be deleted, only works for non-hiddend messages; default MISSING
-        listener: :class:`Listener`
+        listener: :class:`Listener`, optional
             A component-listener for this message
-        hidden: :class:`bool`
+        hidden: :class:`bool`, optional
             Whether the response should be visible only to the user 
-        ninja_mode: :class:`bool`
+        ninja_mode: :class:`bool`, optional
             If true, the client will respond to the button interaction with almost nothing and returns nothing
+        force: :class:`bool`, optional
+            If true, a follow-up message will be forced; default False
         
         Returns
         -------

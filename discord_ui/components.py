@@ -64,7 +64,7 @@ class ComponentStore():
     def copy(self):
         return self.__class__()
     def append(self, item):
-        if item.custom_id in [x.custom_id for x in self._components]:
+        if hasattr(item, "custom_id") and item.custom_id in [x.custom_id if hasattr(x, "custom_id") else None for x in self._components]:
             raise BadArgument(f"A component with the custom_id '{item.custom_id} already exists! CustomIds have to be unique'")
         self._components.append(item)
     def clear(self):
