@@ -235,7 +235,6 @@ def components_to_dict(components) -> List[dict]:
             wrappers.append(curWrapper)
     else:
         wrappers = [components]
-    print(wrappers)
     
     for wrap in wrappers:
         if isinstance(wrap, list) and not all(hasattr(x, "to_dict") for x in wrap):
