@@ -12,15 +12,47 @@ doesn't work
 
 import inspect
 import functools
+from typing import TypeVar, Any, List
+
 from discord.ext import commands
 
+
 __all__ = (
+    'auto_guild',
     'check_failed',
     'any_failure_response',
     'alias',
     'no_sync',
     'auto_defer',
 )
+
+f = TypeVar("f")
+
+class _auto_guild_sentinel():
+    def __init__(self):
+        self.guild_ids: List[int] = []
+        """The guild_ids that should be used when decorating a command with this class"""
+    def __call__(self, m):
+        if inspect.ismethod(m):
+            m.__guild_ids__ = self.guild_ids
+        else:
+            m.guild_ids = self.guild_ids
+        return m
+
+auto_guild: _auto_guild_sentinel = _auto_guild_sentinel()
+"""Decorator for setting guild_ids to application-commands.
+This decorator has to be placed before the actual command decorator
+
+Usage
+-----
+
+.. code-block::
+
+    @ui.slash.command(...)
+    @ext.auto_guild
+    async def my_command(ctx, ...):
+        ...
+"""
 
 def check_failed(content=None, hidden=False, **fields):
     """A decorator for autoresponding to a cog check that failed.
