@@ -1371,7 +1371,7 @@ class CommandCache():
             return len(object._cache) == len(self._cache) and object._cache == self._cache
         return False
     
-    def _on_sync(self):
+    async def _on_sync(self):
         ...
     def on_sync(self, method):
         """Decorator for a method that should be called when the commands were synced
