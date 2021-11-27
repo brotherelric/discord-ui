@@ -27,12 +27,22 @@ __all__ = (
     'Message',
     'EphemeralMessage',
     'EphemeralResponseMessage',
+    
     'ButtonInteraction',
+    'PressedButton',    # deprecated
+
     'SelectInteraction',
-    'ChoiceGeneratorContext',
+    'SelectedMenu',     # deprecated
+
+    'AutocompleteInteraction',
+    'ChoiceGeneratorContext',   # deprecated
+
     'SlashInteraction',
+    'SlashedCommand',           # deprecated
+
     'SubSlashInteraction',
-    'ContextInteraction',
+    'SlashedSubCommand',        # deprecated
+
     'Interaction',
 )
 
@@ -309,7 +319,7 @@ class AutocompleteInteraction(Interaction):
         """Cannot send followup message to this type of interaction"""
         raise NotImplementedError()
 class ChoiceGeneratorContext(AutocompleteInteraction):
-    """Deprecated, please use :class:`AutocompleteInteractiton` instead"""
+    """Deprecated, please use :class:`AutocompleteInteraction` instead"""
     ...
 
 class ComponentInteraction(Interaction):
@@ -362,10 +372,7 @@ class SlashInteraction(Interaction):
     def __init__(self, client, command: SlashCommand, data, user, args = None) -> None:
         Interaction.__init__(self, client._connection, data, user)
         self.command: SlashCommand = command
-        """
-        The original command instance that was used.
-        If you change things here, the changes will be applied globally
-        """
+        """The original command instance that was used. If you change things here, the changes will be applied globally"""
         self.bot: commands.Bot = client
         self.author: discord.Member = user
         """The user who used the command"""

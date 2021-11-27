@@ -82,7 +82,7 @@ SlashPermission
     :members:
 
 SlashInteraction
-===============
+=================
 
 .. autoclass:: SlashInteraction()
     :members:

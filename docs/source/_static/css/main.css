@@ -111,7 +111,8 @@ code.docutils.literal.notranslate, .highlight, div.highlight-default.notranslate
 
 html.writer-html5 .rst-content dl[class]:not(.option-list):not(.field-list):not(.footnote):not(.glossary):not(.simple)>dt:first-child {
     font-family: SFMono-Regular,Menlo,Monaco,Consolas,Liberation Mono,Courier New,Courier,monospace;
-    color: #000;
+    color: white;
+    background-color: #2C2F33;
 }
 
 .wy-nav-shift {
