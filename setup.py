@@ -12,7 +12,11 @@ def get_readme():
     """returns the readme content for the package"""
     with open("./README.md", "r", encoding="utf-8") as f:
         return f.read()
-
+def get_author():
+    """returns the name of the authors"""
+    with open("./README.md", "r", encoding="utf-8") as f:
+        with open("./discord_ui/__init__.py", "r", encoding="utf-8") as f:
+            return [f for f in f.readlines() if f.startswith("__author__")][0].split('"')[1].split('"')[0]
 
 setuptools.setup(
     name=get_name(),
@@ -21,7 +25,7 @@ setuptools.setup(
         "Documentation": "https://discord-ui.rtfd.io/en/latest/",
         "Issue tracker": "https://github.com/discord-py-ui/discord-ui/issues",
     },
-    author="404kuso, RedstoneZockt",
+    author=get_author(),
     author_email="bellou9022@gmail.com, redstoneprofihd@gmail.com",
     description="A disord.py extension for discord's ui/interaction features",
     long_description=get_readme(),
